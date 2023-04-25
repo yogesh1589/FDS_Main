@@ -1,0 +1,211 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\DELL\\Downloads\\fds_desktop-master\\fds_desktop-master\\Uninstaller\\Uninstaller.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\DELL\\Downloads\\fds_desktop-master\\fds_desktop-master\\Desktop\\FusionDataSecure.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\DELL\\Downloads\\fds_desktop-master\\fds_desktop-master\\Desktop\\FusionDataSecure.csproj",
+        "projectName": "Desktop",
+        "projectPath": "C:\\Users\\DELL\\Downloads\\fds_desktop-master\\fds_desktop-master\\Desktop\\FusionDataSecure.csproj",
+        "packagesPath": "C:\\Users\\DELL\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\DELL\\Downloads\\fds_desktop-master\\fds_desktop-master\\Desktop\\obj\\",
+        "projectStyle": "PackageReference",
+        "skipContentFileWrite": true,
+        "configFilePaths": [
+          "C:\\Users\\DELL\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net472"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net472": {
+            "projectReferences": {}
+          }
+        }
+      },
+      "frameworks": {
+        "net472": {
+          "dependencies": {
+            "BouncyCastle": {
+              "target": "Package",
+              "version": "[1.8.9, )"
+            },
+            "Cake.Powershell": {
+              "target": "Package",
+              "version": "[1.0.0, )"
+            },
+            "CredentialManagement": {
+              "target": "Package",
+              "version": "[1.0.2, )"
+            },
+            "MaterialDesignThemes": {
+              "target": "Package",
+              "version": "[3.2.0, )"
+            },
+            "Microsoft.Data.Sqlite": {
+              "target": "Package",
+              "version": "[7.0.2, )"
+            },
+            "Microsoft.Windows.SDK.Contracts": {
+              "target": "Package",
+              "version": "[10.0.18362.2005, )"
+            },
+            "NCrontab.Signed": {
+              "target": "Package",
+              "version": "[3.3.2, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[12.0.3, )"
+            },
+            "OpenSSL.NETStandard": {
+              "target": "Package",
+              "version": "[0.6.1, )"
+            },
+            "Portable.BouncyCastle": {
+              "target": "Package",
+              "version": "[1.8.9, )"
+            },
+            "QRCoder": {
+              "target": "Package",
+              "version": "[1.4.1, )"
+            },
+            "SQLite.Interop.dll": {
+              "target": "Package",
+              "version": "[1.0.103, )"
+            },
+            "SQLitePCLRaw.bundle_e_sqlite3": {
+              "target": "Package",
+              "version": "[2.1.4, )"
+            },
+            "SQLitePCLRaw.provider.e_sqlite3.net45": {
+              "target": "Package",
+              "version": "[1.1.14, )"
+            },
+            "SQLitePCLRaw.provider.e_sqlite3.netstandard11": {
+              "target": "Package",
+              "version": "[1.1.14, )"
+            },
+            "SQLitePCLRaw.provider.sqlite3": {
+              "target": "Package",
+              "version": "[2.1.4, )"
+            },
+            "Selenium.WebDriver": {
+              "target": "Package",
+              "version": "[4.8.0, )"
+            },
+            "System.Data.SQLite": {
+              "target": "Package",
+              "version": "[1.0.117, )"
+            },
+            "System.Diagnostics.Process": {
+              "target": "Package",
+              "version": "[4.3.0, )"
+            },
+            "System.Management": {
+              "target": "Package",
+              "version": "[5.0.0, )"
+            },
+            "System.Runtime": {
+              "target": "Package",
+              "version": "[4.3.1, )"
+            },
+            "System.Security.Cryptography.OpenSsl": {
+              "target": "Package",
+              "version": "[5.0.0, )"
+            }
+          },
+          "imports": [
+            "uap10.0.18362"
+          ],
+          "assetTargetFallback": true,
+          "warn": true
+        }
+      },
+      "runtimes": {
+        "win": {
+          "#import": []
+        },
+        "win-x64": {
+          "#import": []
+        },
+        "win-x86": {
+          "#import": []
+        }
+      }
+    },
+    "C:\\Users\\DELL\\Downloads\\fds_desktop-master\\fds_desktop-master\\Uninstaller\\Uninstaller.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\DELL\\Downloads\\fds_desktop-master\\fds_desktop-master\\Uninstaller\\Uninstaller.csproj",
+        "projectName": "Uninstaller",
+        "projectPath": "C:\\Users\\DELL\\Downloads\\fds_desktop-master\\fds_desktop-master\\Uninstaller\\Uninstaller.csproj",
+        "packagesPath": "C:\\Users\\DELL\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\DELL\\Downloads\\fds_desktop-master\\fds_desktop-master\\Uninstaller\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\DELL\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
+            "projectReferences": {
+              "C:\\Users\\DELL\\Downloads\\fds_desktop-master\\fds_desktop-master\\Desktop\\FusionDataSecure.csproj": {
+                "projectPath": "C:\\Users\\DELL\\Downloads\\fds_desktop-master\\fds_desktop-master\\Desktop\\FusionDataSecure.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "dependencies": {
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.3, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.102\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

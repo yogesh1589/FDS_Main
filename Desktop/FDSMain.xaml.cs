@@ -1,0 +1,2312 @@
+﻿using Desktop.Common;
+using Desktop.DTO.Requests;
+using Desktop.DTO.Responses;
+using Microsoft.Win32;
+using Newtonsoft.Json;
+using QRCoder;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Runtime.InteropServices;
+using System.Security.AccessControl;
+using System.Security.Cryptography;
+using System.Security.Principal;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Threading;
+using System.Data.SQLite;
+using NCrontab;
+using System.Management;
+using System.Windows.Interop;
+using System.Drawing;
+using Image = System.Drawing.Image;
+using CredentialManagement;
+using Org.BouncyCastle.Asn1.Ocsp;
+
+namespace Desktop
+{
+    /// <summary>
+    /// Interaction logic for MainWindow.xaml
+    /// </summary>
+    public partial class FDSMain : Window
+    {
+
+        [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+        static extern int SHEmptyRecycleBin(IntPtr hwnd, string pszRootPath, RecycleFlag dwFlags);
+        [DllImport("shell32.dll")]
+        static extern int SHQueryRecycleBin(string pszRootPath, ref SHQUERYRBINFO pSHQueryRBInfo);
+        [StructLayout(LayoutKind.Sequential)]
+        struct SHQUERYRBINFO
+        {
+            public long cbSize;
+            public long i64Size;
+            public long i64NumItems;
+        }
+        [Flags]
+        enum RecycleFlag : int
+        {
+            SHERB_NOCONFIRMATION = 0x00000001,
+            SHERB_NOPROGRESSUI = 0x00000001,
+            SHERB_NOSOUND = 0x00000004
+        }
+
+
+        DispatcherTimer timerQRCode;
+        DispatcherTimer timerDeviceLogin;
+        DispatcherTimer timerLastUpdate;
+        DispatcherTimer QRGeneratortimer;
+
+        int TotalSeconds = Common.AppConstants.TotalKeyActivationSeconds;
+        System.Windows.Forms.NotifyIcon icon;
+        public DeviceResponse DeviceResponse { get; private set; }
+        public Window thisWindow { get; }
+        public HttpClient client { get; }
+        public QRCodeResponse QRCodeResponse { get; private set; }
+        RSACryptoServiceProvider RSADevice { get; set; }
+        RSACryptoServiceProvider RSAServer { get; set; }
+        private bool isLoggedIn { get; set; }
+        public byte[] Key { get; set; }
+        bool IsAdmin => new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
+        public static string BaseDir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+
+        List<string> whitelistedDomain = new List<string>();
+        bool IsQRGenerated;
+
+        [DllImport("advapi32.dll", EntryPoint = "CredDeleteW", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern bool CredDelete(string target, int type, int reserved);
+
+        public FDSMain()
+        {
+            InitializeComponent();
+
+
+            QRGeneratortimer = new DispatcherTimer();
+            QRGeneratortimer.Interval = TimeSpan.FromMilliseconds(100);
+            QRGeneratortimer.Tick += QRGeneratortimer_Tick;
+
+
+            timerQRCode = new DispatcherTimer();
+            timerQRCode.Interval = TimeSpan.FromMilliseconds(1000);
+            timerQRCode.Tick += timerQRCode_Tick;
+
+            timerDeviceLogin = new DispatcherTimer();
+            timerDeviceLogin.Interval = TimeSpan.FromMilliseconds(1000 * 5);
+            timerDeviceLogin.Tick += TimerDeviceLogin_Tick;
+
+            timerLastUpdate = new DispatcherTimer();
+            timerLastUpdate.Interval = TimeSpan.FromMilliseconds(10000);
+            timerLastUpdate.Tick += TimerLastUpdate_Tick;
+            timerLastUpdate.IsEnabled = false;
+
+            icon = new System.Windows.Forms.NotifyIcon();
+            icon.Icon = new System.Drawing.Icon(Path.Combine(BaseDir, "Assets/FDSDesktopLogo.ico"));//new System.Drawing.Icon(Path.Combine(Directory.GetParent(System.Environment.CurrentDirectory).Parent.FullName + "\\Assets\\FDSDesktopLogo.ico"));
+            icon.Visible = true;
+            icon.BalloonTipText = "The app has been minimised. Click the tray icon to show.";
+            icon.BalloonTipTitle = "FDS (Scanning & Cleaning)";
+            icon.BalloonTipIcon = System.Windows.Forms.ToolTipIcon.Info;
+            icon.Click += Icon_Click;
+
+            lblSerialNumber.Text = lblPopSerialNumber.Text = AppConstants.SerialNumber;
+            lblUserName.Text = lblDeviceName.Text = AppConstants.MachineName;
+            string mac = AppConstants.MACAddress;
+
+            thisWindow = GetWindow(this);
+            client = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI };
+
+
+            whitelistedDomain.Add("'%.google.com%'");
+            whitelistedDomain.Add("'%.clickup.com%'");
+            whitelistedDomain.Add("'%.slack.com%'");
+
+            //#region Auto start on startup done by Installer
+            //RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+            //Assembly curAssembly = Assembly.GetExecutingAssembly();
+            //key.SetValue(curAssembly.GetName().Name, curAssembly.Location);
+
+            //#endregion
+        }
+        private void FDSMain_Loaded(object sender, RoutedEventArgs e)
+        {
+            //CredDelete("FDS_Key_Key1", 1, 0);
+            try
+            {
+                bool valid = CheckAllKeys();
+
+                if (!valid)
+                    LoadMenu(Screens.GetStart);
+                else
+                {
+                    LoadMenu(Screens.Landing);
+                    TimerLastUpdate_Tick(timerLastUpdate, null);
+                    timerLastUpdate.IsEnabled = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private void LoadMenu(Screens screen)
+        {
+            try
+            {
+                cntGetStart.Visibility = Visibility.Hidden;
+                cntQRCode.Visibility = Visibility.Hidden;
+                cntLanding.Visibility = Visibility.Hidden;
+                //cntNavMenu.Visibility = Visibility.Hidden;
+                //imgWires.Visibility = Visibility.Hidden;
+                //imgPantgone.Visibility = Visibility.Hidden;
+                cntServiceSetting.Visibility = Visibility.Hidden;
+                cntServiceSettingPart2.Visibility = Visibility.Hidden;
+                cntBackdrop.Visibility = Visibility.Hidden;
+                cntPopup.Visibility = Visibility.Hidden;
+                lblUserName.Visibility = Visibility.Visible;
+                switch (screen)
+                {
+                    case Screens.GetOTP:
+                        GetOTP.Visibility = Visibility.Visible;
+                        break;
+                    case Screens.GetStart:
+                        //imgPantgone.Visibility = Visibility.Hidden;
+                        header.Visibility = Visibility.Visible;
+                        lblUserName.Visibility = Visibility.Hidden;
+                        imgDesktop.Visibility = Visibility.Hidden;
+                        cntGetStart.Visibility = Visibility.Visible;
+                        break;
+                    case Screens.AuthenticationMethods:
+                        AuthenticationMethods.Visibility = Visibility.Visible;
+                        AuthenticationStep1.Visibility = Visibility.Hidden;
+                        AuthenticationStep2.Visibility = Visibility.Hidden;
+                        AuthenticationStep3.Visibility = Visibility.Hidden;
+                        lblUserName.Visibility = Visibility.Hidden;
+                        AuthenticationProcessing.Visibility = Visibility.Hidden;
+                        AuthenticationFailed.Visibility = Visibility.Hidden;
+                        AuthenticationSuccessfull.Visibility = Visibility.Hidden;
+                        txtEmail.Text = string.Empty;
+                        txtPhoneNubmer.Text = string.Empty;
+                        txtEmailToken.Text = string.Empty;
+                        txtToken.Text = string.Empty;
+                        header.Visibility = Visibility.Visible;
+                        lblUserName.Visibility = Visibility.Hidden;
+                        imgDesktop.Visibility = Visibility.Hidden;
+                        break;
+                    case Screens.AuthenticationStep1:
+                        AuthenticationStep1.Visibility = Visibility.Visible;
+                        AuthenticationMethods.Visibility = Visibility.Hidden;
+                        AuthenticationStep2.Visibility = Visibility.Hidden;
+                        lblUserName.Visibility = Visibility.Hidden;
+                        header.Visibility = Visibility.Visible;
+                        lblUserName.Visibility = Visibility.Hidden;
+                        imgDesktop.Visibility = Visibility.Hidden;
+                        break;
+                    case Screens.AuthenticationStep2:
+                        AuthenticationStep2.Visibility = Visibility.Visible;
+                        AuthenticationStep1.Visibility = Visibility.Hidden;
+                        AuthenticationMethods.Visibility = Visibility.Hidden;
+                        AuthenticationStep3.Visibility = Visibility.Hidden;
+                        header.Visibility = Visibility.Visible;
+                        lblUserName.Visibility = Visibility.Hidden;
+                        imgDesktop.Visibility = Visibility.Hidden;
+                        break;
+                    case Screens.AuthenticationStep3:
+                        AuthenticationStep3.Visibility = Visibility.Visible;
+                        AuthenticationStep2.Visibility = Visibility.Hidden;
+                        AuthenticationMethods.Visibility = Visibility.Hidden;
+                        header.Visibility = Visibility.Visible;
+                        lblUserName.Visibility = Visibility.Hidden;
+                        imgDesktop.Visibility = Visibility.Hidden;
+                        break;
+                    case Screens.AuthenticationProcessing:
+                        AuthenticationProcessing.Visibility = Visibility.Visible;
+                        AuthenticationStep3.Visibility = Visibility.Hidden;
+                        header.Visibility = Visibility.Visible;
+                        lblUserName.Visibility = Visibility.Hidden;
+                        imgDesktop.Visibility = Visibility.Hidden;
+                        break;
+                    case Screens.AuthSuccessfull:
+                        AuthenticationSuccessfull.Visibility = Visibility.Visible;
+                        AuthenticationStep3.Visibility = Visibility.Hidden;
+                        AuthenticationProcessing.Visibility = Visibility.Hidden;
+                        AuthenticationFailed.Visibility = Visibility.Hidden;
+                        header.Visibility = Visibility.Visible;
+                        lblUserName.Visibility = Visibility.Hidden;
+                        imgDesktop.Visibility = Visibility.Hidden;
+                        break;
+                    case Screens.AuthFailed:
+                        AuthenticationFailed.Visibility = Visibility.Visible;
+                        AuthenticationStep3.Visibility = Visibility.Hidden;
+                        AuthenticationSuccessfull.Visibility = Visibility.Hidden;
+                        AuthenticationProcessing.Visibility = Visibility.Hidden;
+                        header.Visibility = Visibility.Visible;
+                        lblUserName.Visibility = Visibility.Hidden;
+                        imgDesktop.Visibility = Visibility.Hidden;
+                        break;
+                    case Screens.QRCode:
+                        cntQRCode.Visibility = Visibility.Visible;
+                        //imgPantgone.Visibility = Visibility.Visible;
+                        header.Visibility = Visibility.Visible;
+                        lblUserName.Visibility = Visibility.Hidden;
+                        imgDesktop.Visibility = Visibility.Hidden;
+                        break;
+                    case Screens.Landing:
+                        //imgWires.Visibility = Visibility.Visible;
+                        cntLanding.Visibility = Visibility.Visible;
+                        cntDataProtection.Visibility = Visibility.Hidden;
+                        txtHome.Visibility = Visibility.Hidden;
+                        txtMenuService.Visibility = Visibility.Hidden;
+                        //cntNavMenu.Visibility = Visibility.Visible;
+                        //btnSettings.Background = System.Windows.Media.Brushes.White;
+                        //btnStatus.Background = Brushes.LightBlue;
+                        header.Visibility = Visibility.Visible;
+                        lblUserName.Visibility = Visibility.Visible;
+                        imgDesktop.Visibility = Visibility.Visible;
+                        GetOTP.Visibility = Visibility.Hidden;
+                        AuthenticationProcessing.Visibility = Visibility.Hidden;
+                        AuthenticationFailed.Visibility = Visibility.Hidden;
+                        AuthenticationSuccessfull.Visibility = Visibility.Hidden;
+                        AuthenticationMethods.Visibility = Visibility.Hidden;
+                        break;
+                    case Screens.ServiceClear:
+                        //imgWires.Visibility = Visibility.Visible;
+                        //cntNavMenu.Visibility = Visibility.Visible;
+                        cntServiceSetting.Visibility = Visibility.Visible;
+                        cntServiceSettingPart2.Visibility = Visibility.Visible;
+                        //btnStatus.Background = Brushes.White;
+                        //btnSettings.Background = Brushes.LightBlue;
+                        break;
+                    case Screens.Popup:
+                        //imgWires.Visibility = Visibility.Visible;
+                        // cntNavMenu.Visibility = Visibility.Visible;
+                        cntServiceSetting.Visibility = Visibility.Visible;
+                        cntServiceSettingPart2.Visibility = Visibility.Visible;
+                        cntBackdrop.Visibility = Visibility.Visible;
+                        cntPopup.Visibility = Visibility.Visible;
+
+                        break;
+                    case Screens.DataProtection:
+                        //imgWires.Visibility = Visibility.Visible;
+                        // cntNavMenu.Visibility = Visibility.Visible;
+                        txtHome.Visibility = Visibility.Visible;
+                        txtMenuService.Visibility = Visibility.Visible;
+                        cntDataProtection.Visibility = Visibility.Visible;
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private async void TimerLastUpdate_Tick(object sender, EventArgs e)
+        {
+            await GetDeviceDetails();
+
+            //await CheckDeviceHealth();
+        }
+        private async void TimerDeviceLogin_Tick(object sender, EventArgs e)
+        {
+            await devicelogin(true);
+        }
+        private void timerQRCode_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                TimeSpan t = new TimeSpan(0, 0, TotalSeconds);
+                lblTimer.Text = $"{t.Minutes.ToString("00")}:{t.Seconds.ToString("00")} minutes";
+                if (TotalSeconds <= 0)
+                {
+                    timerQRCode.IsEnabled = false;
+                    timerDeviceLogin.IsEnabled = false;
+                    btnGetStarted_Click(btnGetStarted, null);
+                }
+                TotalSeconds--;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private bool CheckAllKeys()
+        {
+            try
+            {
+                string InverseQ = KeyManager.GetValue("InverseQ");
+                string DQ = KeyManager.GetValue("DQ");
+                string DP = KeyManager.GetValue("DP");
+                string Q = KeyManager.GetValue("Q");
+                string P = KeyManager.GetValue("P");
+                string D = KeyManager.GetValue("D");
+                string Exponent = KeyManager.GetValue("Exponent");
+                string Modulus = KeyManager.GetValue("Modulus");
+                bool ValidDeviceKey = !string.IsNullOrEmpty(InverseQ) && !string.IsNullOrEmpty(DQ) && !string.IsNullOrEmpty(DP) && !string.IsNullOrEmpty(Q) && !string.IsNullOrEmpty(P) && !string.IsNullOrEmpty(D) && !string.IsNullOrEmpty(Exponent) && !string.IsNullOrEmpty(Modulus);
+                RSAParameters RSAParam;
+                if (!ValidDeviceKey)
+                {
+                    RSADevice = new RSACryptoServiceProvider(2048);
+                    RSAParam = RSADevice.ExportParameters(true);
+                    KeyManager.SaveValue("Modulus", Convert.ToBase64String(RSAParam.Modulus));
+                    KeyManager.SaveValue("Exponent", Convert.ToBase64String(RSAParam.Exponent));
+                    KeyManager.SaveValue("D", Convert.ToBase64String(RSAParam.D));
+                    KeyManager.SaveValue("P", Convert.ToBase64String(RSAParam.P));
+                    KeyManager.SaveValue("Q", Convert.ToBase64String(RSAParam.Q));
+                    KeyManager.SaveValue("DP", Convert.ToBase64String(RSAParam.DP));
+                    KeyManager.SaveValue("DQ", Convert.ToBase64String(RSAParam.DQ));
+                    KeyManager.SaveValue("InverseQ", Convert.ToBase64String(RSAParam.InverseQ));
+                }
+                RSAParam = new RSAParameters
+                {
+                    InverseQ = Convert.FromBase64String(KeyManager.GetValue("InverseQ")),
+                    DQ = Convert.FromBase64String(KeyManager.GetValue("DQ")),
+                    DP = Convert.FromBase64String(KeyManager.GetValue("DP")),
+                    Q = Convert.FromBase64String(KeyManager.GetValue("Q")),
+                    P = Convert.FromBase64String(KeyManager.GetValue("P")),
+                    D = Convert.FromBase64String(KeyManager.GetValue("D")),
+                    Exponent = Convert.FromBase64String(KeyManager.GetValue("Exponent")),
+                    Modulus = Convert.FromBase64String(KeyManager.GetValue("Modulus"))
+                };
+                RSADevice = new RSACryptoServiceProvider(2048);
+                RSADevice.ImportParameters(RSAParam);
+
+                var key1 = KeyManager.GetValue("Key1");
+                var key2 = KeyManager.GetValue("Key2");
+                var Authentication_token = KeyManager.GetValue("Authentication_token");
+                var Authorization_token = KeyManager.GetValue("Authorization_token");
+                bool ValidServerKey = !string.IsNullOrEmpty(key1) && !string.IsNullOrEmpty(key2) && !string.IsNullOrEmpty(Authentication_token) && !string.IsNullOrEmpty(Authorization_token);
+                if (ValidServerKey)
+                {
+                    QRCodeResponse = new QRCodeResponse
+                    {
+                        Public_key = KeyManager.GetValue("Key1") + KeyManager.GetValue("Key2"),
+                        Authentication_token = KeyManager.GetValue("Authentication_token"),
+                        Authorization_token = KeyManager.GetValue("Authorization_token")
+                    };
+                    RSAServer = new RSACryptoServiceProvider(2048);
+                    RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));
+                }
+                return ValidServerKey && ValidDeviceKey;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+
+        }
+        public async void GenerateQRCode()
+        {
+            try
+            {
+                var formContent = new List<KeyValuePair<string, string>>
+                {
+                    new KeyValuePair<string, string>("serial_number", AppConstants.SerialNumber),
+                    new KeyValuePair<string, string>("device_name", AppConstants.MachineName),
+                    new KeyValuePair<string, string>("mac_address", AppConstants.MACAddress),
+                    new KeyValuePair<string, string>("device_type", AppConstants.DeviceType),
+                    new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
+                    new KeyValuePair<string, string>("os_version", AppConstants.OSVersion),
+                };
+                var response = await client.PostAsync(AppConstants.EndPoints.Start, new FormUrlEncodedContent(formContent));
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TotalSeconds = Common.AppConstants.TotalKeyActivationSeconds;
+                    timerQRCode.IsEnabled = true;
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    DeviceResponse = JsonConvert.DeserializeObject<DeviceResponse>(responseString);
+                    IsQRGenerated = DeviceResponse != null ? true : false;
+
+                    imgQR.Source = GetQRCode(DeviceResponse.qr_code_token); //BitmapToImageSource(GetQRCode(DeviceResponse.qr_code_token));
+                                                                            //LoadMenu(Screens.QRCode);
+                                                                            //timerDeviceLogin.IsEnabled = true;
+                                                                            //await devicelogin(true);
+                    //MessageBox.Show("QR generated successfully: " + DeviceResponse.qr_code_token + "with " + response.IsSuccessStatusCode, "success", MessageBoxButton.OK, MessageBoxImage.Information);
+
+
+                }
+                else
+                    MessageBox.Show("API response fails while generating QR code: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred while generating QR code: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private void btnGetStarted_Click(object sender, RoutedEventArgs e)
+        {
+            LoadMenu(Screens.AuthenticationMethods);
+        }
+        private async Task devicelogin(bool MenuChange)
+        {
+            try
+            {
+                var formContent = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("qr_code_token", DeviceResponse.qr_code_token),
+                                                                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),};
+                var response = await client.PostAsync(AppConstants.EndPoints.CheckAuth, new FormUrlEncodedContent(formContent));
+                if (response.IsSuccessStatusCode)
+                {
+                    isLoggedIn = true;
+                    timerDeviceLogin.IsEnabled = false;
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    QRCodeResponse = JsonConvert.DeserializeObject<QRCodeResponse>(responseString);
+                    //var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
+                    //var plainText = Decrypt(responseData.Data);
+                    //var deviceDetail = JsonConvert.DeserializeObject<QRCodeResponse>(plainText);
+                    int LengthAllowed = 512;
+                    KeyManager.SaveValue("Key1", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(0, LengthAllowed) : QRCodeResponse.Public_key);
+                    KeyManager.SaveValue("Key2", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(LengthAllowed, QRCodeResponse.Public_key.Length - LengthAllowed) : "");
+                    KeyManager.SaveValue("Authentication_token", QRCodeResponse.Authentication_token);
+                    KeyManager.SaveValue("Authorization_token", QRCodeResponse.Authorization_token);
+                    RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));
+                    timerQRCode.IsEnabled = false;
+                    if (MenuChange)
+                    {
+                        LoadMenu(Screens.Landing);
+                        await KeyExchange().ConfigureAwait(false);
+                        //timerLastUpdate.IsEnabled = true;
+                    }
+                }
+                else
+                {
+                    switch (response.StatusCode)
+                    {
+                        //case System.Net.HttpStatusCode.Unauthorized:
+                        //    break;
+                        case System.Net.HttpStatusCode.NotFound:
+                            timerDeviceLogin.IsEnabled = false;
+                            timerQRCode.IsEnabled = false;
+                            LoadMenu(Screens.GetStart);
+                            break;
+                        case System.Net.HttpStatusCode.NotAcceptable:
+                            timerDeviceLogin.IsEnabled = false;
+                            timerQRCode.IsEnabled = false;
+                            btnGetStarted_Click(btnGetStarted, null);
+                            break;
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred while devicelogin: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private async Task GetDeviceDetails()
+        {
+            var exchangeObject = new DeviceDetails
+            {
+                serial_number = AppConstants.SerialNumber,
+                mac_address = AppConstants.MACAddress,
+                authorization_token = KeyManager.GetValue("authorization_token"),
+
+            };
+            var message = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(exchangeObject)));
+
+            var payload = Encrypt(message);
+
+            var formContent = new List<KeyValuePair<string, string>> {
+                        new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
+                        new KeyValuePair<string, string>("payload", payload),
+                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion)
+                        //new KeyValuePair<string, string>("os_version", AppConstants.OSVersion)
+                    };
+            var response = await client.PostAsync(AppConstants.EndPoints.DeviceDetails, new FormUrlEncodedContent(formContent));
+            if (response.IsSuccessStatusCode)
+            {
+                var responseString = await response.Content.ReadAsStringAsync();
+                var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
+                var plainText = Decrypt(responseData.Data);
+
+                var deviceDetail = JsonConvert.DeserializeObject<DeviceDetail>(plainText);  //
+
+                if (deviceDetail != null)
+                {
+                    lblSerialNumber.Text = lblPopSerialNumber.Text = deviceDetail.serial_number;
+                    lblUserName.Text = lblDeviceName.Text = deviceDetail.device_name;
+                    lblLocation.Text = deviceDetail.device_location != null ? deviceDetail.device_location.ToString() : "";
+                    txtUpdatedOn.Text = deviceDetail.updated_on != null ? Convert.ToString(deviceDetail.updated_on) : "";
+                    timerLastUpdate.IsEnabled = false;
+                    await RetrieveServices();
+                    LoadMenu(Screens.Landing);
+                }
+            }
+            else
+            {
+                timerLastUpdate.IsEnabled = false;
+                btnGetStarted_Click(btnGetStarted, null);
+                MessageBox.Show("An error occurred in GetDeviceDetails: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private async Task KeyExchange()
+        {
+            QRCodeResponse = new QRCodeResponse
+            {
+                Public_key = KeyManager.GetValue("Key1") + KeyManager.GetValue("Key2"),
+                Authentication_token = KeyManager.GetValue("Authentication_token"),
+                Authorization_token = KeyManager.GetValue("Authorization_token")
+            };
+            var exchangeObject = new KeyExchange
+            {
+                authorization_token = KeyManager.GetValue("authorization_token"),
+                mac_address = AppConstants.MACAddress,
+                public_key = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(RSAKeys.ExportPublicKey(RSADevice))),
+                serial_number = AppConstants.SerialNumber
+            };
+
+            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(exchangeObject))));
+
+            var formContent = new List<KeyValuePair<string, string>> {
+                        new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
+                        new KeyValuePair<string, string>("payload", payload),
+                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion)
+                    };
+
+            var response = await client.PostAsync(AppConstants.EndPoints.KeyExchange, new FormUrlEncodedContent(formContent));
+            if (response.IsSuccessStatusCode)
+            {
+                var responseString = await response.Content.ReadAsStringAsync();
+                var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
+                var plainText = Decrypt(responseData.Data);
+                var finalData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(plainText);
+                timerLastUpdate.IsEnabled = true;
+            }
+            else
+            {
+                timerLastUpdate.IsEnabled = false;
+                btnGetStarted_Click(btnGetStarted, null);
+                MessageBox.Show("An error occurred in KeyExchange: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        public async Task RetrieveServices()
+        {
+            var servicesObject = new RetriveServices
+            {
+                authorization_token = KeyManager.GetValue("authorization_token"),
+                mac_address = AppConstants.MACAddress,
+                serial_number = AppConstants.SerialNumber
+            };
+            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
+
+            var formContent = new List<KeyValuePair<string, string>> {
+                        new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
+                        new KeyValuePair<string, string>("payload", payload),
+                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
+                    };
+
+            var response = await client.PostAsync(AppConstants.EndPoints.DeviceServices, new FormUrlEncodedContent(formContent));
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseString = await response.Content.ReadAsStringAsync();
+                var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
+                var plainText = RetriveDecrypt(responseData.Data);
+                var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText.Replace('', ' '));// replace used to test services
+                                                                                                                    //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
+                ExecuteServices(servicesResponse);
+                timerLastUpdate.IsEnabled = true;
+            }
+            else
+            {
+                timerLastUpdate.IsEnabled = false;
+                btnGetStarted_Click(btnGetStarted, null);
+                MessageBox.Show("An error occurred in RetrieveServices: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private async Task LogServicesData(string authorizationCode, string subServiceName, int FileProcessed)
+        {
+            LogServiceRequest logServiceRequest = new LogServiceRequest
+            {
+                authorization_token = KeyManager.GetValue("authorization_token"),
+                mac_address = AppConstants.MACAddress,
+                serial_number = AppConstants.SerialNumber,
+                sub_service_authorization_code = authorizationCode,
+                sub_service_name = subServiceName,
+                //current_user = Environment.UserName,
+                executed = true,
+                file_deleted = FileProcessed,
+
+            };
+
+            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(logServiceRequest))));
+
+            var formContent = new List<KeyValuePair<string, string>> {
+                        new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
+                        new KeyValuePair<string, string>("payload", payload),
+                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
+                    };
+
+            var response = await client.PostAsync(AppConstants.EndPoints.LogServicesData, new FormUrlEncodedContent(formContent));
+            if (response.IsSuccessStatusCode)
+            {
+                await CheckDeviceHealth();
+            }
+            else
+            {
+                timerLastUpdate.IsEnabled = false;
+                btnGetStarted_Click(btnGetStarted, null);
+                MessageBox.Show("An error occurred in LogServicesData: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        public void updateTrayIcon()
+        {
+            try
+            {
+                icon.Icon = new System.Drawing.Icon(Directory.GetParent(System.Environment.CurrentDirectory).Parent.Parent.FullName + "\\Assets\\LogoFDSXL_disable.ico");
+                icon.Visible = true;
+                icon.BalloonTipText = "The app has been disabled. Click the tray icon to show.";
+                icon.BalloonTipTitle = "FDS (Scanning & Cleaning)";
+                icon.BalloonTipIcon = System.Windows.Forms.ToolTipIcon.Info;
+                icon.ShowBalloonTip(2000);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                MessageBox.Show("An error occurred in updateTrayIcon: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private async Task CheckDeviceHealth()
+        {
+            var servicesObject = new RetriveServices
+            {
+                authorization_token = KeyManager.GetValue("authorization_token"),
+                mac_address = AppConstants.MACAddress,
+                serial_number = AppConstants.SerialNumber,
+                //current_user = Environment.UserName
+            };
+            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
+            //var payload = JsonConvert.SerializeObject(servicesObject).ToString();
+
+            var formContent = new List<KeyValuePair<string, string>> {
+                new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("authentication_token")) ,
+                new KeyValuePair<string, string>("payload", payload),
+                new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
+            };
+
+            var response = await client.PostAsync(AppConstants.EndPoints.DeviceHealth, new FormUrlEncodedContent(formContent));
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseString = await response.Content.ReadAsStringAsync();
+                var responseData = JsonConvert.DeserializeObject<HealthCheckResponse>(responseString);
+                if (responseData.call_config)
+                {
+                    await DeviceConfigurationCheck();
+                }
+            }
+            else
+            {
+                timerLastUpdate.IsEnabled = false;
+                btnGetStarted_Click(btnGetStarted, null);
+                MessageBox.Show("An error occurred in CheckDeviceHealth: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private async Task DeviceConfigurationCheck()
+        {
+            var servicesObject = new RetriveServices
+            {
+                authorization_token = KeyManager.GetValue("authorization_token"),
+                mac_address = AppConstants.MACAddress,
+                serial_number = AppConstants.SerialNumber
+            };
+            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
+
+            var formContent = new List<KeyValuePair<string, string>> {
+                new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
+                new KeyValuePair<string, string>("payload", payload),
+                new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
+            };
+
+            var response = await client.PostAsync(AppConstants.EndPoints.DeviceConfigCheck, new FormUrlEncodedContent(formContent));
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseString = await response.Content.ReadAsStringAsync();
+                var responseData = JsonConvert.DeserializeObject<DeviceConfigCheckResponse>(responseString);
+                if (responseData.config_change)
+                {
+                    if (responseData.call_api.Count() > 0)
+                    {
+                        responseData.call_api.Sort();
+                        foreach (var api in responseData.call_api)
+                        {
+                            if (api.Equals("1") || api.Equals("4"))
+                            {
+                                await RetrieveServices();
+                            }
+                            else if (api.Equals("2"))
+                            {
+                                await GetDeviceDetails();
+                            }
+                            else if (api.Equals("3"))
+                            {
+                                await DeviceReauth();
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                timerLastUpdate.IsEnabled = false;
+                btnGetStarted_Click(btnGetStarted, null);
+                MessageBox.Show("An error occurred in DeviceConfigurationCheck: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private async Task DeviceReauth()
+        {
+            var servicesObject = new RetriveServices
+            {
+                authorization_token = KeyManager.GetValue("authorization_token"),
+                mac_address = AppConstants.MACAddress,
+                serial_number = AppConstants.SerialNumber
+            };
+            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
+
+            var formContent = new List<KeyValuePair<string, string>> {
+                new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
+                new KeyValuePair<string, string>("payload", payload),
+                new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
+            };
+
+            var response = await client.PostAsync(AppConstants.EndPoints.DeviceReauth, new FormUrlEncodedContent(formContent));
+            if (response.IsSuccessStatusCode)
+            {
+                timerLastUpdate.IsEnabled = false;
+                btnGetStarted_Click(btnGetStarted, null);
+                MessageBox.Show("An error occurred in DeviceReauth: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                /// need delete api for flushing 
+            }
+        }
+        public string Encrypt(string plainText)
+        {
+            try
+            {
+                //byte[] Key;
+                byte[] AesEncrypted;
+                using (var aesAlg = new AesCryptoServiceProvider())
+                {
+                    // Create an encryptor to perform the stream transform.
+                    Key = aesAlg.Key;
+                    aesAlg.Mode = CipherMode.ECB;
+                    ICryptoTransform encryptor = aesAlg.CreateEncryptor();
+                    // Create the streams used for encryption.
+                    using (MemoryStream msEncrypt = new MemoryStream())
+                    {
+                        using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                        {
+                            using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
+                            {
+                                //Write all data to the stream.
+                                swEncrypt.Write(plainText);
+                            }
+                            AesEncrypted = msEncrypt.ToArray();
+                        }
+                    }
+                }
+                var RsaEncrypted = RSAServer.Encrypt(Key, true);
+                return Convert.ToBase64String(RsaEncrypted.Concat(AesEncrypted).ToArray());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred while doing encryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return "";
+            }
+        }
+        public string Decrypt(string Cipher)
+        {
+            try
+            {
+                var bArray = Convert.FromBase64String(Cipher);
+                var encKey = bArray.Take(256).ToArray();
+                var byteKey = RSADevice.Decrypt(encKey, true);
+                string plaintext = null;
+                // Create AesManaged    
+                using (AesManaged aes = new AesManaged())
+                {
+                    // Create a decryptor    
+                    aes.Mode = CipherMode.ECB;
+                    ICryptoTransform decryptor = aes.CreateDecryptor(byteKey, aes.IV);
+                    // Create the streams used for decryption.    
+                    using (MemoryStream ms = new MemoryStream(bArray.Skip(256).ToArray()))
+                    {
+                        // Create crypto stream    
+                        using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
+                        {
+                            // Read crypto stream    
+                            using (StreamReader reader = new StreamReader(cs))
+                                plaintext = reader.ReadToEnd();
+                        }
+                    }
+                }
+                return plaintext;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred while doing decryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return "";
+            }
+
+        }
+        public string RetriveDecrypt(string Cipher)
+        {
+            try
+            {
+                var bArray = Convert.FromBase64String(Cipher);
+                var encKey = bArray.Take(256).ToArray();
+                var byteKey = RSADevice.Decrypt(encKey, true);
+                string plaintext = null;
+                // Create AesManaged    
+                using (AesManaged aes = new AesManaged())
+                {
+                    // Create a decryptor    
+                    aes.Mode = CipherMode.ECB;
+                    aes.Padding = PaddingMode.None;
+                    ICryptoTransform decryptor = aes.CreateDecryptor(byteKey, aes.IV);
+                    // Create the streams used for decryption.    
+                    using (MemoryStream ms = new MemoryStream(bArray.Skip(256).ToArray()))
+                    {
+                        // Create crypto stream    
+                        using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
+                        {
+                            // Read crypto stream    
+                            using (StreamReader reader = new StreamReader(cs))
+                                plaintext = reader.ReadToEnd();
+                        }
+                    }
+                }
+                return plaintext;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred while doing decryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return "";
+            }
+
+        }
+        private void ExecuteServices(ServicesResponse servicesResponse)
+        {
+            try
+            {
+                foreach (var services in servicesResponse.Services)
+                {
+                    foreach (var subservice in services.Subservices)
+                    {
+                        if (subservice.Execute_now)
+                            ExecuteSubService(subservice);
+                        else if (subservice.Execution_period.ToString().ToLower() != "null")
+                        {
+                            var schedule = CrontabSchedule.Parse(subservice.Execution_period);
+                            var nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
+                            if (nextRunTime != null && (nextRunTime <= DateTime.Now || nextRunTime >= DateTime.Now.AddSeconds(-10)))
+                                ExecuteSubService(subservice);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred while executing services: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private void ExecuteSubService(SubservicesData subservices)
+        {
+            try
+            {
+                switch (subservices.Sub_service_name)
+                {
+                    case "dns_flushing":
+                        FlushDNS(subservices);
+                        break;
+                    case "recycle_bin_cleaning":
+                        ClearRecycleBin(subservices);
+                        break;
+                    case "windows_registry_cleaning":
+                        ClearWindowsRegistry(subservices);
+                        break;
+                    case "memory_cleaning":
+                        DiskCleaning(subservices);
+                        break;
+                    case "web_cookie_cleaning":
+                        WebCookieCleaning(subservices);
+                        break;
+                    case "web_cache_cleaning":
+                        WebCacheCleaning(subservices);
+                        break;
+                    case "web_history_cleaning":
+                        WebHistoryCleaning(subservices);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred while executing subservices: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        #region Services Implementation
+        private void FlushDNS(SubservicesData subservices)
+        {
+            string flushDnsCmd = @"/C ipconfig /flushdns";
+            try
+            {
+
+                //IPHostEntry dummyEntry = Dns.GetHostEntry("localhost");
+
+                //IPGlobalProperties ipProperties = IPGlobalProperties.GetIPGlobalProperties();
+                //IPv4GlobalStatistics ipStats = ipProperties.GetIPv4GlobalStatistics();
+                //long cacheSizeBefore = ipStats.NumberOfEntries;
+
+                var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo("cmd.exe", flushDnsCmd)
+
+                };
+                process.Start();
+
+                //process.WaitForExit();
+                KillCmd();
+                Console.WriteLine(String.Format("Successfully Flushed DNS:'{0}'", flushDnsCmd), EventLogEntryType.Information);
+
+                //// Perform another DNS lookup to update the cache size
+                //dummyEntry = Dns.GetHostEntry("localhost");
+
+                //// Retrieve the new cache size
+                //int newCacheSize = dummyEntry.AddressList.Length;
+                //Console.WriteLine("DNS cache size after flush: {0}", newCacheSize);
+
+                //// Calculate the number of cleared entries
+                //int numCleared = cacheSize - newCacheSize;
+                //Console.WriteLine("Number of DNS entries cleared: {0}", numCleared);
+
+
+                LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, 0);
+
+
+                ///// or We can try below method as well
+                ///// 
+
+                //ManagementObjectSearcher select = new ManagementObjectSearcher("SELECT * FROM Win32_PerfRawData_DNS_DNSCache");
+                //foreach (ManagementObject entry in select.Get())
+                //{
+                //    uint numEntries = (uint)entry["CacheEntries"];
+
+                //    Console.WriteLine("Number of DNS cache entries: {0}", numEntries);
+                //}
+                //Process process = new Process();
+                //process.StartInfo.FileName = "ipconfig";
+                //process.StartInfo.Arguments = "/flushdns";
+                //process.StartInfo.UseShellExecute = false;
+                //process.StartInfo.RedirectStandardOutput = true;
+                //process.Start();
+
+                //string output = process.StandardOutput.ReadToEnd();
+                //process.WaitForExit();
+
+                //ManagementObjectSearcher Delete = new ManagementObjectSearcher("SELECT * FROM Win32_PerfRawData_DNS_DNSCache");
+                //foreach (ManagementObject entry in Delete.Get())
+                //{
+                //    uint numEntries = (uint)entry["CacheEntries"];
+
+                //    Console.WriteLine("Number of DNS cache entries: {0}", numEntries);
+                //}
+            }
+            catch (Exception exp)
+            {
+                Console.WriteLine(String.Format("Failed to Flush DNS:'{0}' . Error:{1}", flushDnsCmd, exp.Message), EventLogEntryType.Error);
+            }
+
+        }
+        private void ClearWindowsRegistry(SubservicesData subservices)
+        {
+            string user = Environment.UserDomainName + "\\" + Environment.UserName;
+            RegistrySecurity rs = new RegistrySecurity();
+            int CUCount = 0;
+            int LMCount = 0;
+
+            // Allow the current user to read and delete the key.
+            rs.AddAccessRule(new RegistryAccessRule(user,
+                RegistryRights.ReadKey | RegistryRights.WriteKey | RegistryRights.Delete,
+                InheritanceFlags.None,
+                PropagationFlags.None,
+                AccessControlType.Allow));
+
+            RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE", true);
+            key.SetAccessControl(rs);
+            // Scan all subkeys under the defined key
+            foreach (string subkeyName in key.GetSubKeyNames())
+            {
+                RegistryKey subkey = key.OpenSubKey(subkeyName);
+
+                //if (subkey.ValueCount == 0 && subkey.SubKeyCount == 0 && string.Equals(subkeyName, "TestKey"))
+                //{
+                //    key.DeleteSubKeyTree(subkeyName);
+                //    Console.WriteLine("Deleted empty subkey: " + subkeyName);
+                //}
+
+                //Check if the subkey contains any values
+                if (subkey.ValueCount == 0 && subkey.SubKeyCount == 0)
+                {
+                    // If the subkey does not contain any values, delete it
+                    key.DeleteSubKeyTree(subkeyName);
+                    Console.WriteLine("Deleted empty subkey: " + subkeyName);
+                    LMCount++;
+                }
+                else
+                {
+                    // If the subkey contains values, check if they are valid
+                    foreach (string valueName in subkey.GetValueNames())
+                    {
+                        object value = subkey.GetValue(valueName);
+
+                        // Check if the value is invalid or obsolete
+                        if (value == null || value.ToString().Contains("[obsolete]"))
+                        {
+                            // If the value is invalid or obsolete, delete it
+                            subkey.DeleteValue(valueName);
+                            Console.WriteLine("Deleted invalid value: " + valueName);
+                            LMCount++;
+                        }
+                    }
+                }
+            }
+
+            RegistryKey CUkey = Registry.CurrentUser.OpenSubKey("SOFTWARE", true);
+            CUkey.SetAccessControl(rs);
+            // Scan all subkeys under the defined key
+            foreach (string subkeyName in CUkey.GetSubKeyNames())
+            {
+                RegistryKey subkey = CUkey.OpenSubKey(subkeyName);
+
+                // Check if the subkey contains any values
+                if (subkey.ValueCount == 0 && subkey.SubKeyCount == 0)
+                {
+                    // If the subkey does not contain any values, delete it
+                    CUkey.DeleteSubKeyTree(subkeyName);
+                    Console.WriteLine("Deleted empty subkey: " + subkeyName);
+                    CUCount++;
+                }
+                else
+                {
+                    // If the subkey contains values, check if they are valid
+                    foreach (string valueName in subkey.GetValueNames())
+                    {
+                        object value = subkey.GetValue(valueName);
+
+                        // Check if the value is invalid or obsolete
+                        if (value == null || value.ToString().Contains("[obsolete]"))
+                        {
+                            // If the value is invalid or obsolete, delete it
+                            subkey.DeleteValue(valueName);
+                            Console.WriteLine("Deleted invalid value: " + valueName);
+                            CUCount++;
+                        }
+                    }
+                }
+            }
+
+            Console.WriteLine("Total Regitry cleaned from current user", CUCount);
+            Console.WriteLine("Total Regitry cleaned from current user", LMCount);
+            int TotalCount = CUCount + LMCount;
+            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount);
+        }
+        public void KillCmd()
+        {
+            Array.ForEach(Process.GetProcessesByName("cmd"), x => x.Kill());
+        }
+        private void ClearRecycleBin(SubservicesData subservices)
+        {
+
+            //SHEmptyRecycleBin(IntPtr.Zero, null, RecycleFlag.SHERB_NOCONFIRMATION | RecycleFlag.SHERB_NOPROGRESSUI | RecycleFlag.SHERB_NOSOUND);
+            //KillCmd();
+
+            long size = 0;
+            int count = 0;
+
+            string[] drives = Directory.GetLogicalDrives();
+            foreach (string drive in drives)
+            {
+                string recycleBinPath = Path.Combine(drive, "$RECYCLE.BIN");
+                if (Directory.Exists(recycleBinPath))
+                {
+                    DirectoryInfo dirInfo = new DirectoryInfo(recycleBinPath);
+                    FileInfo[] files = dirInfo.GetFiles("*", SearchOption.AllDirectories);
+                    foreach (FileInfo file in files)
+                    {
+                        if ((file.Attributes & FileAttributes.Hidden) != FileAttributes.Hidden)
+                        {
+                            size += file.Length;
+                            count++;
+                        }
+                    }
+                }
+            }
+
+            Console.WriteLine("Recycle bin size: {0} bytes", size);
+            Console.WriteLine("Number of items in recycle bin: {0}", count);
+
+            Console.ReadLine();
+
+
+            SHEmptyRecycleBin(IntPtr.Zero, null, RecycleFlag.SHERB_NOCONFIRMATION | RecycleFlag.SHERB_NOPROGRESSUI | RecycleFlag.SHERB_NOSOUND);
+            KillCmd();
+
+            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, count);
+        }
+        private void DiskCleaning(SubservicesData subservices)
+        {
+            string memoryCleaning = @"cipher /w:c:\";
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo("cmd.exe", memoryCleaning)
+            };
+            process.Start();
+            KillCmd();
+
+
+            // We can try beow code to get free space
+
+            //string command = @"cipher /w:C:\\";  // Replace "C:\\" with the drive or directory you want to clean
+            //ProcessStartInfo startInfo = new ProcessStartInfo("cmd.exe", command);
+            //startInfo.RedirectStandardOutput = true;
+            //startInfo.UseShellExecute = false;
+            //Process process = new Process();
+            //process.StartInfo = startInfo;
+            //process.Start();
+            //string output = process.StandardOutput.ReadToEnd();
+            //KillCmd();
+
+            ////process.WaitForExit();
+
+
+            //Match match = Regex.Match(output, @"([\d,]+) bytes of data were written");
+            //if (match.Success)
+            //{
+            //    string cleaned = match.Groups[1].Value;
+            //    cleaned = cleaned.Replace(",", "");
+            //    int spaceCleaned = int.Parse(cleaned);
+            //    Console.WriteLine("Space cleaned: " + spaceCleaned + " bytes");
+            //}
+            //else
+            //{
+            //    Console.WriteLine("Could not parse space cleaned.");
+            //}
+
+            //string drive = "C:\\";  // Replace with the drive you want to clean
+            //long freeSpaceBefore = new DriveInfo(drive).AvailableFreeSpace;
+            //string command = "cipher /w:" + drive;
+            //ProcessStartInfo startInfo = new ProcessStartInfo("cmd.exe", "/c " + command);
+            //Process process = new Process();
+            //process.StartInfo = startInfo;
+            //process.Start();
+            //KillCmd();
+            //long freeSpaceAfter = new DriveInfo(drive).AvailableFreeSpace;
+            //long spaceCleaned = freeSpaceAfter - freeSpaceBefore;
+            //Console.WriteLine("Space cleaned: " + spaceCleaned + " bytes");
+
+
+            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, 0);
+        }
+        private void WebCookieCleaning(SubservicesData subservices) // eventbased - all browser - Chrome, Mozilla, Edge, IE, BraveBrowser.
+        {
+            int ChromeCount = ClearChromeCookie();
+            int FireFoxCount = ClearFirefoxCookies();
+            int EdgeCount = ClearEdgeCookies();
+            int OperaCount = ClearOperaCookies();
+
+            int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
+
+            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount);
+        }
+        private int ClearChromeCookie()
+        {
+            int TotalCount = 0;
+            Process[] chromeInstances = Process.GetProcessesByName("chrome");
+            if (chromeInstances.Length == 0)
+            {
+                int beforevalue = 0;
+                int aftervalue = 0;
+                var str = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                var connectionString = "Data Source=" + str + "\\Google\\Chrome\\User Data\\Default\\Network\\Cookies";
+                if (File.Exists(connectionString))
+                {
+
+                    string SelectQuery = "Select Count(1) From Cookies WHERE";
+                    foreach (string domain in whitelistedDomain)
+                    {
+                        SelectQuery += " host_key not like " + domain + " And";
+                    }
+                    SelectQuery = SelectQuery.Remove(SelectQuery.Length - 4);
+
+                    using (SQLiteConnection conn = new SQLiteConnection(connectionString))
+                    using (SQLiteCommand SelectCmd = new SQLiteCommand())
+                    {
+                        conn.Open();
+                        SelectCmd.Connection = conn;
+                        SelectCmd.CommandText = SelectQuery;
+                        using (SQLiteDataReader dr = SelectCmd.ExecuteReader())
+                        {
+                            while (dr.Read())
+                            {
+                                beforevalue = Convert.ToInt32(dr[0].ToString());
+                            }
+                        }
+                    }
+
+                    using (SQLiteConnection connection = new SQLiteConnection(connectionString))
+                    using (SQLiteCommand cmd = connection.CreateCommand())
+                    {
+                        connection.Open();
+                        string query = "DELETE FROM Cookies WHERE";
+                        foreach (string domain in whitelistedDomain)
+                        {
+                            query += " host_key not like " + domain + " And";
+                        }
+                        int RemoveAnd = query.Length - 4;
+                        query = query.Remove(query.Length - 4);
+                        cmd.CommandText = query;
+                        cmd.Prepare();
+                        cmd.ExecuteNonQuery();
+                        connection.Close();
+                    }
+
+                    using (SQLiteConnection conn1 = new SQLiteConnection(connectionString))
+                    using (SQLiteCommand SelectCmd1 = new SQLiteCommand())
+                    {
+                        conn1.Open();
+                        SelectCmd1.Connection = conn1;
+                        SelectCmd1.CommandText = SelectQuery;
+                        using (SQLiteDataReader dr = SelectCmd1.ExecuteReader())
+                        {
+                            while (dr.Read())
+                            {
+                                aftervalue = Convert.ToInt32(dr[0].ToString());
+                            }
+                        }
+                        TotalCount = beforevalue - aftervalue;
+
+                    }
+                }
+                // Display the count of items deleted
+                Console.WriteLine("Total number of cookies deleted: " + TotalCount);
+            }
+            return TotalCount;
+        }
+        public int ClearFirefoxCookies()
+        {
+            int TotalCount = 0;
+            Process[] firefoxInstances = Process.GetProcessesByName("firefox");
+            if (firefoxInstances.Length == 0)
+            {
+                string firefoxPath = GetFirefoxPath();
+                string profilePath = GetFirefoxProfilePath(firefoxPath);
+
+                if (profilePath != null)
+                {
+                    try
+                    {
+                        string cookiesFilePath = Path.Combine(profilePath, "cookies.sqlite");
+                        if (File.Exists(cookiesFilePath))
+                        {
+                            using (SQLiteConnection connection = new SQLiteConnection(string.Format("Data Source={0};", cookiesFilePath)))
+                            {
+                                connection.Open();
+                                using (SQLiteCommand command = connection.CreateCommand())
+                                {
+                                    string query = "DELETE FROM moz_cookies WHERE";
+                                    foreach (string domain in whitelistedDomain)
+                                    {
+                                        query += " host not like " + domain + " And";
+                                    }
+                                    int RemoveAnd = query.Length - 4;
+                                    query = query.Remove(query.Length - 4);
+                                    command.CommandText = query;
+                                    TotalCount = command.ExecuteNonQuery();
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Error clearing Firefox cookies: {0}", ex.Message);
+                    }
+                }
+
+                Console.WriteLine("{0} Firefox cookies deleted", TotalCount);
+            }
+            return TotalCount;
+        }
+        public void ClearIECookies()
+        {
+            foreach (string domain in whitelistedDomain)
+            {
+                // Add domains to the PerSite privacy settings
+                Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\PerSiteCookieDecision", domain, 1, RegistryValueKind.DWord);
+            }
+
+            // Clear cookies of Internet Explorer
+            Process.Start("rundll32.exe", "InetCpl.cpl,ClearMyTracksByProcess 2");
+
+            foreach (string domain in whitelistedDomain)
+            {
+                // Add domains to the PerSite privacy settings
+                Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\PerSiteCookieDecision", domain, 0, RegistryValueKind.DWord);
+            }
+        }
+        public int ClearEdgeCookies()
+        {
+            int TotalCount = 0;
+            Process[] msedgeInstances = Process.GetProcessesByName("msedge");
+            if (msedgeInstances.Length == 0)
+            {
+                var str = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                var connectionString = "Data Source=" + str + "\\Microsoft\\Edge\\User Data\\Default\\Network\\Cookies";
+                if (File.Exists(connectionString))
+                {
+                    using (SQLiteConnection connection = new SQLiteConnection(connectionString))
+                    {
+                        // Clear the cookies by deleting all records from the cookies table
+                        connection.Open();
+                        using (SQLiteCommand cmd = connection.CreateCommand())
+                        {
+
+                            string query = "DELETE FROM Cookies WHERE";
+                            foreach (string domain in whitelistedDomain)
+                            {
+                                query += " host_key not like " + domain + " And";
+                            }
+                            int RemoveAnd = query.Length - 4;
+                            query = query.Remove(query.Length - 4);
+                            cmd.CommandText = query;
+                            cmd.Prepare();
+                            TotalCount = cmd.ExecuteNonQuery();
+                            Console.WriteLine($"Deleted {TotalCount} cookies.");
+                        }
+                        connection.Close();
+                    }
+                }
+            }
+            return TotalCount;
+        }
+        public int ClearOperaCookies()
+        {
+            int TotalCount = 0;
+            Process[] msedgeInstances = Process.GetProcessesByName("opera");
+            if (msedgeInstances.Length == 0)
+            {
+                var str = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                var connectionString = "Data Source=" + str + "\\Opera Software\\Opera Stable\\Network\\Cookies";
+                if (File.Exists(connectionString))
+                {
+                    using (SQLiteConnection connection = new SQLiteConnection(connectionString))
+                    {
+                        // Clear the cookies by deleting all records from the cookies table
+                        connection.Open();
+                        using (SQLiteCommand cmd = connection.CreateCommand())
+                        {
+
+                            string query = "DELETE FROM Cookies WHERE";
+                            foreach (string domain in whitelistedDomain)
+                            {
+                                query += " host_key not like " + domain + " And";
+                            }
+                            int RemoveAnd = query.Length - 4;
+                            query = query.Remove(query.Length - 4);
+                            cmd.CommandText = query;
+                            cmd.Prepare();
+                            TotalCount = cmd.ExecuteNonQuery();
+                            Console.WriteLine($"Deleted {TotalCount} cookies.");
+                        }
+                        connection.Close();
+                    }
+                }
+            }
+            return TotalCount;
+        }
+        private void WebHistoryCleaning(SubservicesData subservices)
+        {
+            int ChromeCount = ClearChromeHistory();
+            int FireFoxCount = ClearFireFoxHistory();
+            int EdgeCount = ClearEdgeHistory();
+
+            int OperaCount = ClearOperaHistory();
+
+            int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
+
+            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount);
+        }
+        public int ClearChromeHistory()
+        {
+            int TotalCount = 0;
+            string chromeHistoryPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\Default\History";
+            Process[] chromeInstances = Process.GetProcessesByName("chrome");
+            if (chromeInstances.Length == 0)
+            {
+                RegistryKey regKey = Registry.CurrentUser.OpenSubKey(@"Software\Google\Chrome\BLBeacon");
+                if (regKey != null)
+                {
+                    object val = regKey.GetValue("version");
+                    if (val != null)
+                    {
+                        string historyPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\Default\History";
+                        if (System.IO.File.Exists(historyPath))
+                        {
+                            using (SQLiteConnection connection = new SQLiteConnection("Data Source=" + historyPath + ";Version=3;New=False;Compress=True;"))
+                            {
+                                connection.Open();
+                                using (SQLiteCommand command = new SQLiteCommand("DELETE FROM urls", connection))
+                                {
+                                    TotalCount = command.ExecuteNonQuery();
+                                }
+                                connection.Close();
+                            }
+                        }
+                    }
+                }
+
+                Console.WriteLine("Total number of history deleted: " + TotalCount);
+            }
+            return TotalCount;
+        }
+        public int ClearFireFoxHistory()
+        {
+            int TotalCount = 0;
+            Process[] firefoxInstances = Process.GetProcessesByName("firefox");
+            if (firefoxInstances.Length == 0)
+            {
+                string firefoxPath = GetFirefoxPath();
+
+                if (firefoxPath == null)
+                {
+                    Console.WriteLine("Firefox path not found");
+                }
+                else
+                {
+                    string profilePath = GetFirefoxProfilePath(firefoxPath);
+                    // Delete the history files
+                    TotalCount = DeleteFirefoxHistory(profilePath);
+
+                    Console.WriteLine("Deleted {0} history items from the {1} Firefox profile", TotalCount, firefoxPath);
+                }
+            }
+            return TotalCount;
+        }
+        public static string GetFirefoxPath()
+        {
+            string regKey = "CurrentVersion";
+            string firefoxPath = null;
+            try
+            {
+                RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Mozilla\Mozilla Firefox\", true);
+                if (key != null)
+                {
+                    Object o = key.GetValue(regKey);
+                    if (o != null)
+                    {
+                        string version = o.ToString();
+                        using (RegistryKey pathKey = key.OpenSubKey(version + @"\Main"))
+                        {
+                            if (pathKey != null)
+                            {
+                                Object path = pathKey.GetValue("PathToExe");
+                                if (path != null)
+                                {
+                                    firefoxPath = path.ToString();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error getting Firefox path: {0}", ex.Message);
+            }
+
+            if (firefoxPath == null)
+            {
+                Console.WriteLine("Firefox path not found");
+            }
+
+            return firefoxPath;
+        }
+        public static string GetFirefoxProfilePath(string firefoxPath)
+        {
+            string profilePath = null;
+
+            try
+            {
+                string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                string profilesIniPath = Path.Combine(appData, "Mozilla", "Firefox", "profiles.ini");
+
+                if (File.Exists(profilesIniPath))
+                {
+                    string profileIni = File.ReadAllText(profilesIniPath);
+
+                    Match match = Regex.Match(profileIni, @"Default=([^\r\n]+)", RegexOptions.IgnoreCase);
+                    if (match.Success)
+                    {
+                        string path = match.Groups[1].Value.Replace('/', '\\');
+                        profilePath = Path.Combine(appData, "Mozilla", "Firefox", path);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error getting Firefox profile path: {0}", ex.Message);
+            }
+
+            if (profilePath == null)
+            {
+                Console.WriteLine("Firefox profile path not found");
+            }
+
+            return profilePath;
+        }
+        public static int DeleteFirefoxHistory(string profilePath)
+        {
+            int historyCount = 0;
+
+            // Delete the places.sqlite file
+            string placesFile = Path.Combine(profilePath, "places.sqlite");
+            if (File.Exists(placesFile))
+            {
+                try
+                {
+                    // Count the number of history items in the database before deleting it
+                    using (System.Data.SQLite.SQLiteConnection connection = new System.Data.SQLite.SQLiteConnection($"Data Source={placesFile};Version=3;"))
+                    {
+                        connection.Open();
+                        using (System.Data.SQLite.SQLiteCommand command = new System.Data.SQLite.SQLiteCommand("SELECT COUNT(*) FROM moz_places;", connection))
+                        {
+                            historyCount = Convert.ToInt32(command.ExecuteScalar());
+                        }
+                    }
+
+                    // Delete the database file
+                    File.Delete(placesFile);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error deleting places.sqlite: {0}", ex.Message);
+                }
+            }
+
+
+            // Delete the places.sqlite-shm file
+            string placesShmFile = Path.Combine(profilePath, "places.sqlite-shm");
+            if (File.Exists(placesShmFile))
+            {
+                try
+                {
+                    // Delete the file
+                    File.Delete(placesShmFile);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error deleting places.sqlite-shm: {0}", ex.Message);
+                }
+            }
+
+            // Delete the places.sqlite-wal file
+            string placesWalFile = Path.Combine(profilePath, "places.sqlite-wal");
+            if (File.Exists(placesWalFile))
+            {
+                try
+                {
+                    // Delete the file
+                    File.Delete(placesWalFile);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error deleting places.sqlite-wal: {0}", ex.Message);
+                }
+            }
+
+            // Delete the formhistory.sqlite file
+            string formHistoryFile = Path.Combine(profilePath, "formhistory.sqlite");
+            if (File.Exists(formHistoryFile))
+            {
+                try
+                {
+                    // Delete the file
+                    File.Delete(formHistoryFile);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error deleting formhistory.sqlite: {0}", ex.Message);
+                }
+            }
+
+            Console.WriteLine("Deleted {0} history items", historyCount);
+
+
+            return historyCount;
+        }
+        public void ClearIEHitory()
+        {
+            // Get current number of history items
+            int currentCount = 0;
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Internet Explorer\TypedURLs"))
+            {
+                if (key != null)
+                {
+                    currentCount = key.ValueCount;
+                }
+            }
+
+            // Clear browsing history of Internet Explorer
+            Process.Start("rundll32.exe", "InetCpl.cpl,ClearMyTracksByProcess 1");
+
+            // Get new number of history items
+            int newCount = 0;
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Internet Explorer\TypedURLs"))
+            {
+                if (key != null)
+                {
+                    newCount = key.ValueCount;
+                }
+            }
+
+            // Calculate number of items cleared
+            int countCleared = currentCount - newCount;
+
+        }
+        public int ClearEdgeHistory()
+        {
+            int TotalCount = 0;
+            Process[] msedgeInstances = Process.GetProcessesByName("msedge");
+            if (msedgeInstances.Length == 0)
+            {
+                // Connect to the Edge History database
+                string historyPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Microsoft\Edge\User Data\Default\History";
+                if (System.IO.File.Exists(historyPath))
+                {
+                    string connectionString = "Data Source=" + historyPath + ";Version=3;New=False;Compress=True;";
+                    using (SQLiteConnection connection = new SQLiteConnection(connectionString))
+                    {
+                        connection.Open();
+
+                        // Delete all browsing history records
+                        using (SQLiteCommand command = new SQLiteCommand("DELETE FROM urls;", connection))
+                        {
+                            TotalCount = command.ExecuteNonQuery();
+                            Console.WriteLine($"Deleted {TotalCount} browsing history items.");
+                        }
+
+                        // Disconnect from the database
+                        connection.Close();
+                    }
+                }
+            }
+            return TotalCount;
+        }
+        public int ClearOperaHistory()
+        {
+            int TotalCount = 0;
+            Process[] OperaInstances = Process.GetProcessesByName("opera");
+            if (OperaInstances.Length == 0)
+            {
+                // Set the path to the Opera profile directory
+                string historyPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\Opera Software\Opera Stable\";
+                if (System.IO.File.Exists(historyPath))
+                {
+                    // Connect to the history database file
+                    using (SQLiteConnection connection = new SQLiteConnection("Data Source=" + historyPath + "History"))
+                    {
+                        connection.Open();
+
+                        // Execute the SQL command to delete the browsing history
+                        using (SQLiteCommand command = new SQLiteCommand("DELETE FROM urls", connection))
+                        {
+                            TotalCount = command.ExecuteNonQuery();
+                        }
+                    }
+                }
+
+                Console.WriteLine("Deleted {0} history records.", TotalCount);
+            }
+            return TotalCount;
+        }
+        private void WebCacheCleaning(SubservicesData subservices)
+        {
+            int ChromeCount = ClearChromeCache();
+            int FireFoxCount = ClearFirefoxCache();
+            int EdgeCount = ClearEdgeCache();
+            int OperaCount = ClearOperaCache();
+
+            int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
+            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount);
+        }
+        private int ClearChromeCache()
+        {
+            int TotalCount = 0;
+            Process[] chromeInstances = Process.GetProcessesByName("chrome");
+            if (chromeInstances.Length == 0)
+            {
+                //// Path to the Chrome cache folder
+                string cachePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\Default\Cache\Cache_Data";
+                if (Directory.Exists(cachePath))
+                {
+                    // Get the count of files in the cache folder
+                    int count = Directory.GetFiles(cachePath).Length;
+
+                    // Clear the cache folder
+                    foreach (string file in Directory.GetFiles(cachePath))
+                    {
+                        try
+                        {
+                            File.Delete(file);
+                            TotalCount++;
+                        }
+                        catch (IOException) { } // handle any exceptions here
+                    }
+                    Console.WriteLine($"Total {count} {TotalCount} files cleared from Chrome cache.");
+                }
+                else
+                {
+                    Console.WriteLine("Chrome Cache file not found.");
+                }
+            }
+            return TotalCount;
+        }
+        static int ClearFirefoxCache()
+        {
+            int TotalCount = 0;
+            Process[] firefoxInstances = Process.GetProcessesByName("firefox");
+            if (firefoxInstances.Length == 0)
+            {
+                long totalSize = 0;
+                string firefoxPath = GetFirefoxPath();
+                string profilePath = GetFirefoxProfilePath(firefoxPath);
+
+                if (profilePath != null)
+                {
+                    string[] cacheFolders = { "cache2", "shader-cache", "browser-extension-data", "startupCache", "thumbnails" };
+
+                    foreach (string folder in cacheFolders)
+                    {
+                        string cachePath = Path.Combine(profilePath, folder);
+
+                        if (Directory.Exists(cachePath))
+                        {
+
+                            foreach (string file in Directory.GetFiles(cachePath))
+                            {
+                                try
+                                {
+                                    FileInfo info = new FileInfo(file);
+                                    TotalCount++;
+                                    totalSize += info.Length;
+                                    File.Delete(file);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"Error deleting file: {ex.Message}");
+                                }
+                            }
+                            Console.WriteLine($"Deleted {TotalCount} file of total {totalSize} bytes of {folder} cache");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"{folder} cache folder not found");
+                        }
+                    }
+
+                }
+                else
+                {
+                    Console.WriteLine("Firefox profile not found");
+                }
+
+                Console.WriteLine("{0} Firefox cache items deleted", totalSize);
+            }
+            return TotalCount;
+        }
+        public int ClearEdgeCache()
+        {
+            int TotalCount = 0;
+            Process[] msedgeInstances = Process.GetProcessesByName("msedge");
+            if (msedgeInstances.Length == 0)
+            {
+                // Connect to the Edge cache database
+                string cachePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Microsoft\Edge\User Data\Default\Cache\Cache_Data";
+                if (Directory.Exists(cachePath))
+                {
+                    // Get the count of files in the cache folder
+                    int count = Directory.GetFiles(cachePath).Length;
+
+                    // Clear the cache folder
+                    foreach (string file in Directory.GetFiles(cachePath))
+                    {
+                        try
+                        {
+                            File.Delete(file);
+                            TotalCount++;
+                        }
+                        catch (IOException) { } // handle any exceptions here
+                    }
+                    Console.WriteLine($"Total {count} {TotalCount} files cleared from Chrome cache.");
+                }
+                else
+                {
+                    Console.WriteLine("Chrome Cache file not found.");
+                }
+            }
+            return TotalCount;
+        }
+        public void ClearIECache()
+        {
+            // Get current number of cache items
+            int currentCount = 0;
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings\Cache"))
+            {
+                if (key != null)
+                {
+                    currentCount = key.ValueCount;
+                }
+            }
+
+            // Clear cache of Internet Explorer
+            Process.Start("rundll32.exe", "InetCpl.cpl,ClearMyTracksByProcess 8");
+
+            // Get new number of cache items
+            int newCount = 0;
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings\Cache"))
+            {
+                if (key != null)
+                {
+                    newCount = key.ValueCount;
+                }
+            }
+
+            // Calculate number of items cleared
+            int countCleared = currentCount - newCount;
+            Console.WriteLine($"Deleted {countCleared} cache cleared");
+        }
+        public int ClearOperaCache()
+        {
+            int TotalCount = 0;
+            Process[] OperaInstances = Process.GetProcessesByName("opera");
+            if (OperaInstances.Length == 0)
+            {
+                // Set the path to the Opera profile directory
+                string cachePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Opera Software\Opera Stable\Cache\Cache_Data";
+                if (Directory.Exists(cachePath))
+                {
+                    // Delete all files in the cache directory
+                    foreach (string file in Directory.GetFiles(cachePath))
+                    {
+                        File.Delete(file);
+                        TotalCount++;
+                    }
+                }
+
+                Console.WriteLine("Deleted {0} files from the cache.", TotalCount);
+            }
+            return TotalCount;
+        }
+
+        #endregion
+        private void btnSettings_Click(object sender, RoutedEventArgs e)
+        {
+            //imgServiceClearUnCheck.Visibility = true ? Visibility.Hidden : Visibility.Visible;
+            //imgServiceClearCheck.Visibility = imgServiceClearUnCheck.Visibility == Visibility.Visible ? Visibility.Hidden : Visibility.Visible;
+            LoadMenu(Screens.ServiceClear);
+        }
+        private void btnStatus_Click(object sender, RoutedEventArgs e)
+        {
+            LoadMenu(Screens.Landing);
+        }
+        private void lblReauthenticate_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            LoadMenu(Screens.Popup);
+        }
+        private void btnDeLink_Click(object sender, RoutedEventArgs e)
+        {
+            DeviceReauth();
+            LoadMenu(Screens.ServiceClear);
+        }
+        private void frmFDSMain_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            e.Cancel = true;
+            btnClose_Click(btnClose, null);
+        }
+        private ImageSource GetQRCode(string Code)
+        {
+            // Generate the QR Code
+            ImageSource imageSource = null;
+            try
+            {
+
+                QRCodeGenerator qrGenerator = new QRCodeGenerator();
+                QRCodeData qrCodeData = qrGenerator.CreateQrCode(Code, QRCodeGenerator.ECCLevel.Q);
+                QRCode qrCode = new QRCode(qrCodeData);
+
+                // Convert QR Code to Bitmap
+                Bitmap qrBitmap;
+                using (var qrCodeImage = qrCode.GetGraphic(20))
+                {
+                    qrBitmap = new Bitmap(qrCodeImage);
+                }
+
+                // Create new Bitmap with transparent background
+                System.Drawing.Bitmap newBitmap = new Bitmap(qrBitmap.Width, qrBitmap.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                using (System.Drawing.Graphics graphics = Graphics.FromImage(newBitmap))
+                {
+                    graphics.Clear(System.Drawing.Color.Transparent);
+
+                    // Draw QR Code onto new Bitmap
+                    graphics.DrawImage(qrBitmap, 0, 0);
+
+                    // Calculate position for logo in center of new Bitmap
+                    int logoSize = 300;
+                    int logoX = (newBitmap.Width - logoSize) / 2;
+                    int logoY = (newBitmap.Height - logoSize) / 2;
+
+                    // Load logo image from file
+                    Image logoImage = Image.FromFile(Path.Combine(BaseDir, "Assets/FDSIcon.png"));
+
+                    // Draw logo onto new Bitmap
+                    graphics.DrawImage(logoImage, logoX, logoY, logoSize, logoSize);
+                }
+
+                // Convert new Bitmap to ImageSource for use in WPF
+                imageSource = Imaging.CreateBitmapSourceFromHBitmap(
+                    newBitmap.GetHbitmap(),
+                    IntPtr.Zero,
+                    Int32Rect.Empty,
+                    BitmapSizeOptions.FromEmptyOptions());
+
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred while creating img for QR: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
+            return imageSource;
+
+
+        }
+        BitmapImage BitmapToImageSource(System.Drawing.Bitmap bitmap)
+        {
+            using (MemoryStream memory = new MemoryStream())
+            {
+                bitmap.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
+                memory.Position = 0;
+                BitmapImage bitmapimage = new BitmapImage();
+                bitmapimage.BeginInit();
+                bitmapimage.StreamSource = memory;
+                bitmapimage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapimage.EndInit();
+                return bitmapimage;
+            }
+        }
+        private void header_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            DragMove();
+        }
+        private void btnClose_Click(object sender, RoutedEventArgs e)
+        {
+            //Application.Current.Shutdown();
+            thisWindow.WindowState = WindowState.Minimized;
+            thisWindow.ShowInTaskbar = false;
+            thisWindow.Visibility = Visibility.Hidden;
+            icon.ShowBalloonTip(2000);
+        }
+        private void Icon_Click(object sender, EventArgs e)
+        {
+            if (IsAdmin)
+            {
+                thisWindow.Visibility = Visibility.Visible;
+                thisWindow.WindowState = WindowState.Normal;
+                thisWindow.ShowInTaskbar = true;
+                thisWindow.Focus();
+                Activate();
+            }
+        }
+        private void btnGetOTP_Click(object sender, RoutedEventArgs e)
+        {
+        }
+
+        private void txtOTP_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            Regex regex = new Regex("[0-9]+");
+            if (!regex.IsMatch(e.Text))
+            {
+                e.Handled = true;
+            }
+        }
+        private DispatcherTimer UninstallResponseTimer;
+
+
+        private void UninstallResponseTimer_Tick(object sender, EventArgs e)
+        {
+            UninstallProgram();
+        }
+        private async Task UninstallProgram()
+        {
+            var servicesObject = new RetriveServices
+            {
+                authorization_token = KeyManager.GetValue("authorization_token"),
+                mac_address = AppConstants.MACAddress,
+                serial_number = AppConstants.SerialNumber
+            };
+            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
+
+            var formContent = new List<KeyValuePair<string, string>> {
+                        new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
+                        new KeyValuePair<string, string>("payload", payload)
+                    };
+
+            var response = await client.PostAsync(AppConstants.EndPoints.DeviceServices, new FormUrlEncodedContent(formContent));
+
+            if (response.IsSuccessStatusCode)
+            {
+                UninstallResponseTimer.Stop();
+                try
+                {
+                    //{2D00386E-B5B4-4D0D-9FF0-47F327597A87}
+                    ManagementObjectSearcher mos = new ManagementObjectSearcher(
+                      "SELECT * FROM Win32_Product WHERE Name ='FDS Setup'");
+                    foreach (ManagementObject mo in mos.Get())
+                    {
+                        try
+                        {
+                            if (mo["Name"].ToString() == "FDS Setup")
+                            {
+                                object hr = mo.InvokeMethod("Uninstall", null);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            throw ex;
+                            //this program may not have a name property, so an exception will be thrown
+                        }
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+            }
+            else
+            {
+                UninstallResponseTimer = new DispatcherTimer();
+                UninstallResponseTimer.Tick += UninstallResponseTimer_Tick;
+                UninstallResponseTimer.Interval = TimeSpan.FromMilliseconds(1000 * 5); // in miliseconds
+                UninstallResponseTimer.Start();
+            }
+        }
+
+        private void btnViewServices_Click(object sender, RoutedEventArgs e)
+        {
+            LoadMenu(Screens.DataProtection);
+        }
+        private void txtHome_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            LoadMenu(Screens.Landing);
+        }
+
+        private void btnQR_Click(object sender, RoutedEventArgs e)
+        {
+            GenerateQRCode();
+            Dispatcher.Invoke(() =>
+            {
+                LoadMenu(Screens.QRCode);
+                timerDeviceLogin.IsEnabled = true;
+            });
+
+
+        }
+
+        private void btnCredential_Click(object sender, RoutedEventArgs e)
+        {
+            LoadMenu(Screens.AuthenticationStep1);
+        }
+
+        private async void btnSendOTP_Click(object sender, RoutedEventArgs e)
+        {
+            if (!string.IsNullOrWhiteSpace(txtEmail.Text) && !string.IsNullOrWhiteSpace(txtPhoneNubmer.Text) && IsValidEmail(txtEmail.Text) && IsValidMobileNumber(txtPhoneNubmer.Text))
+            {
+                txtPhoneValidation.Visibility = Visibility.Collapsed;
+                txtEmailValidation.Visibility = Visibility.Collapsed;
+
+                var formContent = new List<KeyValuePair<string, string>> {
+                new KeyValuePair<string, string>("assing_to_user", txtEmail.Text),
+                new KeyValuePair<string, string>("phone_no", txtPhoneNubmer.Text)
+                };
+                var response = await client.PostAsync(AppConstants.EndPoints.Otp, new FormUrlEncodedContent(formContent));
+                if (response.IsSuccessStatusCode)
+                {
+                    LoadMenu(Screens.AuthenticationStep2);
+                    txtCodeVerification.Text = "A verification code has been sent to " + txtPhoneNubmer.Text;
+                    txtEmailVerification.Text = "A 32 digit token has been sent to  " + txtEmail.Text;
+                }
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(txtEmail.Text))
+                {
+                    txtEmailValidation.Text = "Please enter email";
+                    txtEmailValidation.Visibility = Visibility.Visible;
+                }
+                else if (!IsValidEmail(txtEmail.Text))
+                {
+                    txtEmailValidation.Text = "Invalid email address!";
+                    txtEmailValidation.Visibility = Visibility.Visible;
+                }
+                else if (string.IsNullOrWhiteSpace(txtPhoneNubmer.Text))
+                {
+                    txtPhoneValidation.Text = "Please enter phone number";
+                    txtPhoneValidation.Visibility = Visibility.Visible;
+                }
+                else if (!IsValidMobileNumber(txtPhoneNubmer.Text))
+                {
+                    txtPhoneValidation.Text = "Invalid phone number! Phone number should have 10 digit";
+                    txtPhoneValidation.Visibility = Visibility.Visible;
+                }
+                //else
+                //{
+                //    txtEmailValidation.Text = "Please enter email";
+                //    txtEmailValidation.Visibility = Visibility.Visible;
+                //    txtPhoneValidation.Text = "Please enter phone number";
+                //    txtPhoneValidation.Visibility = Visibility.Visible;
+                //}
+            }
+        }
+
+        private bool IsValidMobileNumber(string mobileNumber)
+        {
+            return System.Text.RegularExpressions.Regex.IsMatch(mobileNumber, @"^[0-9]{10}$");
+        }
+
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        private void txtBack_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            LoadMenu(Screens.AuthenticationMethods);
+            txtEmail.Text = "";
+            txtPhoneNubmer.Text = "";
+        }
+        private bool IsValidTokenNumber(string Token)
+        {
+            return System.Text.RegularExpressions.Regex.IsMatch(Token, @"^[0-9]{6}$");
+        }
+        private bool IsValidEmailTokenNumber(string EmailToken)
+        {
+            return System.Text.RegularExpressions.Regex.IsMatch(EmailToken, @"^[a-zA-Z0-9-]{36}$");
+        }
+        private void btnStep2Next_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtToken.Text))
+            {
+                txtTokenValidation.Text = "Please enter token";
+            }
+            else if (!IsValidTokenNumber(txtToken.Text))
+            {
+                txtTokenValidation.Text = "Invalid Token number";
+                txtTokenValidation.Visibility = Visibility.Visible;
+            }
+            else
+                LoadMenu(Screens.AuthenticationStep3);
+        }
+        private async void QRGeneratortimer_Tick(object sender, EventArgs e)
+        {
+            if (IsQRGenerated == true)
+            {
+                QRGeneratortimer.Stop();
+                var formContent = new List<KeyValuePair<string, string>> {
+                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
+                        new KeyValuePair<string, string>("assing_to_user", txtEmail.Text),
+                        new KeyValuePair<string, string>("phone_no", txtPhoneNubmer.Text),
+                        new KeyValuePair<string, string>("otp", txtToken.Text),
+                        new KeyValuePair<string, string>("token", txtEmailToken.Text),
+                        new KeyValuePair<string, string>("qr_code_token", DeviceResponse.qr_code_token)
+                    };
+                Dispatcher.Invoke(() =>
+                {
+                    LoadMenu(Screens.AuthenticationProcessing);
+                });
+
+                var response = await client.PostAsync(AppConstants.EndPoints.DeviceToken, new FormUrlEncodedContent(formContent));
+                if (response.IsSuccessStatusCode)
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        LoadMenu(Screens.AuthSuccessfull);
+                        Dispatcher.Invoke(() =>
+                        {
+                            LoadMenu(Screens.Landing);
+
+                            timerDeviceLogin.IsEnabled = true;
+                        });
+
+                    });
+
+
+                }
+                else
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        LoadMenu(Screens.AuthFailed);
+                        Dispatcher.Invoke(() =>
+                        {
+                            LoadMenu(Screens.AuthenticationMethods);
+                        });
+                    });
+
+
+                }
+            }
+        }
+        private async void btnStep3Submit_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtEmailToken.Text))
+            {
+                txtEmailTokenValidation.Text = "Please enter token";
+            }
+            else if (!IsValidEmailTokenNumber(txtEmailToken.Text))
+            {
+                txtEmailTokenValidation.Text = "Invalid Token number";
+                txtEmailTokenValidation.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                QRGeneratortimer.Start();
+                GenerateQRCode();
+            }
+        }
+
+        private void txtstep2Back_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            LoadMenu(Screens.AuthenticationStep1);
+        }
+
+        private void txtstep3Back_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            LoadMenu(Screens.AuthenticationStep2);
+        }
+    }
+}
