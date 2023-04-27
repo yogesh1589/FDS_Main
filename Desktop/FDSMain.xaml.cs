@@ -121,9 +121,9 @@ namespace Desktop
             client = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI };
 
 
-            whitelistedDomain.Add("'%.google.com%'");
-            whitelistedDomain.Add("'%.clickup.com%'");
-            whitelistedDomain.Add("'%.slack.com%'");
+            //whitelistedDomain.Add("'%.google.com%'");
+            //whitelistedDomain.Add("'%.clickup.com%'");
+            //whitelistedDomain.Add("'%.slack.com%'");
 
             //#region Auto start on startup done by Installer
             //RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
@@ -146,6 +146,7 @@ namespace Desktop
                     LoadMenu(Screens.Landing);
                     TimerLastUpdate_Tick(timerLastUpdate, null);
                     timerLastUpdate.IsEnabled = true;
+                    GetDeviceDetails();
                 }
             }
             catch (Exception ex)
@@ -306,9 +307,9 @@ namespace Desktop
         }
         private async void TimerLastUpdate_Tick(object sender, EventArgs e)
         {
-            await GetDeviceDetails();
+            //await GetDeviceDetails();
 
-            //await CheckDeviceHealth();
+            await CheckDeviceHealth();
         }
         private async void TimerDeviceLogin_Tick(object sender, EventArgs e)
         {
@@ -427,7 +428,7 @@ namespace Desktop
                                                                             //LoadMenu(Screens.QRCode);
                                                                             //timerDeviceLogin.IsEnabled = true;
                                                                             //await devicelogin(true);
-                    //MessageBox.Show("QR generated successfully: " + DeviceResponse.qr_code_token + "with " + response.IsSuccessStatusCode, "success", MessageBoxButton.OK, MessageBoxImage.Information);
+                                                                            //MessageBox.Show("QR generated successfully: " + DeviceResponse.qr_code_token + "with " + response.IsSuccessStatusCode, "success", MessageBoxButton.OK, MessageBoxImage.Information);
 
 
                 }
@@ -522,17 +523,20 @@ namespace Desktop
             {
                 var responseString = await response.Content.ReadAsStringAsync();
                 var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-                var plainText = Decrypt(responseData.Data);
-
-                var deviceDetail = JsonConvert.DeserializeObject<DeviceDetail>(plainText);  //
+                var plainText = RetriveDecrypt(responseData.Data);
+                int idx = plainText.LastIndexOf('}');
+                var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
+                var deviceDetail = JsonConvert.DeserializeObject<DeviceDetail>(result);  //
 
                 if (deviceDetail != null)
                 {
                     lblSerialNumber.Text = lblPopSerialNumber.Text = deviceDetail.serial_number;
                     lblUserName.Text = lblDeviceName.Text = deviceDetail.device_name;
                     lblLocation.Text = deviceDetail.device_location != null ? deviceDetail.device_location.ToString() : "";
-                    txtUpdatedOn.Text = deviceDetail.updated_on != null ? Convert.ToString(deviceDetail.updated_on) : "";
-                    timerLastUpdate.IsEnabled = false;
+                    DateTime convertedDate = DateTime.Parse(Convert.ToString(deviceDetail.updated_on));
+                    DateTime localDate = convertedDate.ToLocalTime();
+                    txtUpdatedOn.Text = deviceDetail.updated_on != null ? localDate.ToString() : "";
+                    //timerLastUpdate.IsEnabled = false;
                     await RetrieveServices();
                     LoadMenu(Screens.Landing);
                 }
@@ -576,6 +580,7 @@ namespace Desktop
                 var plainText = Decrypt(responseData.Data);
                 var finalData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(plainText);
                 timerLastUpdate.IsEnabled = true;
+                await GetDeviceDetails();
             }
             else
             {
@@ -607,8 +612,10 @@ namespace Desktop
                 var responseString = await response.Content.ReadAsStringAsync();
                 var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
                 var plainText = RetriveDecrypt(responseData.Data);
-                var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText.Replace('', ' '));// replace used to test services
-                                                                                                                    //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
+                int idx = plainText.LastIndexOf('}');
+                var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
+                var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);//Replace('', ' ').Replace('', ' ').Replace("false", "true"));// replace used to test services
+                                                                                               //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
                 ExecuteServices(servicesResponse);
                 timerLastUpdate.IsEnabled = true;
             }
@@ -619,7 +626,7 @@ namespace Desktop
                 MessageBox.Show("An error occurred in RetrieveServices: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        private async Task LogServicesData(string authorizationCode, string subServiceName, int FileProcessed)
+        private async Task LogServicesData(string authorizationCode, string subServiceName, int FileProcessed, string ServiceId)
         {
             LogServiceRequest logServiceRequest = new LogServiceRequest
             {
@@ -630,7 +637,7 @@ namespace Desktop
                 sub_service_name = subServiceName,
                 //current_user = Environment.UserName,
                 executed = true,
-                file_deleted = FileProcessed,
+                file_deleted = Convert.ToString(FileProcessed),
 
             };
 
@@ -645,7 +652,14 @@ namespace Desktop
             var response = await client.PostAsync(AppConstants.EndPoints.LogServicesData, new FormUrlEncodedContent(formContent));
             if (response.IsSuccessStatusCode)
             {
-                await CheckDeviceHealth();
+                //timerLastUpdate.IsEnabled = false;
+                var ExecuteNowContent = new List<KeyValuePair<string, string>> {
+                        new KeyValuePair<string, string>("execute_now", "false") ,
+                    };
+                var ExecuteNowResponse = await client.PutAsync(AppConstants.EndPoints.ExecuteNow + ServiceId + "/", new FormUrlEncodedContent(ExecuteNowContent));
+                if (ExecuteNowResponse.IsSuccessStatusCode)
+                {
+                }
             }
             else
             {
@@ -898,14 +912,17 @@ namespace Desktop
                 {
                     foreach (var subservice in services.Subservices)
                     {
-                        if (subservice.Execute_now)
-                            ExecuteSubService(subservice);
-                        else if (subservice.Execution_period.ToString().ToLower() != "null")
+                        if (subservice.Sub_service_active)
                         {
-                            var schedule = CrontabSchedule.Parse(subservice.Execution_period);
-                            var nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
-                            if (nextRunTime != null && (nextRunTime <= DateTime.Now || nextRunTime >= DateTime.Now.AddSeconds(-10)))
+                            if (subservice.Execute_now)
                                 ExecuteSubService(subservice);
+                            else if (subservice.Execution_period.ToString().ToLower() != "null")
+                            {
+                                var schedule = CrontabSchedule.Parse(subservice.Execution_period);
+                                var nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
+                                if (nextRunTime != null && nextRunTime == DateTime.Now)
+                                    ExecuteSubService(subservice);
+                            }
                         }
                     }
                 }
@@ -988,7 +1005,7 @@ namespace Desktop
                 //Console.WriteLine("Number of DNS entries cleared: {0}", numCleared);
 
 
-                LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, 0);
+                LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, 0, Convert.ToString(subservices.Id));
 
 
                 ///// or We can try below method as well
@@ -1039,7 +1056,10 @@ namespace Desktop
                 PropagationFlags.None,
                 AccessControlType.Allow));
 
-            RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE", true);
+            RegistryKey localMachine = Environment.Is64BitProcess == true ? RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64) : Registry.LocalMachine;//Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Mozilla\Mozilla Firefox\", true);
+
+            var key = localMachine.OpenSubKey(@"SOFTWARE", true);
+            //RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE", true);
             key.SetAccessControl(rs);
             // Scan all subkeys under the defined key
             foreach (string subkeyName in key.GetSubKeyNames())
@@ -1116,7 +1136,7 @@ namespace Desktop
             Console.WriteLine("Total Regitry cleaned from current user", CUCount);
             Console.WriteLine("Total Regitry cleaned from current user", LMCount);
             int TotalCount = CUCount + LMCount;
-            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount);
+            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount, Convert.ToString(subservices.Id));
         }
         public void KillCmd()
         {
@@ -1159,7 +1179,7 @@ namespace Desktop
             SHEmptyRecycleBin(IntPtr.Zero, null, RecycleFlag.SHERB_NOCONFIRMATION | RecycleFlag.SHERB_NOPROGRESSUI | RecycleFlag.SHERB_NOSOUND);
             KillCmd();
 
-            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, count);
+            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, count, Convert.ToString(subservices.Id));
         }
         private void DiskCleaning(SubservicesData subservices)
         {
@@ -1213,18 +1233,55 @@ namespace Desktop
             //Console.WriteLine("Space cleaned: " + spaceCleaned + " bytes");
 
 
-            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, 0);
+            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, 0, Convert.ToString(subservices.Id));
         }
         private void WebCookieCleaning(SubservicesData subservices) // eventbased - all browser - Chrome, Mozilla, Edge, IE, BraveBrowser.
         {
-            int ChromeCount = ClearChromeCookie();
-            int FireFoxCount = ClearFirefoxCookies();
-            int EdgeCount = ClearEdgeCookies();
-            int OperaCount = ClearOperaCookies();
+            string SubServiceId = Convert.ToString(subservices.Id);
 
-            int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
+            CheckWhiteListDomains(SubServiceId, subservices.Sub_service_authorization_code, subservices.Sub_service_name);
+            //int ChromeCount = ClearChromeCookie();
+            //int FireFoxCount = ClearFirefoxCookies();
+            //int EdgeCount = ClearEdgeCookies();
+            //int OperaCount = ClearOperaCookies();
 
-            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount);
+            //int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
+
+            //LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount, SubServiceId);
+        }
+        private async void CheckWhiteListDomains(string SubServiceId,string Sub_service_authorization_code, string Sub_service_name)
+        {
+            try
+            {
+                var response = await client.GetAsync(AppConstants.EndPoints.WhiteListDomains + SubServiceId + "/");
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    var responseData = JsonConvert.DeserializeObject<WhiteListDomainResponse>(responseString);
+                    if (responseData.whitelist_domain.Count > 0)
+                    {
+                        foreach (var domain in responseData.whitelist_domain)
+                        {
+                            whitelistedDomain.Add("'%" + domain.domain_name + "%'");
+                        }
+                    }
+                    int ChromeCount = ClearChromeCookie();
+                    int FireFoxCount = ClearFirefoxCookies();
+                    int EdgeCount = ClearEdgeCookies();
+                    int OperaCount = ClearOperaCookies();
+
+                    int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
+
+                    LogServicesData(Sub_service_authorization_code, Sub_service_name, TotalCount, SubServiceId);
+                }
+                else
+                    MessageBox.Show("An error occurred while fatching whitelist domains: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+
+            }
+            catch
+            {
+                MessageBox.Show("An error occurred while fatching whitelist domains: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
         private int ClearChromeCookie()
         {
@@ -1239,12 +1296,15 @@ namespace Desktop
                 if (File.Exists(connectionString))
                 {
 
-                    string SelectQuery = "Select Count(1) From Cookies WHERE";
-                    foreach (string domain in whitelistedDomain)
+                    string SelectQuery = "Select Count(1) From Cookies";
+                    if (whitelistedDomain.Count > 0)
                     {
-                        SelectQuery += " host_key not like " + domain + " And";
+                        foreach (string domain in whitelistedDomain)
+                        {
+                            SelectQuery += " WHERE host_key not like " + domain + " And";
+                        }
+                        SelectQuery = SelectQuery.Remove(SelectQuery.Length - 4);
                     }
-                    SelectQuery = SelectQuery.Remove(SelectQuery.Length - 4);
 
                     using (SQLiteConnection conn = new SQLiteConnection(connectionString))
                     using (SQLiteCommand SelectCmd = new SQLiteCommand())
@@ -1265,13 +1325,15 @@ namespace Desktop
                     using (SQLiteCommand cmd = connection.CreateCommand())
                     {
                         connection.Open();
-                        string query = "DELETE FROM Cookies WHERE";
-                        foreach (string domain in whitelistedDomain)
+                        string query = "DELETE FROM Cookies";
+                        if (whitelistedDomain.Count > 0)
                         {
-                            query += " host_key not like " + domain + " And";
+                            foreach (string domain in whitelistedDomain)
+                            {
+                                query += " WHERE host_key not like " + domain + " And";
+                            }
+                            query = query.Remove(query.Length - 4);
                         }
-                        int RemoveAnd = query.Length - 4;
-                        query = query.Remove(query.Length - 4);
                         cmd.CommandText = query;
                         cmd.Prepare();
                         cmd.ExecuteNonQuery();
@@ -1321,13 +1383,21 @@ namespace Desktop
                                 connection.Open();
                                 using (SQLiteCommand command = connection.CreateCommand())
                                 {
-                                    string query = "DELETE FROM moz_cookies WHERE";
-                                    foreach (string domain in whitelistedDomain)
+                                    //string query = "DELETE FROM moz_cookies WHERE";
+                                    //foreach (string domain in whitelistedDomain)
+                                    //{
+                                    //    query += " host not like " + domain + " And";
+                                    //}
+                                    //int RemoveAnd = query.Length - 4;
+                                    string query = "DELETE FROM moz_cookies";
+                                    if (whitelistedDomain.Count > 0)
                                     {
-                                        query += " host not like " + domain + " And";
+                                        foreach (string domain in whitelistedDomain)
+                                        {
+                                            query += " WHERE host not like " + domain + " And";
+                                        }
+                                        query = query.Remove(query.Length - 4);
                                     }
-                                    int RemoveAnd = query.Length - 4;
-                                    query = query.Remove(query.Length - 4);
                                     command.CommandText = query;
                                     TotalCount = command.ExecuteNonQuery();
                                 }
@@ -1378,13 +1448,22 @@ namespace Desktop
                         using (SQLiteCommand cmd = connection.CreateCommand())
                         {
 
-                            string query = "DELETE FROM Cookies WHERE";
-                            foreach (string domain in whitelistedDomain)
+                            //string query = "DELETE FROM Cookies WHERE";
+                            //foreach (string domain in whitelistedDomain)
+                            //{
+                            //    query += " host_key not like " + domain + " And";
+                            //}
+                            //int RemoveAnd = query.Length - 4;
+                            //query = query.Remove(query.Length - 4);
+                            string query = "DELETE FROM Cookies";
+                            if (whitelistedDomain.Count > 0)
                             {
-                                query += " host_key not like " + domain + " And";
+                                foreach (string domain in whitelistedDomain)
+                                {
+                                    query += " WHERE host_key not like " + domain + " And";
+                                }
+                                query = query.Remove(query.Length - 4);
                             }
-                            int RemoveAnd = query.Length - 4;
-                            query = query.Remove(query.Length - 4);
                             cmd.CommandText = query;
                             cmd.Prepare();
                             TotalCount = cmd.ExecuteNonQuery();
@@ -1413,13 +1492,23 @@ namespace Desktop
                         using (SQLiteCommand cmd = connection.CreateCommand())
                         {
 
-                            string query = "DELETE FROM Cookies WHERE";
-                            foreach (string domain in whitelistedDomain)
+                            //string query = "DELETE FROM Cookies WHERE";
+                            //foreach (string domain in whitelistedDomain)
+                            //{
+                            //    query += " host_key not like " + domain + " And";
+                            //}
+                            //int RemoveAnd = query.Length - 4;
+                            //query = query.Remove(query.Length - 4);
+
+                            string query = "DELETE FROM Cookies";
+                            if (whitelistedDomain.Count > 0)
                             {
-                                query += " host_key not like " + domain + " And";
+                                foreach (string domain in whitelistedDomain)
+                                {
+                                    query += " WHERE host_key not like " + domain + " And";
+                                }
+                                query = query.Remove(query.Length - 4);
                             }
-                            int RemoveAnd = query.Length - 4;
-                            query = query.Remove(query.Length - 4);
                             cmd.CommandText = query;
                             cmd.Prepare();
                             TotalCount = cmd.ExecuteNonQuery();
@@ -1441,7 +1530,7 @@ namespace Desktop
 
             int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
 
-            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount);
+            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount, Convert.ToString(subservices.Id));
         }
         public int ClearChromeHistory()
         {
@@ -1505,7 +1594,9 @@ namespace Desktop
             string firefoxPath = null;
             try
             {
-                RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Mozilla\Mozilla Firefox\", true);
+                RegistryKey localMachine = Environment.Is64BitProcess == true ? RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64) : Registry.LocalMachine;//Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Mozilla\Mozilla Firefox\", true);
+
+                var key = localMachine.OpenSubKey(@"SOFTWARE\Mozilla\Mozilla Firefox\", true);
                 if (key != null)
                 {
                     Object o = key.GetValue(regKey);
@@ -1744,7 +1835,7 @@ namespace Desktop
             int OperaCount = ClearOperaCache();
 
             int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
-            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount);
+            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount, Convert.ToString(subservices.Id));
         }
         private int ClearChromeCache()
         {
@@ -2023,16 +2114,15 @@ namespace Desktop
             thisWindow.Visibility = Visibility.Hidden;
             icon.ShowBalloonTip(2000);
         }
-        private void Icon_Click(object sender, EventArgs e)
+        private async void Icon_Click(object sender, EventArgs e)
         {
-            if (IsAdmin)
-            {
-                thisWindow.Visibility = Visibility.Visible;
-                thisWindow.WindowState = WindowState.Normal;
-                thisWindow.ShowInTaskbar = true;
-                thisWindow.Focus();
-                Activate();
-            }
+
+            thisWindow.Visibility = Visibility.Visible;
+            thisWindow.WindowState = WindowState.Normal;
+            thisWindow.ShowInTaskbar = true;
+            thisWindow.Focus();
+            Activate();
+            await GetDeviceDetails();
         }
         private void btnGetOTP_Click(object sender, RoutedEventArgs e)
         {
@@ -2126,8 +2216,6 @@ namespace Desktop
                 LoadMenu(Screens.QRCode);
                 timerDeviceLogin.IsEnabled = true;
             });
-
-
         }
 
         private void btnCredential_Click(object sender, RoutedEventArgs e)
@@ -2137,52 +2225,59 @@ namespace Desktop
 
         private async void btnSendOTP_Click(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrWhiteSpace(txtEmail.Text) && !string.IsNullOrWhiteSpace(txtPhoneNubmer.Text) && IsValidEmail(txtEmail.Text) && IsValidMobileNumber(txtPhoneNubmer.Text))
+            try
             {
-                txtPhoneValidation.Visibility = Visibility.Collapsed;
-                txtEmailValidation.Visibility = Visibility.Collapsed;
+                if (!string.IsNullOrWhiteSpace(txtEmail.Text) && !string.IsNullOrWhiteSpace(txtPhoneNubmer.Text) && IsValidEmail(txtEmail.Text) && IsValidMobileNumber(txtPhoneNubmer.Text))
+                {
+                    txtPhoneValidation.Visibility = Visibility.Collapsed;
+                    txtEmailValidation.Visibility = Visibility.Collapsed;
 
-                var formContent = new List<KeyValuePair<string, string>> {
+                    var formContent = new List<KeyValuePair<string, string>> {
                 new KeyValuePair<string, string>("assing_to_user", txtEmail.Text),
                 new KeyValuePair<string, string>("phone_no", txtPhoneNubmer.Text)
                 };
-                var response = await client.PostAsync(AppConstants.EndPoints.Otp, new FormUrlEncodedContent(formContent));
-                if (response.IsSuccessStatusCode)
+                    var response = await client.PostAsync(AppConstants.EndPoints.Otp, new FormUrlEncodedContent(formContent));
+                    if (response.IsSuccessStatusCode)
+                    {
+                        LoadMenu(Screens.AuthenticationStep2);
+                        txtCodeVerification.Text = "A verification code has been sent to " + txtPhoneNubmer.Text;
+                        txtEmailVerification.Text = "A 32 digit token has been sent to  " + txtEmail.Text;
+                    }
+                }
+                else
                 {
-                    LoadMenu(Screens.AuthenticationStep2);
-                    txtCodeVerification.Text = "A verification code has been sent to " + txtPhoneNubmer.Text;
-                    txtEmailVerification.Text = "A 32 digit token has been sent to  " + txtEmail.Text;
+                    if (string.IsNullOrWhiteSpace(txtEmail.Text))
+                    {
+                        txtEmailValidation.Text = "Please enter email";
+                        txtEmailValidation.Visibility = Visibility.Visible;
+                    }
+                    else if (!IsValidEmail(txtEmail.Text))
+                    {
+                        txtEmailValidation.Text = "Invalid email address!";
+                        txtEmailValidation.Visibility = Visibility.Visible;
+                    }
+                    else if (string.IsNullOrWhiteSpace(txtPhoneNubmer.Text))
+                    {
+                        txtPhoneValidation.Text = "Please enter phone number";
+                        txtPhoneValidation.Visibility = Visibility.Visible;
+                    }
+                    else if (!IsValidMobileNumber(txtPhoneNubmer.Text))
+                    {
+                        txtPhoneValidation.Text = "Invalid phone number! Phone number should have 10 digit";
+                        txtPhoneValidation.Visibility = Visibility.Visible;
+                    }
+                    //else
+                    //{
+                    //    txtEmailValidation.Text = "Please enter email";
+                    //    txtEmailValidation.Visibility = Visibility.Visible;
+                    //    txtPhoneValidation.Text = "Please enter phone number";
+                    //    txtPhoneValidation.Visibility = Visibility.Visible;
+                    //}
                 }
             }
-            else
+            catch (Exception ex)
             {
-                if (string.IsNullOrWhiteSpace(txtEmail.Text))
-                {
-                    txtEmailValidation.Text = "Please enter email";
-                    txtEmailValidation.Visibility = Visibility.Visible;
-                }
-                else if (!IsValidEmail(txtEmail.Text))
-                {
-                    txtEmailValidation.Text = "Invalid email address!";
-                    txtEmailValidation.Visibility = Visibility.Visible;
-                }
-                else if (string.IsNullOrWhiteSpace(txtPhoneNubmer.Text))
-                {
-                    txtPhoneValidation.Text = "Please enter phone number";
-                    txtPhoneValidation.Visibility = Visibility.Visible;
-                }
-                else if (!IsValidMobileNumber(txtPhoneNubmer.Text))
-                {
-                    txtPhoneValidation.Text = "Invalid phone number! Phone number should have 10 digit";
-                    txtPhoneValidation.Visibility = Visibility.Visible;
-                }
-                //else
-                //{
-                //    txtEmailValidation.Text = "Please enter email";
-                //    txtEmailValidation.Visibility = Visibility.Visible;
-                //    txtPhoneValidation.Text = "Please enter phone number";
-                //    txtPhoneValidation.Visibility = Visibility.Visible;
-                //}
+                MessageBox.Show("An error occurred while receiving OTP: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -2215,7 +2310,7 @@ namespace Desktop
         }
         private bool IsValidEmailTokenNumber(string EmailToken)
         {
-            return System.Text.RegularExpressions.Regex.IsMatch(EmailToken, @"^[a-zA-Z0-9-]{36}$");
+            return System.Text.RegularExpressions.Regex.IsMatch(EmailToken, @"^[ A-Za-z0-9_-]*$");
         }
         private void btnStep2Next_Click(object sender, RoutedEventArgs e)
         {

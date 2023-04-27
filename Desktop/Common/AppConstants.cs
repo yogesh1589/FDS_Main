@@ -28,6 +28,8 @@ namespace Desktop.Common
             public const string DeviceHealth = "device/health/";
             public const string DeviceConfigCheck = "device/configuration/check/";
             public const string DeviceReauth = "device/auth/reauth/";
+            public const string WhiteListDomains = "device/whitelisted-domains/";
+            public const string ExecuteNow = "subservice/executenow/";
         }
         public const string DeviceType = "1";
         public const string CodeVersion = "1.0";

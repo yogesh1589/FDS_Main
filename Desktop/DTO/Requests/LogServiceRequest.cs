@@ -15,6 +15,6 @@ namespace Desktop.DTO.Requests
         public string sub_service_name { get; set; }
         public string current_user { get; set; }
         public bool executed { get; set; }
-        public int file_deleted { get; set; }
+        public string file_deleted { get; set; }
     }
 }
