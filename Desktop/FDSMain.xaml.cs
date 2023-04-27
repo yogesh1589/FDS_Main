@@ -29,6 +29,7 @@ using System.Drawing;
 using Image = System.Drawing.Image;
 using CredentialManagement;
 using Org.BouncyCastle.Asn1.Ocsp;
+using Shell32;
 
 namespace Desktop
 {
@@ -37,7 +38,7 @@ namespace Desktop
     /// </summary>
     public partial class FDSMain : Window
     {
-
+        #region Variable declaration
         [DllImport("shell32.dll", CharSet = CharSet.Auto)]
         static extern int SHEmptyRecycleBin(IntPtr hwnd, string pszRootPath, RecycleFlag dwFlags);
         [DllImport("shell32.dll")]
@@ -82,15 +83,16 @@ namespace Desktop
         [DllImport("advapi32.dll", EntryPoint = "CredDeleteW", CharSet = CharSet.Unicode, SetLastError = true)]
         private static extern bool CredDelete(string target, int type, int reserved);
 
+        #endregion
+
+        #region Application initialization / Load
         public FDSMain()
         {
             InitializeComponent();
 
-
             QRGeneratortimer = new DispatcherTimer();
             QRGeneratortimer.Interval = TimeSpan.FromMilliseconds(100);
             QRGeneratortimer.Tick += QRGeneratortimer_Tick;
-
 
             timerQRCode = new DispatcherTimer();
             timerQRCode.Interval = TimeSpan.FromMilliseconds(1000);
@@ -334,7 +336,6 @@ namespace Desktop
                 MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
         private bool CheckAllKeys()
         {
             try
@@ -401,6 +402,205 @@ namespace Desktop
             }
 
         }
+        #endregion
+
+        #region Authentication methods
+        private void btnGetStarted_Click(object sender, RoutedEventArgs e)
+        {
+            LoadMenu(Screens.AuthenticationMethods);
+        }
+        private void btnQR_Click(object sender, RoutedEventArgs e)
+        {
+            GenerateQRCode();
+            Dispatcher.Invoke(() =>
+            {
+                LoadMenu(Screens.QRCode);
+                timerDeviceLogin.IsEnabled = true;
+            });
+        }
+        private void btnCredential_Click(object sender, RoutedEventArgs e)
+        {
+            LoadMenu(Screens.AuthenticationStep1);
+        }
+        private async void btnSendOTP_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(txtEmail.Text) && !string.IsNullOrWhiteSpace(txtPhoneNubmer.Text) && IsValidEmail(txtEmail.Text) && IsValidMobileNumber(txtPhoneNubmer.Text))
+                {
+                    txtPhoneValidation.Visibility = Visibility.Collapsed;
+                    txtEmailValidation.Visibility = Visibility.Collapsed;
+
+                    var formContent = new List<KeyValuePair<string, string>> {
+                new KeyValuePair<string, string>("assing_to_user", txtEmail.Text),
+                new KeyValuePair<string, string>("phone_no", txtPhoneNubmer.Text)
+                };
+                    var response = await client.PostAsync(AppConstants.EndPoints.Otp, new FormUrlEncodedContent(formContent));
+                    if (response.IsSuccessStatusCode)
+                    {
+                        LoadMenu(Screens.AuthenticationStep2);
+                        txtCodeVerification.Text = "A verification code has been sent to " + txtPhoneNubmer.Text;
+                        txtEmailVerification.Text = "A 32 digit token has been sent to  " + txtEmail.Text;
+                    }
+                }
+                else
+                {
+                    if (string.IsNullOrWhiteSpace(txtEmail.Text))
+                    {
+                        txtEmailValidation.Text = "Please enter email";
+                        txtEmailValidation.Visibility = Visibility.Visible;
+                    }
+                    else if (!IsValidEmail(txtEmail.Text))
+                    {
+                        txtEmailValidation.Text = "Invalid email address!";
+                        txtEmailValidation.Visibility = Visibility.Visible;
+                    }
+                    else if (string.IsNullOrWhiteSpace(txtPhoneNubmer.Text))
+                    {
+                        txtPhoneValidation.Text = "Please enter phone number";
+                        txtPhoneValidation.Visibility = Visibility.Visible;
+                    }
+                    else if (!IsValidMobileNumber(txtPhoneNubmer.Text))
+                    {
+                        txtPhoneValidation.Text = "Invalid phone number! Phone number should have 10 digit";
+                        txtPhoneValidation.Visibility = Visibility.Visible;
+                    }
+                    //else
+                    //{
+                    //    txtEmailValidation.Text = "Please enter email";
+                    //    txtEmailValidation.Visibility = Visibility.Visible;
+                    //    txtPhoneValidation.Text = "Please enter phone number";
+                    //    txtPhoneValidation.Visibility = Visibility.Visible;
+                    //}
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred while receiving OTP: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private bool IsValidMobileNumber(string mobileNumber)
+        {
+            return System.Text.RegularExpressions.Regex.IsMatch(mobileNumber, @"^[0-9]{10}$");
+        }
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        private void txtBack_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            LoadMenu(Screens.AuthenticationMethods);
+            txtEmail.Text = "";
+            txtPhoneNubmer.Text = "";
+        }
+        private bool IsValidTokenNumber(string Token)
+        {
+            return System.Text.RegularExpressions.Regex.IsMatch(Token, @"^[0-9]{6}$");
+        }
+        private bool IsValidEmailTokenNumber(string EmailToken)
+        {
+            return System.Text.RegularExpressions.Regex.IsMatch(EmailToken, @"^[ A-Za-z0-9_-]*$");
+        }
+        private void btnStep2Next_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtToken.Text))
+            {
+                txtTokenValidation.Text = "Please enter token";
+            }
+            else if (!IsValidTokenNumber(txtToken.Text))
+            {
+                txtTokenValidation.Text = "Invalid Token number";
+                txtTokenValidation.Visibility = Visibility.Visible;
+            }
+            else
+                LoadMenu(Screens.AuthenticationStep3);
+        }
+        private async void QRGeneratortimer_Tick(object sender, EventArgs e)
+        {
+            if (IsQRGenerated == true)
+            {
+                QRGeneratortimer.Stop();
+                var formContent = new List<KeyValuePair<string, string>> {
+                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
+                        new KeyValuePair<string, string>("assing_to_user", txtEmail.Text),
+                        new KeyValuePair<string, string>("phone_no", txtPhoneNubmer.Text),
+                        new KeyValuePair<string, string>("otp", txtToken.Text),
+                        new KeyValuePair<string, string>("token", txtEmailToken.Text),
+                        new KeyValuePair<string, string>("qr_code_token", DeviceResponse.qr_code_token)
+                    };
+                Dispatcher.Invoke(() =>
+                {
+                    LoadMenu(Screens.AuthenticationProcessing);
+                });
+
+                var response = await client.PostAsync(AppConstants.EndPoints.DeviceToken, new FormUrlEncodedContent(formContent));
+                if (response.IsSuccessStatusCode)
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        LoadMenu(Screens.AuthSuccessfull);
+                        Dispatcher.Invoke(() =>
+                        {
+                            LoadMenu(Screens.Landing);
+
+                            timerDeviceLogin.IsEnabled = true;
+                        });
+
+                    });
+
+
+                }
+                else
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        LoadMenu(Screens.AuthFailed);
+                        Dispatcher.Invoke(() =>
+                        {
+                            LoadMenu(Screens.AuthenticationMethods);
+                        });
+                    });
+
+
+                }
+            }
+        }
+        private async void btnStep3Submit_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtEmailToken.Text))
+            {
+                txtEmailTokenValidation.Text = "Please enter token";
+            }
+            else if (!IsValidEmailTokenNumber(txtEmailToken.Text))
+            {
+                txtEmailTokenValidation.Text = "Invalid Token number";
+                txtEmailTokenValidation.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                QRGeneratortimer.Start();
+                GenerateQRCode();
+            }
+        }
+        private void txtstep2Back_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            LoadMenu(Screens.AuthenticationStep1);
+        }
+        private void txtstep3Back_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            LoadMenu(Screens.AuthenticationStep2);
+        }
+        #endregion
+
+        #region generate QR
         public async void GenerateQRCode()
         {
             try
@@ -440,10 +640,80 @@ namespace Desktop
                 MessageBox.Show("An error occurred while generating QR code: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        private void btnGetStarted_Click(object sender, RoutedEventArgs e)
+        private ImageSource GetQRCode(string Code)
         {
-            LoadMenu(Screens.AuthenticationMethods);
+            // Generate the QR Code
+            ImageSource imageSource = null;
+            try
+            {
+
+                QRCodeGenerator qrGenerator = new QRCodeGenerator();
+                QRCodeData qrCodeData = qrGenerator.CreateQrCode(Code, QRCodeGenerator.ECCLevel.Q);
+                QRCode qrCode = new QRCode(qrCodeData);
+
+                // Convert QR Code to Bitmap
+                Bitmap qrBitmap;
+                using (var qrCodeImage = qrCode.GetGraphic(20))
+                {
+                    qrBitmap = new Bitmap(qrCodeImage);
+                }
+
+                // Create new Bitmap with transparent background
+                System.Drawing.Bitmap newBitmap = new Bitmap(qrBitmap.Width, qrBitmap.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                using (System.Drawing.Graphics graphics = Graphics.FromImage(newBitmap))
+                {
+                    graphics.Clear(System.Drawing.Color.Transparent);
+
+                    // Draw QR Code onto new Bitmap
+                    graphics.DrawImage(qrBitmap, 0, 0);
+
+                    // Calculate position for logo in center of new Bitmap
+                    int logoSize = 300;
+                    int logoX = (newBitmap.Width - logoSize) / 2;
+                    int logoY = (newBitmap.Height - logoSize) / 2;
+
+                    // Load logo image from file
+                    Image logoImage = Image.FromFile(Path.Combine(BaseDir, "Assets/FDSIcon.png"));
+
+                    // Draw logo onto new Bitmap
+                    graphics.DrawImage(logoImage, logoX, logoY, logoSize, logoSize);
+                }
+
+                // Convert new Bitmap to ImageSource for use in WPF
+                imageSource = Imaging.CreateBitmapSourceFromHBitmap(
+                    newBitmap.GetHbitmap(),
+                    IntPtr.Zero,
+                    Int32Rect.Empty,
+                    BitmapSizeOptions.FromEmptyOptions());
+
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred while creating img for QR: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
+            return imageSource;
+
+
         }
+        BitmapImage BitmapToImageSource(System.Drawing.Bitmap bitmap)
+        {
+            using (MemoryStream memory = new MemoryStream())
+            {
+                bitmap.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
+                memory.Position = 0;
+                BitmapImage bitmapimage = new BitmapImage();
+                bitmapimage.BeginInit();
+                bitmapimage.StreamSource = memory;
+                bitmapimage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapimage.EndInit();
+                return bitmapimage;
+            }
+        }
+        #endregion
+
+        #region device login/Key Exchage
         private async Task devicelogin(bool MenuChange)
         {
             try
@@ -499,6 +769,176 @@ namespace Desktop
                 MessageBox.Show("An error occurred while devicelogin: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        private async Task KeyExchange()
+        {
+            QRCodeResponse = new QRCodeResponse
+            {
+                Public_key = KeyManager.GetValue("Key1") + KeyManager.GetValue("Key2"),
+                Authentication_token = KeyManager.GetValue("Authentication_token"),
+                Authorization_token = KeyManager.GetValue("Authorization_token")
+            };
+            var exchangeObject = new KeyExchange
+            {
+                authorization_token = KeyManager.GetValue("authorization_token"),
+                mac_address = AppConstants.MACAddress,
+                public_key = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(RSAKeys.ExportPublicKey(RSADevice))),
+                serial_number = AppConstants.SerialNumber
+            };
+
+            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(exchangeObject))));
+
+            var formContent = new List<KeyValuePair<string, string>> {
+                        new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
+                        new KeyValuePair<string, string>("payload", payload),
+                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion)
+                    };
+
+            var response = await client.PostAsync(AppConstants.EndPoints.KeyExchange, new FormUrlEncodedContent(formContent));
+            if (response.IsSuccessStatusCode)
+            {
+                var responseString = await response.Content.ReadAsStringAsync();
+                var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
+                var plainText = Decrypt(responseData.Data);
+                var finalData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(plainText);
+                timerLastUpdate.IsEnabled = true;
+                await GetDeviceDetails();
+            }
+            else
+            {
+                timerLastUpdate.IsEnabled = false;
+                btnGetStarted_Click(btnGetStarted, null);
+                MessageBox.Show("An error occurred in KeyExchange: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        #endregion
+        
+        #region device health
+        private async Task CheckDeviceHealth()
+        {
+            var servicesObject = new RetriveServices
+            {
+                authorization_token = KeyManager.GetValue("authorization_token"),
+                mac_address = AppConstants.MACAddress,
+                serial_number = AppConstants.SerialNumber,
+                current_user = Environment.UserName
+            };
+            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
+            //var payload = JsonConvert.SerializeObject(servicesObject).ToString();
+
+            var formContent = new List<KeyValuePair<string, string>> {
+                new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("authentication_token")) ,
+                new KeyValuePair<string, string>("payload", payload),
+                new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
+            };
+
+            var response = await client.PostAsync(AppConstants.EndPoints.DeviceHealth, new FormUrlEncodedContent(formContent));
+
+            if (response.IsSuccessStatusCode)
+            {
+
+                var responseString = await response.Content.ReadAsStringAsync();
+                var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
+                var plainText = RetriveDecrypt(responseData.Data);
+                int idx = plainText.LastIndexOf('}');
+                var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
+                var HealthData = JsonConvert.DeserializeObject<HealthCheckResponse>(result);
+                if (HealthData.call_config)
+                {
+                    await DeviceConfigurationCheck();
+                }
+            }
+            else
+            {
+                timerLastUpdate.IsEnabled = false;
+                btnGetStarted_Click(btnGetStarted, null);
+                MessageBox.Show("An error occurred in CheckDeviceHealth: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private async Task DeviceConfigurationCheck()
+        {
+            var servicesObject = new RetriveServices
+            {
+                authorization_token = KeyManager.GetValue("authorization_token"),
+                mac_address = AppConstants.MACAddress,
+                serial_number = AppConstants.SerialNumber
+            };
+            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
+
+            var formContent = new List<KeyValuePair<string, string>> {
+                new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
+                new KeyValuePair<string, string>("payload", payload),
+                new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
+            };
+
+            var response = await client.PostAsync(AppConstants.EndPoints.DeviceConfigCheck, new FormUrlEncodedContent(formContent));
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseString = await response.Content.ReadAsStringAsync();
+                var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
+                var plainText = RetriveDecrypt(responseData.Data);
+                int idx = plainText.LastIndexOf('}');
+                var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
+                var DeviceConfigData = JsonConvert.DeserializeObject<DeviceConfigCheckResponse>(result);
+
+                if (DeviceConfigData.config_change)
+                {
+                    if (DeviceConfigData.call_api.Count() > 0)
+                    {
+                        DeviceConfigData.call_api.Sort();
+                        foreach (var api in DeviceConfigData.call_api)
+                        {
+                            if (api.Equals("1") || api.Equals("4"))
+                            {
+                                await RetrieveServices();
+                            }
+                            else if (api.Equals("2"))
+                            {
+                                await GetDeviceDetails();
+                            }
+                            else if (api.Equals("3"))
+                            {
+                                await DeviceReauth();
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                timerLastUpdate.IsEnabled = false;
+                btnGetStarted_Click(btnGetStarted, null);
+                MessageBox.Show("An error occurred in DeviceConfigurationCheck: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private async Task DeviceReauth()
+        {
+            var servicesObject = new RetriveServices
+            {
+                authorization_token = KeyManager.GetValue("authorization_token"),
+                mac_address = AppConstants.MACAddress,
+                serial_number = AppConstants.SerialNumber
+            };
+            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
+
+            var formContent = new List<KeyValuePair<string, string>> {
+                new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
+                new KeyValuePair<string, string>("payload", payload),
+                new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
+            };
+
+            var response = await client.PostAsync(AppConstants.EndPoints.DeviceReauth, new FormUrlEncodedContent(formContent));
+            if (response.IsSuccessStatusCode)
+            {
+                timerLastUpdate.IsEnabled = false;
+                btnGetStarted_Click(btnGetStarted, null);
+                //MessageBox.Show("An error occurred in DeviceReauth: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                /// need delete api for flushing 
+            }
+        }
+        #endregion
+
+        #region Device detail / Retrive Services
         private async Task GetDeviceDetails()
         {
             var exchangeObject = new DeviceDetails
@@ -548,47 +988,7 @@ namespace Desktop
                 MessageBox.Show("An error occurred in GetDeviceDetails: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        private async Task KeyExchange()
-        {
-            QRCodeResponse = new QRCodeResponse
-            {
-                Public_key = KeyManager.GetValue("Key1") + KeyManager.GetValue("Key2"),
-                Authentication_token = KeyManager.GetValue("Authentication_token"),
-                Authorization_token = KeyManager.GetValue("Authorization_token")
-            };
-            var exchangeObject = new KeyExchange
-            {
-                authorization_token = KeyManager.GetValue("authorization_token"),
-                mac_address = AppConstants.MACAddress,
-                public_key = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(RSAKeys.ExportPublicKey(RSADevice))),
-                serial_number = AppConstants.SerialNumber
-            };
 
-            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(exchangeObject))));
-
-            var formContent = new List<KeyValuePair<string, string>> {
-                        new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
-                        new KeyValuePair<string, string>("payload", payload),
-                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion)
-                    };
-
-            var response = await client.PostAsync(AppConstants.EndPoints.KeyExchange, new FormUrlEncodedContent(formContent));
-            if (response.IsSuccessStatusCode)
-            {
-                var responseString = await response.Content.ReadAsStringAsync();
-                var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-                var plainText = Decrypt(responseData.Data);
-                var finalData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(plainText);
-                timerLastUpdate.IsEnabled = true;
-                await GetDeviceDetails();
-            }
-            else
-            {
-                timerLastUpdate.IsEnabled = false;
-                btnGetStarted_Click(btnGetStarted, null);
-                MessageBox.Show("An error occurred in KeyExchange: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
         public async Task RetrieveServices()
         {
             var servicesObject = new RetriveServices
@@ -626,178 +1026,9 @@ namespace Desktop
                 MessageBox.Show("An error occurred in RetrieveServices: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        private async Task LogServicesData(string authorizationCode, string subServiceName, int FileProcessed, string ServiceId)
-        {
-            LogServiceRequest logServiceRequest = new LogServiceRequest
-            {
-                authorization_token = KeyManager.GetValue("authorization_token"),
-                mac_address = AppConstants.MACAddress,
-                serial_number = AppConstants.SerialNumber,
-                sub_service_authorization_code = authorizationCode,
-                sub_service_name = subServiceName,
-                //current_user = Environment.UserName,
-                executed = true,
-                file_deleted = Convert.ToString(FileProcessed),
+        #endregion
 
-            };
-
-            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(logServiceRequest))));
-
-            var formContent = new List<KeyValuePair<string, string>> {
-                        new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
-                        new KeyValuePair<string, string>("payload", payload),
-                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
-                    };
-
-            var response = await client.PostAsync(AppConstants.EndPoints.LogServicesData, new FormUrlEncodedContent(formContent));
-            if (response.IsSuccessStatusCode)
-            {
-                //timerLastUpdate.IsEnabled = false;
-                var ExecuteNowContent = new List<KeyValuePair<string, string>> {
-                        new KeyValuePair<string, string>("execute_now", "false") ,
-                    };
-                var ExecuteNowResponse = await client.PutAsync(AppConstants.EndPoints.ExecuteNow + ServiceId + "/", new FormUrlEncodedContent(ExecuteNowContent));
-                if (ExecuteNowResponse.IsSuccessStatusCode)
-                {
-                }
-            }
-            else
-            {
-                timerLastUpdate.IsEnabled = false;
-                btnGetStarted_Click(btnGetStarted, null);
-                MessageBox.Show("An error occurred in LogServicesData: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-        public void updateTrayIcon()
-        {
-            try
-            {
-                icon.Icon = new System.Drawing.Icon(Directory.GetParent(System.Environment.CurrentDirectory).Parent.Parent.FullName + "\\Assets\\LogoFDSXL_disable.ico");
-                icon.Visible = true;
-                icon.BalloonTipText = "The app has been disabled. Click the tray icon to show.";
-                icon.BalloonTipTitle = "FDS (Scanning & Cleaning)";
-                icon.BalloonTipIcon = System.Windows.Forms.ToolTipIcon.Info;
-                icon.ShowBalloonTip(2000);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                MessageBox.Show("An error occurred in updateTrayIcon: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-        private async Task CheckDeviceHealth()
-        {
-            var servicesObject = new RetriveServices
-            {
-                authorization_token = KeyManager.GetValue("authorization_token"),
-                mac_address = AppConstants.MACAddress,
-                serial_number = AppConstants.SerialNumber,
-                //current_user = Environment.UserName
-            };
-            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
-            //var payload = JsonConvert.SerializeObject(servicesObject).ToString();
-
-            var formContent = new List<KeyValuePair<string, string>> {
-                new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("authentication_token")) ,
-                new KeyValuePair<string, string>("payload", payload),
-                new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
-            };
-
-            var response = await client.PostAsync(AppConstants.EndPoints.DeviceHealth, new FormUrlEncodedContent(formContent));
-
-            if (response.IsSuccessStatusCode)
-            {
-                var responseString = await response.Content.ReadAsStringAsync();
-                var responseData = JsonConvert.DeserializeObject<HealthCheckResponse>(responseString);
-                if (responseData.call_config)
-                {
-                    await DeviceConfigurationCheck();
-                }
-            }
-            else
-            {
-                timerLastUpdate.IsEnabled = false;
-                btnGetStarted_Click(btnGetStarted, null);
-                MessageBox.Show("An error occurred in CheckDeviceHealth: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-        private async Task DeviceConfigurationCheck()
-        {
-            var servicesObject = new RetriveServices
-            {
-                authorization_token = KeyManager.GetValue("authorization_token"),
-                mac_address = AppConstants.MACAddress,
-                serial_number = AppConstants.SerialNumber
-            };
-            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
-
-            var formContent = new List<KeyValuePair<string, string>> {
-                new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
-                new KeyValuePair<string, string>("payload", payload),
-                new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
-            };
-
-            var response = await client.PostAsync(AppConstants.EndPoints.DeviceConfigCheck, new FormUrlEncodedContent(formContent));
-
-            if (response.IsSuccessStatusCode)
-            {
-                var responseString = await response.Content.ReadAsStringAsync();
-                var responseData = JsonConvert.DeserializeObject<DeviceConfigCheckResponse>(responseString);
-                if (responseData.config_change)
-                {
-                    if (responseData.call_api.Count() > 0)
-                    {
-                        responseData.call_api.Sort();
-                        foreach (var api in responseData.call_api)
-                        {
-                            if (api.Equals("1") || api.Equals("4"))
-                            {
-                                await RetrieveServices();
-                            }
-                            else if (api.Equals("2"))
-                            {
-                                await GetDeviceDetails();
-                            }
-                            else if (api.Equals("3"))
-                            {
-                                await DeviceReauth();
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                timerLastUpdate.IsEnabled = false;
-                btnGetStarted_Click(btnGetStarted, null);
-                MessageBox.Show("An error occurred in DeviceConfigurationCheck: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-        private async Task DeviceReauth()
-        {
-            var servicesObject = new RetriveServices
-            {
-                authorization_token = KeyManager.GetValue("authorization_token"),
-                mac_address = AppConstants.MACAddress,
-                serial_number = AppConstants.SerialNumber
-            };
-            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
-
-            var formContent = new List<KeyValuePair<string, string>> {
-                new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
-                new KeyValuePair<string, string>("payload", payload),
-                new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
-            };
-
-            var response = await client.PostAsync(AppConstants.EndPoints.DeviceReauth, new FormUrlEncodedContent(formContent));
-            if (response.IsSuccessStatusCode)
-            {
-                timerLastUpdate.IsEnabled = false;
-                btnGetStarted_Click(btnGetStarted, null);
-                MessageBox.Show("An error occurred in DeviceReauth: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                /// need delete api for flushing 
-            }
-        }
+        #region Encryption / Decryption
         public string Encrypt(string plainText)
         {
             try
@@ -904,6 +1135,52 @@ namespace Desktop
             }
 
         }
+
+        #endregion
+
+        #region log / execute service
+        private async Task LogServicesData(string authorizationCode, string subServiceName, int FileProcessed, string ServiceId)
+        {
+            LogServiceRequest logServiceRequest = new LogServiceRequest
+            {
+                authorization_token = KeyManager.GetValue("authorization_token"),
+                mac_address = AppConstants.MACAddress,
+                serial_number = AppConstants.SerialNumber,
+                sub_service_authorization_code = authorizationCode,
+                sub_service_name = subServiceName,
+                //current_user = Environment.UserName,
+                executed = true,
+                file_deleted = Convert.ToString(FileProcessed),
+
+            };
+
+            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(logServiceRequest))));
+
+            var formContent = new List<KeyValuePair<string, string>> {
+                        new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
+                        new KeyValuePair<string, string>("payload", payload),
+                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
+                    };
+
+            var response = await client.PostAsync(AppConstants.EndPoints.LogServicesData, new FormUrlEncodedContent(formContent));
+            if (response.IsSuccessStatusCode)
+            {
+                //timerLastUpdate.IsEnabled = false;
+                var ExecuteNowContent = new List<KeyValuePair<string, string>> {
+                        new KeyValuePair<string, string>("execute_now", "false") ,
+                    };
+                var ExecuteNowResponse = await client.PutAsync(AppConstants.EndPoints.ExecuteNow + ServiceId + "/", new FormUrlEncodedContent(ExecuteNowContent));
+                if (ExecuteNowResponse.IsSuccessStatusCode)
+                {
+                }
+            }
+            else
+            {
+                timerLastUpdate.IsEnabled = false;
+                btnGetStarted_Click(btnGetStarted, null);
+                MessageBox.Show("An error occurred in LogServicesData: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
         private void ExecuteServices(ServicesResponse servicesResponse)
         {
             try
@@ -968,6 +1245,7 @@ namespace Desktop
                 MessageBox.Show("An error occurred while executing subservices: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        #endregion
 
         #region Services Implementation
         private void FlushDNS(SubservicesData subservices)
@@ -975,13 +1253,6 @@ namespace Desktop
             string flushDnsCmd = @"/C ipconfig /flushdns";
             try
             {
-
-                //IPHostEntry dummyEntry = Dns.GetHostEntry("localhost");
-
-                //IPGlobalProperties ipProperties = IPGlobalProperties.GetIPGlobalProperties();
-                //IPv4GlobalStatistics ipStats = ipProperties.GetIPv4GlobalStatistics();
-                //long cacheSizeBefore = ipStats.NumberOfEntries;
-
                 var process = new Process
                 {
                     StartInfo = new ProcessStartInfo("cmd.exe", flushDnsCmd)
@@ -993,48 +1264,8 @@ namespace Desktop
                 KillCmd();
                 Console.WriteLine(String.Format("Successfully Flushed DNS:'{0}'", flushDnsCmd), EventLogEntryType.Information);
 
-                //// Perform another DNS lookup to update the cache size
-                //dummyEntry = Dns.GetHostEntry("localhost");
-
-                //// Retrieve the new cache size
-                //int newCacheSize = dummyEntry.AddressList.Length;
-                //Console.WriteLine("DNS cache size after flush: {0}", newCacheSize);
-
-                //// Calculate the number of cleared entries
-                //int numCleared = cacheSize - newCacheSize;
-                //Console.WriteLine("Number of DNS entries cleared: {0}", numCleared);
-
-
                 LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, 0, Convert.ToString(subservices.Id));
 
-
-                ///// or We can try below method as well
-                ///// 
-
-                //ManagementObjectSearcher select = new ManagementObjectSearcher("SELECT * FROM Win32_PerfRawData_DNS_DNSCache");
-                //foreach (ManagementObject entry in select.Get())
-                //{
-                //    uint numEntries = (uint)entry["CacheEntries"];
-
-                //    Console.WriteLine("Number of DNS cache entries: {0}", numEntries);
-                //}
-                //Process process = new Process();
-                //process.StartInfo.FileName = "ipconfig";
-                //process.StartInfo.Arguments = "/flushdns";
-                //process.StartInfo.UseShellExecute = false;
-                //process.StartInfo.RedirectStandardOutput = true;
-                //process.Start();
-
-                //string output = process.StandardOutput.ReadToEnd();
-                //process.WaitForExit();
-
-                //ManagementObjectSearcher Delete = new ManagementObjectSearcher("SELECT * FROM Win32_PerfRawData_DNS_DNSCache");
-                //foreach (ManagementObject entry in Delete.Get())
-                //{
-                //    uint numEntries = (uint)entry["CacheEntries"];
-
-                //    Console.WriteLine("Number of DNS cache entries: {0}", numEntries);
-                //}
             }
             catch (Exception exp)
             {
@@ -1144,37 +1375,17 @@ namespace Desktop
         }
         private void ClearRecycleBin(SubservicesData subservices)
         {
-
-            //SHEmptyRecycleBin(IntPtr.Zero, null, RecycleFlag.SHERB_NOCONFIRMATION | RecycleFlag.SHERB_NOPROGRESSUI | RecycleFlag.SHERB_NOSOUND);
-            //KillCmd();
-
             long size = 0;
             int count = 0;
 
-            string[] drives = Directory.GetLogicalDrives();
-            foreach (string drive in drives)
+            Shell shell = new Shell();
+            Folder recycleBin = shell.NameSpace(10);
+
+            foreach (FolderItem2 item in recycleBin.Items())
             {
-                string recycleBinPath = Path.Combine(drive, "$RECYCLE.BIN");
-                if (Directory.Exists(recycleBinPath))
-                {
-                    DirectoryInfo dirInfo = new DirectoryInfo(recycleBinPath);
-                    FileInfo[] files = dirInfo.GetFiles("*", SearchOption.AllDirectories);
-                    foreach (FileInfo file in files)
-                    {
-                        if ((file.Attributes & FileAttributes.Hidden) != FileAttributes.Hidden)
-                        {
-                            size += file.Length;
-                            count++;
-                        }
-                    }
-                }
+                //item.InvokeVerb("Delete");
+                count++; // Increment counter for each deleted file
             }
-
-            Console.WriteLine("Recycle bin size: {0} bytes", size);
-            Console.WriteLine("Number of items in recycle bin: {0}", count);
-
-            Console.ReadLine();
-
 
             SHEmptyRecycleBin(IntPtr.Zero, null, RecycleFlag.SHERB_NOCONFIRMATION | RecycleFlag.SHERB_NOPROGRESSUI | RecycleFlag.SHERB_NOSOUND);
             KillCmd();
@@ -1191,48 +1402,6 @@ namespace Desktop
             process.Start();
             KillCmd();
 
-
-            // We can try beow code to get free space
-
-            //string command = @"cipher /w:C:\\";  // Replace "C:\\" with the drive or directory you want to clean
-            //ProcessStartInfo startInfo = new ProcessStartInfo("cmd.exe", command);
-            //startInfo.RedirectStandardOutput = true;
-            //startInfo.UseShellExecute = false;
-            //Process process = new Process();
-            //process.StartInfo = startInfo;
-            //process.Start();
-            //string output = process.StandardOutput.ReadToEnd();
-            //KillCmd();
-
-            ////process.WaitForExit();
-
-
-            //Match match = Regex.Match(output, @"([\d,]+) bytes of data were written");
-            //if (match.Success)
-            //{
-            //    string cleaned = match.Groups[1].Value;
-            //    cleaned = cleaned.Replace(",", "");
-            //    int spaceCleaned = int.Parse(cleaned);
-            //    Console.WriteLine("Space cleaned: " + spaceCleaned + " bytes");
-            //}
-            //else
-            //{
-            //    Console.WriteLine("Could not parse space cleaned.");
-            //}
-
-            //string drive = "C:\\";  // Replace with the drive you want to clean
-            //long freeSpaceBefore = new DriveInfo(drive).AvailableFreeSpace;
-            //string command = "cipher /w:" + drive;
-            //ProcessStartInfo startInfo = new ProcessStartInfo("cmd.exe", "/c " + command);
-            //Process process = new Process();
-            //process.StartInfo = startInfo;
-            //process.Start();
-            //KillCmd();
-            //long freeSpaceAfter = new DriveInfo(drive).AvailableFreeSpace;
-            //long spaceCleaned = freeSpaceAfter - freeSpaceBefore;
-            //Console.WriteLine("Space cleaned: " + spaceCleaned + " bytes");
-
-
             LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, 0, Convert.ToString(subservices.Id));
         }
         private void WebCookieCleaning(SubservicesData subservices) // eventbased - all browser - Chrome, Mozilla, Edge, IE, BraveBrowser.
@@ -1240,14 +1409,6 @@ namespace Desktop
             string SubServiceId = Convert.ToString(subservices.Id);
 
             CheckWhiteListDomains(SubServiceId, subservices.Sub_service_authorization_code, subservices.Sub_service_name);
-            //int ChromeCount = ClearChromeCookie();
-            //int FireFoxCount = ClearFirefoxCookies();
-            //int EdgeCount = ClearEdgeCookies();
-            //int OperaCount = ClearOperaCookies();
-
-            //int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
-
-            //LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount, SubServiceId);
         }
         private async void CheckWhiteListDomains(string SubServiceId,string Sub_service_authorization_code, string Sub_service_name)
         {
@@ -1299,9 +1460,10 @@ namespace Desktop
                     string SelectQuery = "Select Count(1) From Cookies";
                     if (whitelistedDomain.Count > 0)
                     {
+                        SelectQuery += " WHERE ";
                         foreach (string domain in whitelistedDomain)
                         {
-                            SelectQuery += " WHERE host_key not like " + domain + " And";
+                            SelectQuery += "  host_key not like " + domain + " And";
                         }
                         SelectQuery = SelectQuery.Remove(SelectQuery.Length - 4);
                     }
@@ -1328,9 +1490,10 @@ namespace Desktop
                         string query = "DELETE FROM Cookies";
                         if (whitelistedDomain.Count > 0)
                         {
+                            query += " WHERE ";
                             foreach (string domain in whitelistedDomain)
                             {
-                                query += " WHERE host_key not like " + domain + " And";
+                                query += " host_key not like " + domain + " And";
                             }
                             query = query.Remove(query.Length - 4);
                         }
@@ -1392,9 +1555,10 @@ namespace Desktop
                                     string query = "DELETE FROM moz_cookies";
                                     if (whitelistedDomain.Count > 0)
                                     {
+                                        query += " WHERE ";
                                         foreach (string domain in whitelistedDomain)
                                         {
-                                            query += " WHERE host not like " + domain + " And";
+                                            query += "  host not like " + domain + " And";
                                         }
                                         query = query.Remove(query.Length - 4);
                                     }
@@ -1457,10 +1621,11 @@ namespace Desktop
                             //query = query.Remove(query.Length - 4);
                             string query = "DELETE FROM Cookies";
                             if (whitelistedDomain.Count > 0)
-                            {
+                            {   
+                                query += " WHERE ";
                                 foreach (string domain in whitelistedDomain)
                                 {
-                                    query += " WHERE host_key not like " + domain + " And";
+                                    query += " host_key not like " + domain + " And";
                                 }
                                 query = query.Remove(query.Length - 4);
                             }
@@ -1502,10 +1667,11 @@ namespace Desktop
 
                             string query = "DELETE FROM Cookies";
                             if (whitelistedDomain.Count > 0)
-                            {
+                            { 
+                                query += " WHERE ";
                                 foreach (string domain in whitelistedDomain)
                                 {
-                                    query += " WHERE host_key not like " + domain + " And";
+                                    query += " host_key not like " + domain + " And";
                                 }
                                 query = query.Remove(query.Length - 4);
                             }
@@ -2007,6 +2173,29 @@ namespace Desktop
         }
 
         #endregion
+
+        #region Application close / minimize
+        private void btnClose_Click(object sender, RoutedEventArgs e)
+        {
+            //Application.Current.Shutdown();
+            thisWindow.WindowState = WindowState.Minimized;
+            thisWindow.ShowInTaskbar = false;
+            thisWindow.Visibility = Visibility.Hidden;
+            icon.ShowBalloonTip(2000);
+        }
+        private async void Icon_Click(object sender, EventArgs e)
+        {
+
+            thisWindow.Visibility = Visibility.Visible;
+            thisWindow.WindowState = WindowState.Normal;
+            thisWindow.ShowInTaskbar = true;
+            thisWindow.Focus();
+            Activate();
+            await GetDeviceDetails();
+        }
+        #endregion
+
+        #region unwanted code for now
         private void btnSettings_Click(object sender, RoutedEventArgs e)
         {
             //imgServiceClearUnCheck.Visibility = true ? Visibility.Hidden : Visibility.Visible;
@@ -2031,103 +2220,15 @@ namespace Desktop
             e.Cancel = true;
             btnClose_Click(btnClose, null);
         }
-        private ImageSource GetQRCode(string Code)
-        {
-            // Generate the QR Code
-            ImageSource imageSource = null;
-            try
-            {
 
-                QRCodeGenerator qrGenerator = new QRCodeGenerator();
-                QRCodeData qrCodeData = qrGenerator.CreateQrCode(Code, QRCodeGenerator.ECCLevel.Q);
-                QRCode qrCode = new QRCode(qrCodeData);
-
-                // Convert QR Code to Bitmap
-                Bitmap qrBitmap;
-                using (var qrCodeImage = qrCode.GetGraphic(20))
-                {
-                    qrBitmap = new Bitmap(qrCodeImage);
-                }
-
-                // Create new Bitmap with transparent background
-                System.Drawing.Bitmap newBitmap = new Bitmap(qrBitmap.Width, qrBitmap.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                using (System.Drawing.Graphics graphics = Graphics.FromImage(newBitmap))
-                {
-                    graphics.Clear(System.Drawing.Color.Transparent);
-
-                    // Draw QR Code onto new Bitmap
-                    graphics.DrawImage(qrBitmap, 0, 0);
-
-                    // Calculate position for logo in center of new Bitmap
-                    int logoSize = 300;
-                    int logoX = (newBitmap.Width - logoSize) / 2;
-                    int logoY = (newBitmap.Height - logoSize) / 2;
-
-                    // Load logo image from file
-                    Image logoImage = Image.FromFile(Path.Combine(BaseDir, "Assets/FDSIcon.png"));
-
-                    // Draw logo onto new Bitmap
-                    graphics.DrawImage(logoImage, logoX, logoY, logoSize, logoSize);
-                }
-
-                // Convert new Bitmap to ImageSource for use in WPF
-                imageSource = Imaging.CreateBitmapSourceFromHBitmap(
-                    newBitmap.GetHbitmap(),
-                    IntPtr.Zero,
-                    Int32Rect.Empty,
-                    BitmapSizeOptions.FromEmptyOptions());
-
-
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("An error occurred while creating img for QR: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-
-            return imageSource;
-
-
-        }
-        BitmapImage BitmapToImageSource(System.Drawing.Bitmap bitmap)
-        {
-            using (MemoryStream memory = new MemoryStream())
-            {
-                bitmap.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
-                memory.Position = 0;
-                BitmapImage bitmapimage = new BitmapImage();
-                bitmapimage.BeginInit();
-                bitmapimage.StreamSource = memory;
-                bitmapimage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapimage.EndInit();
-                return bitmapimage;
-            }
-        }
         private void header_MouseDown(object sender, MouseButtonEventArgs e)
         {
             DragMove();
         }
-        private void btnClose_Click(object sender, RoutedEventArgs e)
-        {
-            //Application.Current.Shutdown();
-            thisWindow.WindowState = WindowState.Minimized;
-            thisWindow.ShowInTaskbar = false;
-            thisWindow.Visibility = Visibility.Hidden;
-            icon.ShowBalloonTip(2000);
-        }
-        private async void Icon_Click(object sender, EventArgs e)
-        {
 
-            thisWindow.Visibility = Visibility.Visible;
-            thisWindow.WindowState = WindowState.Normal;
-            thisWindow.ShowInTaskbar = true;
-            thisWindow.Focus();
-            Activate();
-            await GetDeviceDetails();
-        }
         private void btnGetOTP_Click(object sender, RoutedEventArgs e)
         {
         }
-
         private void txtOTP_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             Regex regex = new Regex("[0-9]+");
@@ -2136,9 +2237,8 @@ namespace Desktop
                 e.Handled = true;
             }
         }
+
         private DispatcherTimer UninstallResponseTimer;
-
-
         private void UninstallResponseTimer_Tick(object sender, EventArgs e)
         {
             UninstallProgram();
@@ -2198,7 +2298,6 @@ namespace Desktop
                 UninstallResponseTimer.Start();
             }
         }
-
         private void btnViewServices_Click(object sender, RoutedEventArgs e)
         {
             LoadMenu(Screens.DataProtection);
@@ -2207,201 +2306,24 @@ namespace Desktop
         {
             LoadMenu(Screens.Landing);
         }
-
-        private void btnQR_Click(object sender, RoutedEventArgs e)
-        {
-            GenerateQRCode();
-            Dispatcher.Invoke(() =>
-            {
-                LoadMenu(Screens.QRCode);
-                timerDeviceLogin.IsEnabled = true;
-            });
-        }
-
-        private void btnCredential_Click(object sender, RoutedEventArgs e)
-        {
-            LoadMenu(Screens.AuthenticationStep1);
-        }
-
-        private async void btnSendOTP_Click(object sender, RoutedEventArgs e)
+        
+        public void updateTrayIcon()
         {
             try
             {
-                if (!string.IsNullOrWhiteSpace(txtEmail.Text) && !string.IsNullOrWhiteSpace(txtPhoneNubmer.Text) && IsValidEmail(txtEmail.Text) && IsValidMobileNumber(txtPhoneNubmer.Text))
-                {
-                    txtPhoneValidation.Visibility = Visibility.Collapsed;
-                    txtEmailValidation.Visibility = Visibility.Collapsed;
-
-                    var formContent = new List<KeyValuePair<string, string>> {
-                new KeyValuePair<string, string>("assing_to_user", txtEmail.Text),
-                new KeyValuePair<string, string>("phone_no", txtPhoneNubmer.Text)
-                };
-                    var response = await client.PostAsync(AppConstants.EndPoints.Otp, new FormUrlEncodedContent(formContent));
-                    if (response.IsSuccessStatusCode)
-                    {
-                        LoadMenu(Screens.AuthenticationStep2);
-                        txtCodeVerification.Text = "A verification code has been sent to " + txtPhoneNubmer.Text;
-                        txtEmailVerification.Text = "A 32 digit token has been sent to  " + txtEmail.Text;
-                    }
-                }
-                else
-                {
-                    if (string.IsNullOrWhiteSpace(txtEmail.Text))
-                    {
-                        txtEmailValidation.Text = "Please enter email";
-                        txtEmailValidation.Visibility = Visibility.Visible;
-                    }
-                    else if (!IsValidEmail(txtEmail.Text))
-                    {
-                        txtEmailValidation.Text = "Invalid email address!";
-                        txtEmailValidation.Visibility = Visibility.Visible;
-                    }
-                    else if (string.IsNullOrWhiteSpace(txtPhoneNubmer.Text))
-                    {
-                        txtPhoneValidation.Text = "Please enter phone number";
-                        txtPhoneValidation.Visibility = Visibility.Visible;
-                    }
-                    else if (!IsValidMobileNumber(txtPhoneNubmer.Text))
-                    {
-                        txtPhoneValidation.Text = "Invalid phone number! Phone number should have 10 digit";
-                        txtPhoneValidation.Visibility = Visibility.Visible;
-                    }
-                    //else
-                    //{
-                    //    txtEmailValidation.Text = "Please enter email";
-                    //    txtEmailValidation.Visibility = Visibility.Visible;
-                    //    txtPhoneValidation.Text = "Please enter phone number";
-                    //    txtPhoneValidation.Visibility = Visibility.Visible;
-                    //}
-                }
+                icon.Icon = new System.Drawing.Icon(Directory.GetParent(System.Environment.CurrentDirectory).Parent.Parent.FullName + "\\Assets\\LogoFDSXL_disable.ico");
+                icon.Visible = true;
+                icon.BalloonTipText = "The app has been disabled. Click the tray icon to show.";
+                icon.BalloonTipTitle = "FDS (Scanning & Cleaning)";
+                icon.BalloonTipIcon = System.Windows.Forms.ToolTipIcon.Info;
+                icon.ShowBalloonTip(2000);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred while receiving OTP: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Console.WriteLine(ex.Message);
+                MessageBox.Show("An error occurred in updateTrayIcon: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
-        private bool IsValidMobileNumber(string mobileNumber)
-        {
-            return System.Text.RegularExpressions.Regex.IsMatch(mobileNumber, @"^[0-9]{10}$");
-        }
-
-        private bool IsValidEmail(string email)
-        {
-            try
-            {
-                var addr = new System.Net.Mail.MailAddress(email);
-                return addr.Address == email;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-        private void txtBack_PreviewMouseDown(object sender, MouseButtonEventArgs e)
-        {
-            LoadMenu(Screens.AuthenticationMethods);
-            txtEmail.Text = "";
-            txtPhoneNubmer.Text = "";
-        }
-        private bool IsValidTokenNumber(string Token)
-        {
-            return System.Text.RegularExpressions.Regex.IsMatch(Token, @"^[0-9]{6}$");
-        }
-        private bool IsValidEmailTokenNumber(string EmailToken)
-        {
-            return System.Text.RegularExpressions.Regex.IsMatch(EmailToken, @"^[ A-Za-z0-9_-]*$");
-        }
-        private void btnStep2Next_Click(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtToken.Text))
-            {
-                txtTokenValidation.Text = "Please enter token";
-            }
-            else if (!IsValidTokenNumber(txtToken.Text))
-            {
-                txtTokenValidation.Text = "Invalid Token number";
-                txtTokenValidation.Visibility = Visibility.Visible;
-            }
-            else
-                LoadMenu(Screens.AuthenticationStep3);
-        }
-        private async void QRGeneratortimer_Tick(object sender, EventArgs e)
-        {
-            if (IsQRGenerated == true)
-            {
-                QRGeneratortimer.Stop();
-                var formContent = new List<KeyValuePair<string, string>> {
-                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
-                        new KeyValuePair<string, string>("assing_to_user", txtEmail.Text),
-                        new KeyValuePair<string, string>("phone_no", txtPhoneNubmer.Text),
-                        new KeyValuePair<string, string>("otp", txtToken.Text),
-                        new KeyValuePair<string, string>("token", txtEmailToken.Text),
-                        new KeyValuePair<string, string>("qr_code_token", DeviceResponse.qr_code_token)
-                    };
-                Dispatcher.Invoke(() =>
-                {
-                    LoadMenu(Screens.AuthenticationProcessing);
-                });
-
-                var response = await client.PostAsync(AppConstants.EndPoints.DeviceToken, new FormUrlEncodedContent(formContent));
-                if (response.IsSuccessStatusCode)
-                {
-                    Dispatcher.Invoke(() =>
-                    {
-                        LoadMenu(Screens.AuthSuccessfull);
-                        Dispatcher.Invoke(() =>
-                        {
-                            LoadMenu(Screens.Landing);
-
-                            timerDeviceLogin.IsEnabled = true;
-                        });
-
-                    });
-
-
-                }
-                else
-                {
-                    Dispatcher.Invoke(() =>
-                    {
-                        LoadMenu(Screens.AuthFailed);
-                        Dispatcher.Invoke(() =>
-                        {
-                            LoadMenu(Screens.AuthenticationMethods);
-                        });
-                    });
-
-
-                }
-            }
-        }
-        private async void btnStep3Submit_Click(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtEmailToken.Text))
-            {
-                txtEmailTokenValidation.Text = "Please enter token";
-            }
-            else if (!IsValidEmailTokenNumber(txtEmailToken.Text))
-            {
-                txtEmailTokenValidation.Text = "Invalid Token number";
-                txtEmailTokenValidation.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                QRGeneratortimer.Start();
-                GenerateQRCode();
-            }
-        }
-
-        private void txtstep2Back_PreviewMouseDown(object sender, MouseButtonEventArgs e)
-        {
-            LoadMenu(Screens.AuthenticationStep1);
-        }
-
-        private void txtstep3Back_PreviewMouseDown(object sender, MouseButtonEventArgs e)
-        {
-            LoadMenu(Screens.AuthenticationStep2);
-        }
+        #endregion
     }
 }
