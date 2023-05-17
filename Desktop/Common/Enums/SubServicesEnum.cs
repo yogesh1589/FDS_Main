@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace Desktop.Common.Enums
+namespace FDS.Common.Enums
 {
     public enum SubServicesEnum
     {

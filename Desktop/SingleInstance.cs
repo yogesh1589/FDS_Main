@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Desktop
+namespace FDS
 {
     public sealed class SingleInstance
     {

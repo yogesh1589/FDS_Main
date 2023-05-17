@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Desktop.DTO.Responses
+namespace FDS.DTO.Responses
 {
     public class WhiteListDomainResponse
     {

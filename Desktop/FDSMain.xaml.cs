@@ -1,6 +1,6 @@
-﻿using Desktop.Common;
-using Desktop.DTO.Requests;
-using Desktop.DTO.Responses;
+﻿using FDS.Common;
+using FDS.DTO.Requests;
+using FDS.DTO.Responses;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using QRCoder;
@@ -30,8 +30,13 @@ using Image = System.Drawing.Image;
 using CredentialManagement;
 using Org.BouncyCastle.Asn1.Ocsp;
 using Shell32;
+using System.ServiceProcess;
+using Windows.Services.Maps;
+using System.Reflection;
+using System.Net.Mail;
+using System.Globalization;
 
-namespace Desktop
+namespace FDS
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -58,11 +63,12 @@ namespace Desktop
             SHERB_NOSOUND = 0x00000004
         }
 
-
         DispatcherTimer timerQRCode;
         DispatcherTimer timerDeviceLogin;
         DispatcherTimer timerLastUpdate;
         DispatcherTimer QRGeneratortimer;
+        DispatcherTimer CronLastUpdate;
+        DispatcherTimer UninstallResponseTimer;
 
         int TotalSeconds = Common.AppConstants.TotalKeyActivationSeconds;
         System.Windows.Forms.NotifyIcon icon;
@@ -83,6 +89,15 @@ namespace Desktop
         [DllImport("advapi32.dll", EntryPoint = "CredDeleteW", CharSet = CharSet.Unicode, SetLastError = true)]
         private static extern bool CredDelete(string target, int type, int reserved);
 
+        public Dictionary<SubservicesData, DateTime> lstCron = new Dictionary<SubservicesData, DateTime>();
+        public DateTime RecycleBinCronTime;
+        public DateTime FlushDNSCronTime;
+        public DateTime DiskCleaningCronTime;
+        public DateTime WebCacheCronTime;
+        public DateTime WebHistoryCronTime;
+        public DateTime WebCookieCronTime;
+        public DateTime RegistryCronTime;
+        public bool IsUnInstallFlag;
         #endregion
 
         #region Application initialization / Load
@@ -107,6 +122,15 @@ namespace Desktop
             timerLastUpdate.Tick += TimerLastUpdate_Tick;
             timerLastUpdate.IsEnabled = false;
 
+            CronLastUpdate = new DispatcherTimer();
+            CronLastUpdate.Interval = TimeSpan.FromMilliseconds(10000);
+            CronLastUpdate.Tick += CronLastUpdate_Tick;
+            timerLastUpdate.IsEnabled = false;
+
+            UninstallResponseTimer = new DispatcherTimer();
+            UninstallResponseTimer.Tick += UninstallResponseTimer_Tick;
+            UninstallResponseTimer.Interval = TimeSpan.FromMilliseconds(1000 * 60); // in miliseconds
+
             icon = new System.Windows.Forms.NotifyIcon();
             icon.Icon = new System.Drawing.Icon(Path.Combine(BaseDir, "Assets/FDSDesktopLogo.ico"));//new System.Drawing.Icon(Path.Combine(Directory.GetParent(System.Environment.CurrentDirectory).Parent.FullName + "\\Assets\\FDSDesktopLogo.ico"));
             icon.Visible = true;
@@ -121,33 +145,46 @@ namespace Desktop
 
             thisWindow = GetWindow(this);
             client = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI };
-
+            IsUninstallFlagUpdated();
 
             //whitelistedDomain.Add("'%.google.com%'");
             //whitelistedDomain.Add("'%.clickup.com%'");
             //whitelistedDomain.Add("'%.slack.com%'");
 
             //#region Auto start on startup done by Installer
-            //RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+            //RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+            //string AutoStartBaseDir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            //string exeFile = Path.Combine(BaseDir, "FDS.exe");
             //Assembly curAssembly = Assembly.GetExecutingAssembly();
-            //key.SetValue(curAssembly.GetName().Name, curAssembly.Location);
+            //key.SetValue("FDS", exeFile);
 
             //#endregion
         }
-        private void FDSMain_Loaded(object sender, RoutedEventArgs e)
+        public void FDSMain_Loaded(object sender, RoutedEventArgs e)
         {
             //CredDelete("FDS_Key_Key1", 1, 0);
+
+            //ServiceBase[] ServicesToRun;
+            //ServicesToRun = new ServiceBase[]
+            //{
+            //            new Service()
+            //};
+            //ServiceBase.Run(ServicesToRun);
+
             try
             {
                 bool valid = CheckAllKeys();
 
                 if (!valid)
+                {
                     LoadMenu(Screens.GetStart);
+                    //IsUninstallFlagUpdated();
+                }
                 else
                 {
                     LoadMenu(Screens.Landing);
                     TimerLastUpdate_Tick(timerLastUpdate, null);
-                    timerLastUpdate.IsEnabled = true;
+                    //timerLastUpdate.IsEnabled = true;
                     GetDeviceDetails();
                 }
             }
@@ -156,6 +193,7 @@ namespace Desktop
                 MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
         private void LoadMenu(Screens screen)
         {
             try
@@ -275,6 +313,7 @@ namespace Desktop
                         AuthenticationFailed.Visibility = Visibility.Hidden;
                         AuthenticationSuccessfull.Visibility = Visibility.Hidden;
                         AuthenticationMethods.Visibility = Visibility.Hidden;
+                        btnUninstall.Visibility = Visibility.Visible;
                         break;
                     case Screens.ServiceClear:
                         //imgWires.Visibility = Visibility.Visible;
@@ -307,6 +346,7 @@ namespace Desktop
                 MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
         private async void TimerLastUpdate_Tick(object sender, EventArgs e)
         {
             //await GetDeviceDetails();
@@ -432,9 +472,9 @@ namespace Desktop
                     txtEmailValidation.Visibility = Visibility.Collapsed;
 
                     var formContent = new List<KeyValuePair<string, string>> {
-                new KeyValuePair<string, string>("assing_to_user", txtEmail.Text),
-                new KeyValuePair<string, string>("phone_no", txtPhoneNubmer.Text)
-                };
+                        new KeyValuePair<string, string>("assing_to_user", txtEmail.Text),
+                        new KeyValuePair<string, string>("phone_no", txtPhoneNubmer.Text)
+                    };
                     var response = await client.PostAsync(AppConstants.EndPoints.Otp, new FormUrlEncodedContent(formContent));
                     if (response.IsSuccessStatusCode)
                     {
@@ -555,8 +595,6 @@ namespace Desktop
                         });
 
                     });
-
-
                 }
                 else
                 {
@@ -811,16 +849,19 @@ namespace Desktop
             }
         }
         #endregion
-        
+
         #region device health
-        private async Task CheckDeviceHealth()
+
+        public async Task CheckDeviceHealth()
         {
             var servicesObject = new RetriveServices
             {
                 authorization_token = KeyManager.GetValue("authorization_token"),
                 mac_address = AppConstants.MACAddress,
                 serial_number = AppConstants.SerialNumber,
-                current_user = Environment.UserName
+                current_user = Environment.UserName,
+                //app_version
+                //os_version
             };
             var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
             //var payload = JsonConvert.SerializeObject(servicesObject).ToString();
@@ -885,11 +926,12 @@ namespace Desktop
                 {
                     if (DeviceConfigData.call_api.Count() > 0)
                     {
-                        DeviceConfigData.call_api.Sort();
+                        //DeviceConfigData.call_api.Sort();
                         foreach (var api in DeviceConfigData.call_api)
                         {
                             if (api.Equals("1") || api.Equals("4"))
                             {
+                                //await GetDeviceDetails();
                                 await RetrieveServices();
                             }
                             else if (api.Equals("2"))
@@ -976,6 +1018,7 @@ namespace Desktop
                     DateTime convertedDate = DateTime.Parse(Convert.ToString(deviceDetail.updated_on));
                     DateTime localDate = convertedDate.ToLocalTime();
                     txtUpdatedOn.Text = deviceDetail.updated_on != null ? localDate.ToString() : "";
+
                     //timerLastUpdate.IsEnabled = false;
                     await RetrieveServices();
                     LoadMenu(Screens.Landing);
@@ -1016,6 +1059,9 @@ namespace Desktop
                 var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
                 var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);//Replace('', ' ').Replace('', ' ').Replace("false", "true"));// replace used to test services
                                                                                                //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
+
+                DateTime localDate = DateTime.Now.ToLocalTime();
+                txtUpdatedOn.Text = localDate.ToString();
                 ExecuteServices(servicesResponse);
                 timerLastUpdate.IsEnabled = true;
             }
@@ -1040,6 +1086,7 @@ namespace Desktop
                     // Create an encryptor to perform the stream transform.
                     Key = aesAlg.Key;
                     aesAlg.Mode = CipherMode.ECB;
+                    aesAlg.Padding = PaddingMode.PKCS7;
                     ICryptoTransform encryptor = aesAlg.CreateEncryptor();
                     // Create the streams used for encryption.
                     using (MemoryStream msEncrypt = new MemoryStream())
@@ -1148,7 +1195,7 @@ namespace Desktop
                 serial_number = AppConstants.SerialNumber,
                 sub_service_authorization_code = authorizationCode,
                 sub_service_name = subServiceName,
-                //current_user = Environment.UserName,
+                current_user = Environment.UserName,
                 executed = true,
                 file_deleted = Convert.ToString(FileProcessed),
 
@@ -1181,6 +1228,26 @@ namespace Desktop
                 MessageBox.Show("An error occurred in LogServicesData: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        private async void CronLastUpdate_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                foreach (var key in lstCron)
+                {
+                    SubservicesData SubservicesData = key.Key;
+                    //var responseData = JsonConvert.DeserializeObject<SubservicesData>(key.Key.);
+                    //if (DateTime.Now. == key.Value)
+                    //{
+                    if (DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute)
+                    {
+                        ExecuteSubService(SubservicesData);
+                        DateTime localDate = DateTime.Now.ToLocalTime();
+                        txtUpdatedOn.Text = localDate.ToString();
+                    }
+                }
+            }
+            catch (Exception ex) { }
+        }
         private void ExecuteServices(ServicesResponse servicesResponse)
         {
             try
@@ -1197,12 +1264,14 @@ namespace Desktop
                             {
                                 var schedule = CrontabSchedule.Parse(subservice.Execution_period);
                                 var nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
+                                lstCron.Add(subservice, nextRunTime);
                                 if (nextRunTime != null && nextRunTime == DateTime.Now)
                                     ExecuteSubService(subservice);
                             }
                         }
                     }
                 }
+                CronLastUpdate.Start();
             }
             catch (Exception ex)
             {
@@ -1410,7 +1479,7 @@ namespace Desktop
 
             CheckWhiteListDomains(SubServiceId, subservices.Sub_service_authorization_code, subservices.Sub_service_name);
         }
-        private async void CheckWhiteListDomains(string SubServiceId,string Sub_service_authorization_code, string Sub_service_name)
+        private async void CheckWhiteListDomains(string SubServiceId, string Sub_service_authorization_code, string Sub_service_name)
         {
             try
             {
@@ -1621,7 +1690,7 @@ namespace Desktop
                             //query = query.Remove(query.Length - 4);
                             string query = "DELETE FROM Cookies";
                             if (whitelistedDomain.Count > 0)
-                            {   
+                            {
                                 query += " WHERE ";
                                 foreach (string domain in whitelistedDomain)
                                 {
@@ -1667,7 +1736,7 @@ namespace Desktop
 
                             string query = "DELETE FROM Cookies";
                             if (whitelistedDomain.Count > 0)
-                            { 
+                            {
                                 query += " WHERE ";
                                 foreach (string domain in whitelistedDomain)
                                 {
@@ -2166,7 +2235,6 @@ namespace Desktop
                         TotalCount++;
                     }
                 }
-
                 Console.WriteLine("Deleted {0} files from the cache.", TotalCount);
             }
             return TotalCount;
@@ -2192,6 +2260,156 @@ namespace Desktop
             thisWindow.Focus();
             Activate();
             await GetDeviceDetails();
+        }
+        #endregion
+
+        #region uninstall
+        public void IsUninstallFlagUpdated()
+        {
+            if (!IsUnInstallFlag)
+            {
+                string displayName = "FDS";
+                string uninstallKeyPath = null;
+
+                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"))
+                {
+                    if (key != null)
+                    {
+                        //MessageBox.Show("Uninstall key " + key);
+                        foreach (string subKeyName in key.GetSubKeyNames())
+                        {
+                            //MessageBox.Show("Uninstall subKeyName " + subKeyName);
+                            using (RegistryKey subKey = key.OpenSubKey(subKeyName))
+                            {
+                                object displayNameValue = subKey.GetValue("DisplayName");
+                                if (displayNameValue != null && displayNameValue.ToString() == displayName)
+                                {
+                                    uninstallKeyPath = subKey.Name;
+                                    //MessageBox.Show("ProductKey unistall" + uninstallKeyPath);
+                                    IsUnInstallFlag = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (uninstallKeyPath != null)
+                {
+                    uninstallKeyPath = uninstallKeyPath.Replace("HKEY_LOCAL_MACHINE\\", "");
+                    // Modify the registry key to prevent uninstallation
+                    using (RegistryKey uninstallKey = Registry.LocalMachine.OpenSubKey(uninstallKeyPath, true))
+                    {
+                        if (uninstallKey != null)
+                        {
+                            //MessageBox.Show("Modified unistall" + uninstallKey);
+                            uninstallKey.SetValue("SystemComponent", 1, RegistryValueKind.DWord);
+                        }
+                    }
+                }
+            }
+        }
+        private async void btnUninstall_Click(object sender, RoutedEventArgs e)
+        {
+            var formContent = new List<KeyValuePair<string, string>> {
+                new KeyValuePair<string, string>("mac_address", AppConstants.MACAddress),
+                new KeyValuePair<string, string>("serial_number", AppConstants.SerialNumber),
+                new KeyValuePair<string, string>("current_user", Environment.UserName)
+            };
+            var response = await client.PostAsync(AppConstants.EndPoints.UninstallDevice, new FormUrlEncodedContent(formContent));
+            var responseString = await response.Content.ReadAsStringAsync();
+            var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
+            if (response.IsSuccessStatusCode)
+            {
+                MessageBox.Show(responseData.msg, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                UninstallResponseTimer.Start();
+            }
+            else
+            {
+                MessageBox.Show(responseData.error, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private void UninstallResponseTimer_Tick(object sender, EventArgs e)
+        {
+            UninstallProgram();
+        }
+        private async Task UninstallProgram()
+        {
+            var formContent = new List<KeyValuePair<string, string>> {
+                new KeyValuePair<string, string>("mac_address", AppConstants.MACAddress),
+                new KeyValuePair<string, string>("serial_number", AppConstants.SerialNumber),
+                new KeyValuePair<string, string>("current_user", Environment.UserName)
+            };
+            var response = await client.PostAsync(AppConstants.EndPoints.UninstallCheck, new FormUrlEncodedContent(formContent));
+            var responseString = await response.Content.ReadAsStringAsync();
+            var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
+            if (response.IsSuccessStatusCode)
+            {
+                /// 1- Pending, 2 - Approved, 3 - Rejected
+                try
+                {
+                    if (responseData.Data == "2")
+
+                    //MessageBox.Show(responseData.msg, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                    //if (responseData.Data == "3")
+                    //{
+                    //    UninstallResponseTimer.Stop();
+                    //    MessageBox.Show(responseData.msg, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                    //}
+                    //else
+                    {
+                        string applicationName = "FDS";
+
+                        // Get the uninstall registry key for the application
+                        RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\");
+                        if (key != null)
+                        {
+                            foreach (string subKeyName in key.GetSubKeyNames())
+                            {
+                                using (RegistryKey subKey = key.OpenSubKey(subKeyName))
+                                {
+                                    object displayNameValue = subKey.GetValue("DisplayName");
+                                    if (displayNameValue != null && displayNameValue.ToString() == applicationName)
+                                    {
+                                        // Get the uninstall string from the registry key
+                                        string uninstallString = subKey.GetValue("UninstallString").ToString();
+
+                                        //MessageBox.Show(uninstallString, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                                        CredDelete("FDS_Key_Key1", 1, 0);
+                                        UninstallResponseTimer.Stop();
+                                        // Run the uninstall command
+
+                                        //Process.Start(uninstallString).WaitForExit();
+                                        Process.Start("cmd.exe", "/C " + uninstallString);
+
+                                        //System.Diagnostics.Process.Start("cmd.exe", "/C " + uninstallString);
+
+                                        // Delete the registry key for the application
+                                        key.DeleteSubKeyTree(applicationName);
+
+                                        MessageBox.Show("Application uninstalled successfully", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                                        KillCmd();
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // The application was not found in the registry
+                            Console.WriteLine("Application not found.");
+                            MessageBox.Show("Application not found", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    MessageBox.Show("An error while uninstalling application: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            else
+            {
+                MessageBox.Show(responseData.error, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
         #endregion
 
@@ -2238,66 +2456,6 @@ namespace Desktop
             }
         }
 
-        private DispatcherTimer UninstallResponseTimer;
-        private void UninstallResponseTimer_Tick(object sender, EventArgs e)
-        {
-            UninstallProgram();
-        }
-        private async Task UninstallProgram()
-        {
-            var servicesObject = new RetriveServices
-            {
-                authorization_token = KeyManager.GetValue("authorization_token"),
-                mac_address = AppConstants.MACAddress,
-                serial_number = AppConstants.SerialNumber
-            };
-            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
-
-            var formContent = new List<KeyValuePair<string, string>> {
-                        new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
-                        new KeyValuePair<string, string>("payload", payload)
-                    };
-
-            var response = await client.PostAsync(AppConstants.EndPoints.DeviceServices, new FormUrlEncodedContent(formContent));
-
-            if (response.IsSuccessStatusCode)
-            {
-                UninstallResponseTimer.Stop();
-                try
-                {
-                    //{2D00386E-B5B4-4D0D-9FF0-47F327597A87}
-                    ManagementObjectSearcher mos = new ManagementObjectSearcher(
-                      "SELECT * FROM Win32_Product WHERE Name ='FDS Setup'");
-                    foreach (ManagementObject mo in mos.Get())
-                    {
-                        try
-                        {
-                            if (mo["Name"].ToString() == "FDS Setup")
-                            {
-                                object hr = mo.InvokeMethod("Uninstall", null);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            throw ex;
-                            //this program may not have a name property, so an exception will be thrown
-                        }
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    throw ex;
-                }
-            }
-            else
-            {
-                UninstallResponseTimer = new DispatcherTimer();
-                UninstallResponseTimer.Tick += UninstallResponseTimer_Tick;
-                UninstallResponseTimer.Interval = TimeSpan.FromMilliseconds(1000 * 5); // in miliseconds
-                UninstallResponseTimer.Start();
-            }
-        }
         private void btnViewServices_Click(object sender, RoutedEventArgs e)
         {
             LoadMenu(Screens.DataProtection);
@@ -2306,7 +2464,7 @@ namespace Desktop
         {
             LoadMenu(Screens.Landing);
         }
-        
+
         public void updateTrayIcon()
         {
             try

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Desktop.DTO.Requests
+namespace FDS.DTO.Requests
 {
     public class LogServiceRequest
     {

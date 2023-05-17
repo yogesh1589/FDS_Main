@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Security.Cryptography;
 
-namespace Desktop.Common
+namespace FDS.Common
 {
     public class Cipher
     {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Desktop.Common
+namespace FDS.Common
 {
 
     public enum Screens

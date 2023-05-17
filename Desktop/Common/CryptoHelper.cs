@@ -12,7 +12,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Desktop.Common
+namespace FDS.Common
 {
     public class RSAKeys
     {

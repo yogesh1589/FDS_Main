@@ -2,7 +2,7 @@
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
 
-namespace Desktop.Common
+namespace FDS.Common
 {
     [Serializable]
     public class RSAParametersSerializable : ISerializable

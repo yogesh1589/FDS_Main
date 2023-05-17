@@ -5,13 +5,14 @@ using System.Management;
 using System.Net.NetworkInformation;
 using System.Text;
 
-namespace Desktop.Common
+namespace FDS.Common
 {
     public class AppConstants
     {
         internal const string InvalidKeyErrorMsg = "Invalid Key";
         internal const int TotalKeyActivationSeconds = 600;
         public const string KeyPrfix = "FDS_Key_";
+        //public const string AuthKey = SerialNumber + MACAddress + CodeVersion;
         public static string MachineName => System.Environment.MachineName;
 
         public class EndPoints
@@ -30,6 +31,8 @@ namespace Desktop.Common
             public const string DeviceReauth = "device/auth/reauth/";
             public const string WhiteListDomains = "device/whitelisted-domains/";
             public const string ExecuteNow = "subservice/executenow/";
+            public const string UninstallDevice = "uninstall/device/";
+            public const string UninstallCheck = "check/uninstall/device/";
         }
         public const string DeviceType = "1";
         public const string CodeVersion = "1.0";
