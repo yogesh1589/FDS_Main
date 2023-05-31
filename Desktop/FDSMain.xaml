@@ -226,14 +226,26 @@
                                 </StackPanel>
                             </Border>
                         </Grid>
-                        <Grid x:Name="AuthenticationProcessing" Margin="200,50,200,50" Visibility="Hidden">
-                            <Image Source="/Assets/AuthProcessing.png" Margin="20,20,20,20"/>
+                        <Grid x:Name="AuthenticationProcessing" Margin="200,0,200,50" Visibility="Hidden" Height="200" Width="300">
+                            <TextBlock x:Name="txtAuthProcesing" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                    Margin="0,0,0,-30" Foreground="Black" FontSize="18" FontWeight="Bold"> Authentication Processing
+                            </TextBlock>
                         </Grid>
-                        <Grid x:Name="AuthenticationSuccessfull" Margin="200,50,200,50" Visibility="Hidden">
-                            <Image Source="/Assets/AuthSuccessfull.png" Margin="20,20,20,20"/>
+                        <Grid x:Name="AuthenticationSuccessfull" Margin="200,0,200,50" Visibility="Hidden" Height="200" Width="300">
+                            <TextBlock x:Name="txtAuthSuccess" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,-30"
+                                    Foreground="Black" FontSize="18" FontWeight="Bold"> Authentication Successful
+                            </TextBlock>
                         </Grid>
-                        <Grid x:Name="AuthenticationFailed" Margin="200,50,200,50" Visibility="Hidden">
-                            <Image Source="/Assets/AuthFailed.png" Margin="20,20,20,20"/>
+                        <Grid x:Name="AuthenticationFailed" Margin="200,0,200,50" Visibility="Hidden" Height="200" Width="300">
+                            <TextBlock x:Name="txtAuthFailed" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,-30"
+                                    Foreground="Black" FontSize="18" FontWeight="Bold"> Authentication failed
+                            </TextBlock>
+                            <TextBlock PreviewMouseDown="txtTryAgain_PreviewMouseDown" x:Name="txtTryAgain" HorizontalAlignment="Center"
+                                    VerticalAlignment="Bottom" Foreground="Blue" Margin="0,10,0,-50" FontSize="12" FontWeight="Bold"
+                                    FontFamily="Radian" Cursor="Hand">
+                                <TextBlock.TextDecorations>
+                                    <TextDecoration/>
+                                </TextBlock.TextDecorations>Try again</TextBlock>
                         </Grid>
                         <Grid x:Name="cntQRCode" Margin="40,10,40,50" Visibility="Hidden">
                             <Border Background="White"  BorderThickness="1,1,1,1"  CornerRadius="45">

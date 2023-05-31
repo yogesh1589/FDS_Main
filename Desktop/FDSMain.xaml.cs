@@ -35,6 +35,9 @@ using Windows.Services.Maps;
 using System.Reflection;
 using System.Net.Mail;
 using System.Globalization;
+using WpfAnimatedGif;
+using System.Net;
+using System.IO.Compression;
 
 namespace FDS
 {
@@ -98,6 +101,7 @@ namespace FDS
         public DateTime WebCookieCronTime;
         public DateTime RegistryCronTime;
         public bool IsUnInstallFlag;
+        public bool IsServiceActive = true;
         #endregion
 
         #region Application initialization / Load
@@ -270,6 +274,8 @@ namespace FDS
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
+                        System.Windows.Controls.Image imgProcessing = SetGIF("\\Assets\\loader.gif");
+                        AuthenticationProcessing.Children.Add(imgProcessing);
                         break;
                     case Screens.AuthSuccessfull:
                         AuthenticationSuccessfull.Visibility = Visibility.Visible;
@@ -279,6 +285,8 @@ namespace FDS
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
+                        System.Windows.Controls.Image imgSuccess = SetGIF("\\Assets\\success.gif");
+                        AuthenticationSuccessfull.Children.Add(imgSuccess);
                         break;
                     case Screens.AuthFailed:
                         AuthenticationFailed.Visibility = Visibility.Visible;
@@ -288,6 +296,8 @@ namespace FDS
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
+                        System.Windows.Controls.Image imgfailed = SetGIF("\\Assets\\failed.gif");
+                        AuthenticationFailed.Children.Add(imgfailed);
                         break;
                     case Screens.QRCode:
                         cntQRCode.Visibility = Visibility.Visible;
@@ -345,6 +355,18 @@ namespace FDS
             {
                 MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private System.Windows.Controls.Image SetGIF(string ImagePath)
+        {
+            string uriString = Directory.GetCurrentDirectory() + ImagePath;
+            System.Windows.Controls.Image image = new System.Windows.Controls.Image();
+            BitmapImage bitmapImage = new BitmapImage();
+            bitmapImage.BeginInit();
+            bitmapImage.UriSource = new Uri(uriString);
+            bitmapImage.EndInit();
+            ImageBehavior.SetAnimatedSource(image, (ImageSource)bitmapImage);
+            return image;
         }
 
         private async void TimerLastUpdate_Tick(object sender, EventArgs e)
@@ -598,19 +620,20 @@ namespace FDS
                 }
                 else
                 {
-                    Dispatcher.Invoke(() =>
-                    {
-                        LoadMenu(Screens.AuthFailed);
-                        Dispatcher.Invoke(() =>
-                        {
-                            LoadMenu(Screens.AuthenticationMethods);
-                        });
-                    });
+
+                    LoadMenu(Screens.AuthFailed);
+
 
 
                 }
             }
         }
+
+        private void txtTryAgain_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            LoadMenu(Screens.AuthenticationMethods);
+        }
+
         private async void btnStep3Submit_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtEmailToken.Text))
@@ -887,12 +910,31 @@ namespace FDS
                 {
                     await DeviceConfigurationCheck();
                 }
+                if (IsServiceActive)
+                {
+                    lblCompliant.Text = "Your system is Compliant";
+                    string ImagePath = Path.Combine(BaseDir, "Assets/DeviceActive.png");
+                    BitmapImage DeviceDeactive = new BitmapImage();
+                    DeviceDeactive.BeginInit();
+                    DeviceDeactive.UriSource = new Uri(ImagePath);
+                    DeviceDeactive.EndInit();
+                    imgCompliant.Source = DeviceDeactive;
+                    LoadMenu(Screens.Landing);
+                }
             }
             else
             {
-                timerLastUpdate.IsEnabled = false;
-                btnGetStarted_Click(btnGetStarted, null);
-                MessageBox.Show("An error occurred in CheckDeviceHealth: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                //timerLastUpdate.IsEnabled = false;
+                //btnGetStarted_Click(btnGetStarted, null);
+                //MessageBox.Show("An error occurred in CheckDeviceHealth: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                lblCompliant.Text = "Ooops! Will be back soon.";
+                string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
+                BitmapImage DeviceDeactive = new BitmapImage();
+                DeviceDeactive.BeginInit();
+                DeviceDeactive.UriSource = new Uri(ImagePath);
+                DeviceDeactive.EndInit();
+                imgCompliant.Source = DeviceDeactive;
+                LoadMenu(Screens.Landing);
             }
         }
         private async Task DeviceConfigurationCheck()
@@ -941,6 +983,16 @@ namespace FDS
                             else if (api.Equals("3"))
                             {
                                 await DeviceReauth();
+                            }
+                            else if (api.Equals("5"))
+                            {
+                                IsServiceActive = false;
+                                await GetDeviceDetails();
+                            }
+                            else if (api.Equals("6"))
+                            {
+                                IsServiceActive = true;
+                                await GetDeviceDetails();
                             }
                         }
                     }
@@ -1020,8 +1072,29 @@ namespace FDS
                     txtUpdatedOn.Text = deviceDetail.updated_on != null ? localDate.ToString() : "";
 
                     //timerLastUpdate.IsEnabled = false;
-                    await RetrieveServices();
-                    LoadMenu(Screens.Landing);
+                    if (IsServiceActive)
+                    {
+                        await RetrieveServices();
+                        lblCompliant.Text = "Your system is Compliant";
+                        string ImagePath = Path.Combine(BaseDir, "Assets/DeviceActive.png");
+                        BitmapImage DeviceActive = new BitmapImage();
+                        DeviceActive.BeginInit();
+                        DeviceActive.UriSource = new Uri(ImagePath);
+                        DeviceActive.EndInit();
+                        imgCompliant.Source = DeviceActive;
+                        LoadMenu(Screens.Landing);
+                    }
+                    else
+                    {
+                        lblCompliant.Text = "Check With Administrator";
+                        string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
+                        BitmapImage DeviceDeactive = new BitmapImage();
+                        DeviceDeactive.BeginInit();
+                        DeviceDeactive.UriSource = new Uri(ImagePath);
+                        DeviceDeactive.EndInit();
+                        imgCompliant.Source = DeviceDeactive;
+                        LoadMenu(Screens.Landing);
+                    }
                 }
             }
             else
@@ -1186,7 +1259,7 @@ namespace FDS
         #endregion
 
         #region log / execute service
-        private async Task LogServicesData(string authorizationCode, string subServiceName, int FileProcessed, string ServiceId)
+        private async Task LogServicesData(string authorizationCode, string subServiceName, long FileProcessed, string ServiceId, bool IsManualExecution)
         {
             LogServiceRequest logServiceRequest = new LogServiceRequest
             {
@@ -1198,7 +1271,7 @@ namespace FDS
                 current_user = Environment.UserName,
                 executed = true,
                 file_deleted = Convert.ToString(FileProcessed),
-
+                IsManualExecution = IsManualExecution
             };
 
             var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(logServiceRequest))));
@@ -1252,26 +1325,29 @@ namespace FDS
         {
             try
             {
-                foreach (var services in servicesResponse.Services)
+                if (IsServiceActive)
                 {
-                    foreach (var subservice in services.Subservices)
+                    foreach (var services in servicesResponse.Services)
                     {
-                        if (subservice.Sub_service_active)
+                        foreach (var subservice in services.Subservices)
                         {
-                            if (subservice.Execute_now)
-                                ExecuteSubService(subservice);
-                            else if (subservice.Execution_period.ToString().ToLower() != "null")
+                            if (subservice.Sub_service_active)
                             {
-                                var schedule = CrontabSchedule.Parse(subservice.Execution_period);
-                                var nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
-                                lstCron.Add(subservice, nextRunTime);
-                                if (nextRunTime != null && nextRunTime == DateTime.Now)
+                                if (subservice.Execute_now)
                                     ExecuteSubService(subservice);
+                                else if (subservice.Execution_period.ToString().ToLower() != "null")
+                                {
+                                    var schedule = CrontabSchedule.Parse(subservice.Execution_period);
+                                    var nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
+                                    lstCron.Add(subservice, nextRunTime);
+                                    if (nextRunTime != null && nextRunTime == DateTime.Now)
+                                        ExecuteSubService(subservice);
+                                }
                             }
                         }
                     }
+                    CronLastUpdate.Start();
                 }
-                CronLastUpdate.Start();
             }
             catch (Exception ex)
             {
@@ -1284,25 +1360,25 @@ namespace FDS
             {
                 switch (subservices.Sub_service_name)
                 {
-                    case "dns_flushing":
+                    case "dns_cache_protection":
                         FlushDNS(subservices);
                         break;
-                    case "recycle_bin_cleaning":
+                    case "trash_data_protection":
                         ClearRecycleBin(subservices);
                         break;
-                    case "windows_registry_cleaning":
+                    case "windows_registry_protection":
                         ClearWindowsRegistry(subservices);
                         break;
-                    case "memory_cleaning":
+                    case "free_storage_protection":
                         DiskCleaning(subservices);
                         break;
-                    case "web_cookie_cleaning":
+                    case "web_session_protection":
                         WebCookieCleaning(subservices);
                         break;
-                    case "web_cache_cleaning":
+                    case "web_cache_protection":
                         WebCacheCleaning(subservices);
                         break;
-                    case "web_history_cleaning":
+                    case "web_tracking_protecting":
                         WebHistoryCleaning(subservices);
                         break;
                     default:
@@ -1333,7 +1409,7 @@ namespace FDS
                 KillCmd();
                 Console.WriteLine(String.Format("Successfully Flushed DNS:'{0}'", flushDnsCmd), EventLogEntryType.Information);
 
-                LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, 0, Convert.ToString(subservices.Id));
+                LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, 0, Convert.ToString(subservices.Id), subservices.Execute_now);
 
             }
             catch (Exception exp)
@@ -1359,18 +1435,11 @@ namespace FDS
             RegistryKey localMachine = Environment.Is64BitProcess == true ? RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64) : Registry.LocalMachine;//Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Mozilla\Mozilla Firefox\", true);
 
             var key = localMachine.OpenSubKey(@"SOFTWARE", true);
-            //RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE", true);
             key.SetAccessControl(rs);
             // Scan all subkeys under the defined key
             foreach (string subkeyName in key.GetSubKeyNames())
             {
                 RegistryKey subkey = key.OpenSubKey(subkeyName);
-
-                //if (subkey.ValueCount == 0 && subkey.SubKeyCount == 0 && string.Equals(subkeyName, "TestKey"))
-                //{
-                //    key.DeleteSubKeyTree(subkeyName);
-                //    Console.WriteLine("Deleted empty subkey: " + subkeyName);
-                //}
 
                 //Check if the subkey contains any values
                 if (subkey.ValueCount == 0 && subkey.SubKeyCount == 0)
@@ -1436,7 +1505,7 @@ namespace FDS
             Console.WriteLine("Total Regitry cleaned from current user", CUCount);
             Console.WriteLine("Total Regitry cleaned from current user", LMCount);
             int TotalCount = CUCount + LMCount;
-            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount, Convert.ToString(subservices.Id));
+            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount, Convert.ToString(subservices.Id), subservices.Execute_now);
         }
         public void KillCmd()
         {
@@ -1459,7 +1528,7 @@ namespace FDS
             SHEmptyRecycleBin(IntPtr.Zero, null, RecycleFlag.SHERB_NOCONFIRMATION | RecycleFlag.SHERB_NOPROGRESSUI | RecycleFlag.SHERB_NOSOUND);
             KillCmd();
 
-            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, count, Convert.ToString(subservices.Id));
+            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, count, Convert.ToString(subservices.Id), subservices.Execute_now);
         }
         private void DiskCleaning(SubservicesData subservices)
         {
@@ -1471,15 +1540,15 @@ namespace FDS
             process.Start();
             KillCmd();
 
-            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, 0, Convert.ToString(subservices.Id));
+            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, 0, Convert.ToString(subservices.Id), subservices.Execute_now);
         }
         private void WebCookieCleaning(SubservicesData subservices) // eventbased - all browser - Chrome, Mozilla, Edge, IE, BraveBrowser.
         {
             string SubServiceId = Convert.ToString(subservices.Id);
 
-            CheckWhiteListDomains(SubServiceId, subservices.Sub_service_authorization_code, subservices.Sub_service_name);
+            CheckWhiteListDomains(SubServiceId, subservices.Sub_service_authorization_code, subservices.Sub_service_name, subservices.Execute_now);
         }
-        private async void CheckWhiteListDomains(string SubServiceId, string Sub_service_authorization_code, string Sub_service_name)
+        private async void CheckWhiteListDomains(string SubServiceId, string Sub_service_authorization_code, string Sub_service_name, bool ExecuteNow)
         {
             try
             {
@@ -1502,7 +1571,7 @@ namespace FDS
 
                     int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
 
-                    LogServicesData(Sub_service_authorization_code, Sub_service_name, TotalCount, SubServiceId);
+                    LogServicesData(Sub_service_authorization_code, Sub_service_name, TotalCount, SubServiceId, ExecuteNow);
                 }
                 else
                     MessageBox.Show("An error occurred while fatching whitelist domains: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -1615,12 +1684,6 @@ namespace FDS
                                 connection.Open();
                                 using (SQLiteCommand command = connection.CreateCommand())
                                 {
-                                    //string query = "DELETE FROM moz_cookies WHERE";
-                                    //foreach (string domain in whitelistedDomain)
-                                    //{
-                                    //    query += " host not like " + domain + " And";
-                                    //}
-                                    //int RemoveAnd = query.Length - 4;
                                     string query = "DELETE FROM moz_cookies";
                                     if (whitelistedDomain.Count > 0)
                                     {
@@ -1680,14 +1743,6 @@ namespace FDS
                         connection.Open();
                         using (SQLiteCommand cmd = connection.CreateCommand())
                         {
-
-                            //string query = "DELETE FROM Cookies WHERE";
-                            //foreach (string domain in whitelistedDomain)
-                            //{
-                            //    query += " host_key not like " + domain + " And";
-                            //}
-                            //int RemoveAnd = query.Length - 4;
-                            //query = query.Remove(query.Length - 4);
                             string query = "DELETE FROM Cookies";
                             if (whitelistedDomain.Count > 0)
                             {
@@ -1725,15 +1780,6 @@ namespace FDS
                         connection.Open();
                         using (SQLiteCommand cmd = connection.CreateCommand())
                         {
-
-                            //string query = "DELETE FROM Cookies WHERE";
-                            //foreach (string domain in whitelistedDomain)
-                            //{
-                            //    query += " host_key not like " + domain + " And";
-                            //}
-                            //int RemoveAnd = query.Length - 4;
-                            //query = query.Remove(query.Length - 4);
-
                             string query = "DELETE FROM Cookies";
                             if (whitelistedDomain.Count > 0)
                             {
@@ -1765,7 +1811,7 @@ namespace FDS
 
             int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
 
-            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount, Convert.ToString(subservices.Id));
+            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount, Convert.ToString(subservices.Id), subservices.Execute_now);
         }
         public int ClearChromeHistory()
         {
@@ -2064,17 +2110,18 @@ namespace FDS
         }
         private void WebCacheCleaning(SubservicesData subservices)
         {
-            int ChromeCount = ClearChromeCache();
-            int FireFoxCount = ClearFirefoxCache();
-            int EdgeCount = ClearEdgeCache();
-            int OperaCount = ClearOperaCache();
+            long ChromeCount = ClearChromeCache();
+            long FireFoxCount = ClearFirefoxCache();
+            long EdgeCount = ClearEdgeCache();
+            long OperaCount = ClearOperaCache();
 
-            int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
-            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount, Convert.ToString(subservices.Id));
+            long TotalSize = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
+            LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalSize, Convert.ToString(subservices.Id), subservices.Execute_now);
         }
-        private int ClearChromeCache()
+        private long ClearChromeCache()
         {
             int TotalCount = 0;
+            long TotalSize = 0;
             Process[] chromeInstances = Process.GetProcessesByName("chrome");
             if (chromeInstances.Length == 0)
             {
@@ -2082,35 +2129,34 @@ namespace FDS
                 string cachePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\Default\Cache\Cache_Data";
                 if (Directory.Exists(cachePath))
                 {
-                    // Get the count of files in the cache folder
-                    int count = Directory.GetFiles(cachePath).Length;
 
                     // Clear the cache folder
                     foreach (string file in Directory.GetFiles(cachePath))
                     {
                         try
                         {
+                            TotalSize += file.Length;
                             File.Delete(file);
                             TotalCount++;
                         }
                         catch (IOException) { } // handle any exceptions here
                     }
-                    Console.WriteLine($"Total {count} {TotalCount} files cleared from Chrome cache.");
+                    Console.WriteLine($"Total {TotalSize} files cleared from Chrome cache.");
                 }
                 else
                 {
                     Console.WriteLine("Chrome Cache file not found.");
                 }
             }
-            return TotalCount;
+            return TotalSize;
         }
-        static int ClearFirefoxCache()
+        static long ClearFirefoxCache()
         {
             int TotalCount = 0;
+            long TotalSize = 0;
             Process[] firefoxInstances = Process.GetProcessesByName("firefox");
             if (firefoxInstances.Length == 0)
             {
-                long totalSize = 0;
                 string firefoxPath = GetFirefoxPath();
                 string profilePath = GetFirefoxProfilePath(firefoxPath);
 
@@ -2131,7 +2177,7 @@ namespace FDS
                                 {
                                     FileInfo info = new FileInfo(file);
                                     TotalCount++;
-                                    totalSize += info.Length;
+                                    TotalSize += info.Length;
                                     File.Delete(file);
                                 }
                                 catch (Exception ex)
@@ -2139,7 +2185,7 @@ namespace FDS
                                     Console.WriteLine($"Error deleting file: {ex.Message}");
                                 }
                             }
-                            Console.WriteLine($"Deleted {TotalCount} file of total {totalSize} bytes of {folder} cache");
+                            Console.WriteLine($"Deleted {TotalCount} file of total {TotalSize} bytes of {folder} cache");
                         }
                         else
                         {
@@ -2153,13 +2199,14 @@ namespace FDS
                     Console.WriteLine("Firefox profile not found");
                 }
 
-                Console.WriteLine("{0} Firefox cache items deleted", totalSize);
+                Console.WriteLine("{0} Firefox cache items deleted", TotalSize);
             }
-            return TotalCount;
+            return TotalSize;
         }
-        public int ClearEdgeCache()
+        public long ClearEdgeCache()
         {
             int TotalCount = 0;
+            long TotalSize = 0;
             Process[] msedgeInstances = Process.GetProcessesByName("msedge");
             if (msedgeInstances.Length == 0)
             {
@@ -2167,27 +2214,25 @@ namespace FDS
                 string cachePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Microsoft\Edge\User Data\Default\Cache\Cache_Data";
                 if (Directory.Exists(cachePath))
                 {
-                    // Get the count of files in the cache folder
-                    int count = Directory.GetFiles(cachePath).Length;
-
                     // Clear the cache folder
                     foreach (string file in Directory.GetFiles(cachePath))
                     {
                         try
                         {
+                            TotalSize += file.Length;
                             File.Delete(file);
                             TotalCount++;
                         }
                         catch (IOException) { } // handle any exceptions here
                     }
-                    Console.WriteLine($"Total {count} {TotalCount} files cleared from Chrome cache.");
+                    Console.WriteLine($"Total {TotalSize} files cleared from Chrome cache.");
                 }
                 else
                 {
                     Console.WriteLine("Chrome Cache file not found.");
                 }
             }
-            return TotalCount;
+            return TotalSize;
         }
         public void ClearIECache()
         {
@@ -2218,9 +2263,10 @@ namespace FDS
             int countCleared = currentCount - newCount;
             Console.WriteLine($"Deleted {countCleared} cache cleared");
         }
-        public int ClearOperaCache()
+        public long ClearOperaCache()
         {
             int TotalCount = 0;
+            long TotalSize = 0;
             Process[] OperaInstances = Process.GetProcessesByName("opera");
             if (OperaInstances.Length == 0)
             {
@@ -2231,13 +2277,14 @@ namespace FDS
                     // Delete all files in the cache directory
                     foreach (string file in Directory.GetFiles(cachePath))
                     {
+                        TotalSize += file.Length;
                         File.Delete(file);
                         TotalCount++;
                     }
                 }
-                Console.WriteLine("Deleted {0} files from the cache.", TotalCount);
+                Console.WriteLine("Deleted {0} files from the cache.", TotalSize);
             }
-            return TotalCount;
+            return TotalSize;
         }
 
         #endregion
@@ -2347,16 +2394,22 @@ namespace FDS
                 /// 1- Pending, 2 - Approved, 3 - Rejected
                 try
                 {
-                    if (responseData.Data == "2")
-
-                    //MessageBox.Show(responseData.msg, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                    //if (responseData.Data == "3")
-                    //{
-                    //    UninstallResponseTimer.Stop();
-                    //    MessageBox.Show(responseData.msg, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                    //}
-                    //else
+                    if (responseData.Data == "1")
                     {
+                        btnUninstall.ToolTip = "Your uninstall request is pending.";
+                        btnUninstall.Foreground = System.Windows.Media.Brushes.Gold;
+
+                    }
+                    else if (responseData.Data == "3")
+                    {
+                        UninstallResponseTimer.Stop();
+                        btnUninstall.ToolTip = "Your uninstall request has been declined!";
+                        btnUninstall.Foreground = System.Windows.Media.Brushes.Red;
+                    }
+                    else
+                    {
+                        btnUninstall.ToolTip = "Your uninstall request has been approved!";
+                        btnUninstall.Foreground = System.Windows.Media.Brushes.DarkGreen;
                         string applicationName = "FDS";
 
                         // Get the uninstall registry key for the application
@@ -2374,20 +2427,25 @@ namespace FDS
                                         string uninstallString = subKey.GetValue("UninstallString").ToString();
 
                                         //MessageBox.Show(uninstallString, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                                        CredDelete("FDS_Key_Key1", 1, 0);
                                         UninstallResponseTimer.Stop();
-                                        // Run the uninstall command
-
-                                        //Process.Start(uninstallString).WaitForExit();
+                                        timerLastUpdate.Stop();
+                                        timerDeviceLogin.Stop();
+                                        CredDelete("FDS_Key_Key1", 1, 0);
                                         Process.Start("cmd.exe", "/C " + uninstallString);
-
-                                        //System.Diagnostics.Process.Start("cmd.exe", "/C " + uninstallString);
-
+                                        Process[] processes = Process.GetProcessesByName(applicationName);
+                                        Process[] processArray = processes;
+                                        for (int index2 = 0; index2 < processArray.Length; ++index2)
+                                        {
+                                            Process process = processArray[index2];
+                                            process.Kill();
+                                            process.WaitForExit();
+                                            process = (Process)null;
+                                        }
                                         // Delete the registry key for the application
                                         key.DeleteSubKeyTree(applicationName);
 
                                         MessageBox.Show("Application uninstalled successfully", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                                        KillCmd();
+                                        //KillCmd();
                                     }
                                 }
                             }
@@ -2412,7 +2470,60 @@ namespace FDS
             }
         }
         #endregion
+        #region AutoUpdate
+        private void AutoUpdate()
+        {
+            string url = "http://example.com/update/yourapp.zip";
+            string str = "C:\\Temp\\FDS";
+            string installationPath = "";
+            if (!Directory.Exists(str))
+                Directory.CreateDirectory(str);
+            RegistryKey registryKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
+            if (registryKey != null)
+            {
+                object obj = registryKey.GetValue("FDS");
+                if (obj != null)
+                    installationPath = Path.GetDirectoryName(obj.ToString());
+            }
+            this.DownloadFile(url, str);
+            this.ReplaceFiles(str, installationPath);
+            Directory.Delete(str, true);
+        }
 
+        private void DownloadFile(string url, string temporaryPath)
+        {
+            using (WebClient webClient = new WebClient())
+            {
+                try
+                {
+                    webClient.DownloadFile(url, temporaryPath);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error downloading file: " + ex.Message);
+                }
+            }
+            ZipFile.ExtractToDirectory(Path.Combine(temporaryPath, "yourapp.zip"), temporaryPath);
+        }
+
+        private void ReplaceFiles(string temporaryPath, string installationPath)
+        {
+            try
+            {
+                foreach (Process process in Process.GetProcessesByName("FDS"))
+                {
+                    process.Kill();
+                    process.WaitForExit();
+                }
+                foreach (FileInfo file in new DirectoryInfo(temporaryPath).GetFiles())
+                    file.CopyTo(Path.Combine(installationPath, file.Name));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error replacing files: " + ex.Message);
+            }
+        }
+        #endregion
         #region unwanted code for now
         private void btnSettings_Click(object sender, RoutedEventArgs e)
         {

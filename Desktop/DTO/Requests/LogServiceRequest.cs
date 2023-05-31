@@ -16,5 +16,7 @@ namespace FDS.DTO.Requests
         public string current_user { get; set; }
         public bool executed { get; set; }
         public string file_deleted { get; set; }
+
+        public bool IsManualExecution { get; set; }
     }
 }
