@@ -168,6 +168,7 @@
     <Compile Include="DTO\Requests\LogServiceRequest.cs" />
     <Compile Include="DTO\Requests\RetriveServices.cs" />
     <Compile Include="DTO\Requests\ExecuteNow.cs" />
+    <Compile Include="DTO\Responses\CountryCodeResponse.cs" />
     <Compile Include="DTO\Responses\DeviceConfigCheckResponse.cs" />
     <Compile Include="DTO\Responses\HealthCheckResponse.cs" />
     <Compile Include="DTO\Responses\ServicesResponse.cs" />
@@ -412,6 +413,9 @@
     <PackageReference Include="System.Security.Cryptography.OpenSsl">
       <Version>5.0.0</Version>
     </PackageReference>
+    <PackageReference Include="WpfAnimatedGif">
+      <Version>2.0.2</Version>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Assets\AuthFailed.png" />
@@ -449,6 +453,17 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\loader.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\success.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\DeviceActive.png" />
+    <Resource Include="Assets\DeviceDisable.png" />
+    <Resource Include="Assets\failed.gif" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

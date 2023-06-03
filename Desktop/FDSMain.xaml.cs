@@ -38,6 +38,8 @@ using System.Globalization;
 using WpfAnimatedGif;
 using System.Net;
 using System.IO.Compression;
+using System.Collections.ObjectModel;
+using System.Windows.Controls;
 
 namespace FDS
 {
@@ -178,7 +180,7 @@ namespace FDS
             try
             {
                 bool valid = CheckAllKeys();
-
+               
                 if (!valid)
                 {
                     LoadMenu(Screens.GetStart);
@@ -483,6 +485,26 @@ namespace FDS
         private void btnCredential_Click(object sender, RoutedEventArgs e)
         {
             LoadMenu(Screens.AuthenticationStep1);
+            GetcountryCode();
+        }
+        public async void GetcountryCode()
+        {
+            var response = await client.GetAsync(AppConstants.EndPoints.CountryCode);
+            if (response.IsSuccessStatusCode)
+            {
+                var responseString = await response.Content.ReadAsStringAsync();
+                CountryCodeResponse responseData = JsonConvert.DeserializeObject<CountryCodeResponse>(responseString);
+                List<CountryCode> countries = responseData.data;
+                ObservableCollection<string> CountryCode = new ObservableCollection<string>();
+                if (countries.Count > 0 && countries != null)
+                {
+                    foreach (var country in countries)
+                    {
+                        CountryCode.Add(country.phone_code +" - "+ country.name);
+                    }
+                }
+                cmbCountryCode.ItemsSource = CountryCode;
+            }
         }
         private async void btnSendOTP_Click(object sender, RoutedEventArgs e)
         {
@@ -501,8 +523,10 @@ namespace FDS
                     if (response.IsSuccessStatusCode)
                     {
                         LoadMenu(Screens.AuthenticationStep2);
-                        txtCodeVerification.Text = "A verification code has been sent to " + txtPhoneNubmer.Text;
-                        txtEmailVerification.Text = "A 32 digit token has been sent to  " + txtEmail.Text;
+                        txtEmailVerification.TextAlignment = TextAlignment.Center;
+                        txtCodeVerification.TextAlignment = TextAlignment.Center;
+                        txtCodeVerification.Text = "A verification code has been sent to \n" + txtPhoneNubmer.Text;
+                        txtEmailVerification.Text = "A 32 digit token has been sent to  \n" + txtEmail.Text;
                     }
                 }
                 else
@@ -674,6 +698,7 @@ namespace FDS
                     new KeyValuePair<string, string>("device_type", AppConstants.DeviceType),
                     new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
                     new KeyValuePair<string, string>("os_version", AppConstants.OSVersion),
+                    new KeyValuePair<string, string>("device_uuid", AppConstants.UUId),
                 };
                 var response = await client.PostAsync(AppConstants.EndPoints.Start, new FormUrlEncodedContent(formContent));
 
@@ -1099,8 +1124,8 @@ namespace FDS
             }
             else
             {
-                timerLastUpdate.IsEnabled = false;
-                btnGetStarted_Click(btnGetStarted, null);
+                //timerLastUpdate.IsEnabled = false;
+                //btnGetStarted_Click(btnGetStarted, null);
                 MessageBox.Show("An error occurred in GetDeviceDetails: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -1140,8 +1165,8 @@ namespace FDS
             }
             else
             {
-                timerLastUpdate.IsEnabled = false;
-                btnGetStarted_Click(btnGetStarted, null);
+                //timerLastUpdate.IsEnabled = false;
+                //btnGetStarted_Click(btnGetStarted, null);
                 MessageBox.Show("An error occurred in RetrieveServices: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -1296,8 +1321,8 @@ namespace FDS
             }
             else
             {
-                timerLastUpdate.IsEnabled = false;
-                btnGetStarted_Click(btnGetStarted, null);
+                //timerLastUpdate.IsEnabled = false;
+                //btnGetStarted_Click(btnGetStarted, null);
                 MessageBox.Show("An error occurred in LogServicesData: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -2470,6 +2495,7 @@ namespace FDS
             }
         }
         #endregion
+
         #region AutoUpdate
         private void AutoUpdate()
         {
@@ -2524,6 +2550,7 @@ namespace FDS
             }
         }
         #endregion
+
         #region unwanted code for now
         private void btnSettings_Click(object sender, RoutedEventArgs e)
         {
@@ -2594,5 +2621,12 @@ namespace FDS
             }
         }
         #endregion
+
+        private void cmbCountryCode_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            // Get the selected value or content
+            string selectedValue =  e.AddedItems[0].ToString().Split('-')[0].Trim();
+            cmbCountryCode.SelectedValue = selectedValue;
+        }
     }
 }

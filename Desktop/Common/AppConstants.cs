@@ -33,6 +33,7 @@ namespace FDS.Common
             public const string ExecuteNow = "subservice/executenow/";
             public const string UninstallDevice = "uninstall/device/";
             public const string UninstallCheck = "check/uninstall/device/";
+            public const string CountryCode = "location/";
         }
         public const string DeviceType = "1";
         public const string CodeVersion = "1.0";
@@ -81,6 +82,21 @@ namespace FDS.Common
                 }
                 //string mac = (from o in objects orderby o["IPConnectionMetric"] select o["MACAddress"].ToString()).FirstOrDefault();
                 return mac;
+            }
+        }
+        public static string UUId
+        {
+            get
+            {
+                string uuid = string.Empty;
+                ManagementObjectSearcher searcher = new ManagementObjectSearcher("Select UUID from Win32_ComputerSystemProduct");
+                foreach (ManagementObject mo in searcher.Get())
+                {
+                    uuid = mo["UUId"].ToString();
+                    break;
+                }
+                //string mac = (from o in objects orderby o["IPConnectionMetric"] select o["MACAddress"].ToString()).FirstOrDefault();
+                return uuid;
             }
         }
     }
