@@ -40,6 +40,9 @@ using System.Net;
 using System.IO.Compression;
 using System.Collections.ObjectModel;
 using System.Windows.Controls;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using Windows.UI.Xaml.Controls.Primitives;
 
 namespace FDS
 {
@@ -110,7 +113,7 @@ namespace FDS
         public FDSMain()
         {
             InitializeComponent();
-
+            DataContext = this;
             QRGeneratortimer = new DispatcherTimer();
             QRGeneratortimer.Interval = TimeSpan.FromMilliseconds(100);
             QRGeneratortimer.Tick += QRGeneratortimer_Tick;
@@ -153,6 +156,9 @@ namespace FDS
             client = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI };
             IsUninstallFlagUpdated();
 
+
+
+
             //whitelistedDomain.Add("'%.google.com%'");
             //whitelistedDomain.Add("'%.clickup.com%'");
             //whitelistedDomain.Add("'%.slack.com%'");
@@ -166,6 +172,10 @@ namespace FDS
 
             //#endregion
         }
+        //protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        //{
+        //    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        //}
         public void FDSMain_Loaded(object sender, RoutedEventArgs e)
         {
             //CredDelete("FDS_Key_Key1", 1, 0);
@@ -179,8 +189,9 @@ namespace FDS
 
             try
             {
+                //LoadMenu(Screens.AuthenticationMethods);
                 bool valid = CheckAllKeys();
-               
+
                 if (!valid)
                 {
                     LoadMenu(Screens.GetStart);
@@ -500,7 +511,7 @@ namespace FDS
                 {
                     foreach (var country in countries)
                     {
-                        CountryCode.Add(country.phone_code +" - "+ country.name);
+                        CountryCode.Add(country.phone_code + "              " + country.name);
                     }
                 }
                 cmbCountryCode.ItemsSource = CountryCode;
@@ -517,7 +528,8 @@ namespace FDS
 
                     var formContent = new List<KeyValuePair<string, string>> {
                         new KeyValuePair<string, string>("assing_to_user", txtEmail.Text),
-                        new KeyValuePair<string, string>("phone_no", txtPhoneNubmer.Text)
+                        new KeyValuePair<string, string>("phone_no", txtPhoneNubmer.Text),
+                        new KeyValuePair<string, string>("phone_code", cmbCountryCode.Text.Split(' ')[0].Trim())
                     };
                     var response = await client.PostAsync(AppConstants.EndPoints.Otp, new FormUrlEncodedContent(formContent));
                     if (response.IsSuccessStatusCode)
@@ -2621,12 +2633,5 @@ namespace FDS
             }
         }
         #endregion
-
-        private void cmbCountryCode_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-        {
-            // Get the selected value or content
-            string selectedValue =  e.AddedItems[0].ToString().Split('-')[0].Trim();
-            cmbCountryCode.SelectedValue = selectedValue;
-        }
     }
 }
