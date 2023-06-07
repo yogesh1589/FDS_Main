@@ -12,5 +12,6 @@ namespace FDS.DTO.Requests
         public string mac_address { get; set; }
         public string authorization_token { get; set; }
         public string code_version { get; set; }
+        public string device_uuid { get; set; }
     }
 }

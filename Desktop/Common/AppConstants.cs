@@ -34,6 +34,7 @@ namespace FDS.Common
             public const string UninstallDevice = "uninstall/device/";
             public const string UninstallCheck = "check/uninstall/device/";
             public const string CountryCode = "location/";
+            public const string AutoUpdate = "update/";
         }
         public const string DeviceType = "1";
         public const string CodeVersion = "1.0";

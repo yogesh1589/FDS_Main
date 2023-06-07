@@ -18,5 +18,6 @@ namespace FDS.DTO.Requests
         public string file_deleted { get; set; }
 
         public bool IsManualExecution { get; set; }
+        public string device_uuid { get; set; }
     }
 }

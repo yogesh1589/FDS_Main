@@ -40,9 +40,10 @@ using System.Net;
 using System.IO.Compression;
 using System.Collections.ObjectModel;
 using System.Windows.Controls;
+using System.DirectoryServices.AccountManagement;
+using Windows.Storage;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using Windows.UI.Xaml.Controls.Primitives;
+using System.Windows.Data;
 
 namespace FDS
 {
@@ -107,13 +108,18 @@ namespace FDS
         public DateTime RegistryCronTime;
         public bool IsUnInstallFlag;
         public bool IsServiceActive = true;
+        List<string> userList = new List<string>();
+        string applicationName = "FDS";
+        string TempPath = "C:\\Temp\\FDS";
+        ViewModel VM = new ViewModel();
+        public ObservableCollection<CountryCode> AllCounties { get; }
         #endregion
 
         #region Application initialization / Load
         public FDSMain()
         {
             InitializeComponent();
-            DataContext = this;
+            DataContext = new ViewModel();
             QRGeneratortimer = new DispatcherTimer();
             QRGeneratortimer.Interval = TimeSpan.FromMilliseconds(100);
             QRGeneratortimer.Tick += QRGeneratortimer_Tick;
@@ -132,9 +138,9 @@ namespace FDS
             timerLastUpdate.IsEnabled = false;
 
             CronLastUpdate = new DispatcherTimer();
-            CronLastUpdate.Interval = TimeSpan.FromMilliseconds(10000);
+            CronLastUpdate.Interval = TimeSpan.FromMilliseconds(59000);
             CronLastUpdate.Tick += CronLastUpdate_Tick;
-            timerLastUpdate.IsEnabled = false;
+            CronLastUpdate.IsEnabled = false;
 
             UninstallResponseTimer = new DispatcherTimer();
             UninstallResponseTimer.Tick += UninstallResponseTimer_Tick;
@@ -155,10 +161,8 @@ namespace FDS
             thisWindow = GetWindow(this);
             client = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI };
             IsUninstallFlagUpdated();
-
-
-
-
+            //cmbCountryCode.DropDownOpened += cmbCountryCode_DropDownOpened;
+            cmbCountryCode.DropDownClosed += cmbCountryCode_DropDownClosed;
             //whitelistedDomain.Add("'%.google.com%'");
             //whitelistedDomain.Add("'%.clickup.com%'");
             //whitelistedDomain.Add("'%.slack.com%'");
@@ -172,10 +176,7 @@ namespace FDS
 
             //#endregion
         }
-        //protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        //{
-        //    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        //}
+       
         public void FDSMain_Loaded(object sender, RoutedEventArgs e)
         {
             //CredDelete("FDS_Key_Key1", 1, 0);
@@ -186,14 +187,46 @@ namespace FDS
             //            new Service()
             //};
             //ServiceBase.Run(ServicesToRun);
-
+            //LoadMenu(Screens.AuthenticationMethods);
             try
             {
-                //LoadMenu(Screens.AuthenticationMethods);
+
+                //using (var context = new PrincipalContext(ContextType.Machine))
+                //{
+                //    using (var searcher = new PrincipalSearcher(new UserPrincipal(context)))
+                //    {
+                //        foreach (var result in searcher.FindAll())
+                //        {
+                //            if (result is UserPrincipal userPrincipal)
+                //            {
+                //                userList.Add(userPrincipal.SamAccountName);
+                //            }
+                //        }
+                //    }
+                //}
+
                 bool valid = CheckAllKeys();
 
                 if (!valid)
                 {
+                    #region Auto start on startup done by Installer
+
+                    string applicationPath = "";
+                    RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
+                    if (registryKey != null)
+                    {
+                        object obj = registryKey.GetValue("FDS");
+                        if (obj != null)
+                            applicationPath = Path.GetDirectoryName(obj.ToString());
+                    }
+
+                    RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+                    string AutoStartBaseDir = applicationPath;
+                    string exeFile = Path.Combine(AutoStartBaseDir, "FDS.exe");
+                    key.SetValue("FDS", exeFile);
+
+                    #endregion
+
                     LoadMenu(Screens.GetStart);
                     //IsUninstallFlagUpdated();
                 }
@@ -437,6 +470,23 @@ namespace FDS
                     KeyManager.SaveValue("DP", Convert.ToBase64String(RSAParam.DP));
                     KeyManager.SaveValue("DQ", Convert.ToBase64String(RSAParam.DQ));
                     KeyManager.SaveValue("InverseQ", Convert.ToBase64String(RSAParam.InverseQ));
+
+
+                    //foreach (var user in userList)
+                    //{
+                    //    RSADevice = new RSACryptoServiceProvider(2048);
+                    //    RSAParam = RSADevice.ExportParameters(true);
+                    //    KeyManager.SaveValue("Modulus", Convert.ToBase64String(RSAParam.Modulus), user);
+                    //    KeyManager.SaveValue("Exponent", Convert.ToBase64String(RSAParam.Exponent), user);
+                    //    KeyManager.SaveValue("D", Convert.ToBase64String(RSAParam.D), user);
+                    //    KeyManager.SaveValue("P", Convert.ToBase64String(RSAParam.P), user);
+                    //    KeyManager.SaveValue("Q", Convert.ToBase64String(RSAParam.Q), user);
+                    //    KeyManager.SaveValue("DP", Convert.ToBase64String(RSAParam.DP), user);
+                    //    KeyManager.SaveValue("DQ", Convert.ToBase64String(RSAParam.DQ), user);
+                    //    KeyManager.SaveValue("InverseQ", Convert.ToBase64String(RSAParam.InverseQ), user);
+                    //}
+
+
                 }
                 RSAParam = new RSAParameters
                 {
@@ -498,23 +548,87 @@ namespace FDS
             LoadMenu(Screens.AuthenticationStep1);
             GetcountryCode();
         }
+        private void cmbCountryCode_KeyUp(object sender, KeyEventArgs e)
+        {
+            string searchKeyword = cmbCountryCode.Text.ToLower();
+            // bool isNumeric = double.TryParse(searchKeyword, out double numericValue);
+            //cmbCountryCode.Items.Filter = item =>
+            //{
+            //    if (item.ToString().ToLower().Contains(searchKeyword))
+            //        return true;
+            //    else
+            //        return false;
+            //};
+            //cmbCountryCode.IsDropDownOpen = true;
+            //e.Handled = true;
+
+
+            // Filter the Countries collection based on the search text
+            var filteredCountries = VM.AllCountries.Where(c => c.DisplayText.ToLower().Contains(searchKeyword));
+
+            // Update the ComboBox items source with the filtered collection
+            cmbCountryCode.ItemsSource = filteredCountries;
+            cmbCountryCode.IsDropDownOpen = true;
+        }
+
         public async void GetcountryCode()
         {
+            //var response = await client.GetAsync(AppConstants.EndPoints.CountryCode);
+            //if (response.IsSuccessStatusCode)
+            //{
+            //    var responseString = await response.Content.ReadAsStringAsync();
+            //    CountryCodeResponse responseData = JsonConvert.DeserializeObject<CountryCodeResponse>(responseString);
+            //    List<CountryCode> countryList = responseData.data;
+
+            //    //ObservableCollection<string> countries = new ObservableCollection<string>();
+            //    ////List<string> CountryCode = new List<string>();
+            //    ////List<CountryCode> countryList = new List<CountryCode>();
+
+            //    //if (countries.Count > 0 && countries != null)
+            //    //{
+            //    //    foreach (var country in countryList)
+            //    //    {
+            //    //        new CountryCode { country_code = country.country_code, phone_code = country.phone_code };
+            //    //        countries.Add(country.phone_code);
+            //    //    }
+            //    //}
+
+            //    //VM.AllCountries = countryList;
+            //    //cmbCountryCode.ItemsSource = VM.AllCountries;
+
+            //}
+
             var response = await client.GetAsync(AppConstants.EndPoints.CountryCode);
             if (response.IsSuccessStatusCode)
             {
                 var responseString = await response.Content.ReadAsStringAsync();
                 CountryCodeResponse responseData = JsonConvert.DeserializeObject<CountryCodeResponse>(responseString);
-                List<CountryCode> countries = responseData.data;
-                ObservableCollection<string> CountryCode = new ObservableCollection<string>();
-                if (countries.Count > 0 && countries != null)
+                List<CountryCode> countryList = responseData.data;
+
+                //ObservableCollection<string> countries = new ObservableCollection<string>();
+
+                //if (countryList.Count > 0 && countryList != null)
+                //{
+                //    foreach (var country in countryList)
+                //    {
+                //        countries.Add(country.DisplayText);
+                //    }
+                //}
+
+                VM.AllCountries = countryList;
+                cmbCountryCode.ItemsSource = VM.AllCountries;
+
+            }
+        }
+        private void cmbCountryCode_DropDownClosed(object sender, EventArgs e)
+        {
+            if (cmbCountryCode.SelectedItem != null)
+            {
+                if (cmbCountryCode.SelectedItem is CountryCode selectedCountry)
                 {
-                    foreach (var country in countries)
-                    {
-                        CountryCode.Add(country.phone_code + "              " + country.name);
-                    }
+                    cmbCountryCode.SelectedValue = selectedCountry.Phone_code;
+                    VM.SelectedCountryCode = selectedCountry.Phone_code;
                 }
-                cmbCountryCode.ItemsSource = CountryCode;
             }
         }
         private async void btnSendOTP_Click(object sender, RoutedEventArgs e)
@@ -529,7 +643,7 @@ namespace FDS
                     var formContent = new List<KeyValuePair<string, string>> {
                         new KeyValuePair<string, string>("assing_to_user", txtEmail.Text),
                         new KeyValuePair<string, string>("phone_no", txtPhoneNubmer.Text),
-                        new KeyValuePair<string, string>("phone_code", cmbCountryCode.Text.Split(' ')[0].Trim())
+                        new KeyValuePair<string, string>("phone_code", txtCountryCode.Text)
                     };
                     var response = await client.PostAsync(AppConstants.EndPoints.Otp, new FormUrlEncodedContent(formContent));
                     if (response.IsSuccessStatusCode)
@@ -630,6 +744,7 @@ namespace FDS
                         new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
                         new KeyValuePair<string, string>("assing_to_user", txtEmail.Text),
                         new KeyValuePair<string, string>("phone_no", txtPhoneNubmer.Text),
+                        new KeyValuePair<string, string>("phone_code", txtCountryCode.Text),
                         new KeyValuePair<string, string>("otp", txtToken.Text),
                         new KeyValuePair<string, string>("token", txtEmailToken.Text),
                         new KeyValuePair<string, string>("qr_code_token", DeviceResponse.qr_code_token)
@@ -656,11 +771,7 @@ namespace FDS
                 }
                 else
                 {
-
                     LoadMenu(Screens.AuthFailed);
-
-
-
                 }
             }
         }
@@ -825,14 +936,15 @@ namespace FDS
                     timerDeviceLogin.IsEnabled = false;
                     var responseString = await response.Content.ReadAsStringAsync();
                     QRCodeResponse = JsonConvert.DeserializeObject<QRCodeResponse>(responseString);
-                    //var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-                    //var plainText = Decrypt(responseData.Data);
-                    //var deviceDetail = JsonConvert.DeserializeObject<QRCodeResponse>(plainText);
                     int LengthAllowed = 512;
-                    KeyManager.SaveValue("Key1", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(0, LengthAllowed) : QRCodeResponse.Public_key);
-                    KeyManager.SaveValue("Key2", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(LengthAllowed, QRCodeResponse.Public_key.Length - LengthAllowed) : "");
-                    KeyManager.SaveValue("Authentication_token", QRCodeResponse.Authentication_token);
-                    KeyManager.SaveValue("Authorization_token", QRCodeResponse.Authorization_token);
+                    foreach (var user in userList)
+                    {
+                        //MessageBox.Show("Credentials has been saved: ", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                        KeyManager.SaveValue("Key1", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(0, LengthAllowed) : QRCodeResponse.Public_key);
+                        KeyManager.SaveValue("Key2", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(LengthAllowed, QRCodeResponse.Public_key.Length - LengthAllowed) : "");
+                        KeyManager.SaveValue("Authentication_token", QRCodeResponse.Authentication_token);
+                        KeyManager.SaveValue("Authorization_token", QRCodeResponse.Authorization_token);
+                    }
                     RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));
                     timerQRCode.IsEnabled = false;
                     if (MenuChange)
@@ -869,18 +981,19 @@ namespace FDS
         }
         private async Task KeyExchange()
         {
-            QRCodeResponse = new QRCodeResponse
-            {
-                Public_key = KeyManager.GetValue("Key1") + KeyManager.GetValue("Key2"),
-                Authentication_token = KeyManager.GetValue("Authentication_token"),
-                Authorization_token = KeyManager.GetValue("Authorization_token")
-            };
+            //QRCodeResponse = new QRCodeResponse
+            //{
+            //    Public_key = KeyManager.GetValue("Key1") + KeyManager.GetValue("Key2"),
+            //    Authentication_token = KeyManager.GetValue("Authentication_token"),
+            //    Authorization_token = KeyManager.GetValue("Authorization_token")
+            //};
             var exchangeObject = new KeyExchange
             {
                 authorization_token = KeyManager.GetValue("authorization_token"),
                 mac_address = AppConstants.MACAddress,
                 public_key = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(RSAKeys.ExportPublicKey(RSADevice))),
-                serial_number = AppConstants.SerialNumber
+                serial_number = AppConstants.SerialNumber,
+                device_uuid = AppConstants.UUId,
             };
 
             var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(exchangeObject))));
@@ -920,6 +1033,7 @@ namespace FDS
                 mac_address = AppConstants.MACAddress,
                 serial_number = AppConstants.SerialNumber,
                 current_user = Environment.UserName,
+                device_uuid = AppConstants.UUId,
                 //app_version
                 //os_version
             };
@@ -980,7 +1094,8 @@ namespace FDS
             {
                 authorization_token = KeyManager.GetValue("authorization_token"),
                 mac_address = AppConstants.MACAddress,
-                serial_number = AppConstants.SerialNumber
+                serial_number = AppConstants.SerialNumber,
+                device_uuid = AppConstants.UUId,
             };
             var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
 
@@ -1031,6 +1146,10 @@ namespace FDS
                                 IsServiceActive = true;
                                 await GetDeviceDetails();
                             }
+                            else if (api.Equals("7"))
+                            {
+                                AutoUpdate();
+                            }
                         }
                     }
                 }
@@ -1048,7 +1167,8 @@ namespace FDS
             {
                 authorization_token = KeyManager.GetValue("authorization_token"),
                 mac_address = AppConstants.MACAddress,
-                serial_number = AppConstants.SerialNumber
+                serial_number = AppConstants.SerialNumber,
+                device_uuid = AppConstants.UUId
             };
             var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
 
@@ -1077,6 +1197,7 @@ namespace FDS
                 serial_number = AppConstants.SerialNumber,
                 mac_address = AppConstants.MACAddress,
                 authorization_token = KeyManager.GetValue("authorization_token"),
+                device_uuid = AppConstants.UUId
 
             };
             var message = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(exchangeObject)));
@@ -1148,7 +1269,8 @@ namespace FDS
             {
                 authorization_token = KeyManager.GetValue("authorization_token"),
                 mac_address = AppConstants.MACAddress,
-                serial_number = AppConstants.SerialNumber
+                serial_number = AppConstants.SerialNumber,
+                device_uuid = AppConstants.UUId
             };
             var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
 
@@ -1162,6 +1284,7 @@ namespace FDS
 
             if (response.IsSuccessStatusCode)
             {
+                //MessageBox.Show("Current User: " + WindowsIdentity.GetCurrent().Name, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 var responseString = await response.Content.ReadAsStringAsync();
                 var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
                 var plainText = RetriveDecrypt(responseData.Data);
@@ -1303,6 +1426,7 @@ namespace FDS
                 authorization_token = KeyManager.GetValue("authorization_token"),
                 mac_address = AppConstants.MACAddress,
                 serial_number = AppConstants.SerialNumber,
+                device_uuid = AppConstants.UUId,
                 sub_service_authorization_code = authorizationCode,
                 sub_service_name = subServiceName,
                 current_user = Environment.UserName,
@@ -1371,7 +1495,10 @@ namespace FDS
                             if (subservice.Sub_service_active)
                             {
                                 if (subservice.Execute_now)
+                                {
                                     ExecuteSubService(subservice);
+                                    //MessageBox.Show("Executed Service: " + subservice.Name + " for user " + WindowsIdentity.GetCurrent().Name, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                                }
                                 else if (subservice.Execution_period.ToString().ToLower() != "null")
                                 {
                                     var schedule = CrontabSchedule.Parse(subservice.Execution_period);
@@ -2397,7 +2524,8 @@ namespace FDS
             var formContent = new List<KeyValuePair<string, string>> {
                 new KeyValuePair<string, string>("mac_address", AppConstants.MACAddress),
                 new KeyValuePair<string, string>("serial_number", AppConstants.SerialNumber),
-                new KeyValuePair<string, string>("current_user", Environment.UserName)
+                new KeyValuePair<string, string>("current_user", Environment.UserName),
+                new KeyValuePair<string, string>("device_uuid", AppConstants.UUId)
             };
             var response = await client.PostAsync(AppConstants.EndPoints.UninstallDevice, new FormUrlEncodedContent(formContent));
             var responseString = await response.Content.ReadAsStringAsync();
@@ -2421,7 +2549,8 @@ namespace FDS
             var formContent = new List<KeyValuePair<string, string>> {
                 new KeyValuePair<string, string>("mac_address", AppConstants.MACAddress),
                 new KeyValuePair<string, string>("serial_number", AppConstants.SerialNumber),
-                new KeyValuePair<string, string>("current_user", Environment.UserName)
+                new KeyValuePair<string, string>("current_user", Environment.UserName),
+                new KeyValuePair<string, string>("device_uuid", AppConstants.UUId)
             };
             var response = await client.PostAsync(AppConstants.EndPoints.UninstallCheck, new FormUrlEncodedContent(formContent));
             var responseString = await response.Content.ReadAsStringAsync();
@@ -2509,23 +2638,42 @@ namespace FDS
         #endregion
 
         #region AutoUpdate
-        private void AutoUpdate()
+        private async void AutoUpdate()
         {
-            string url = "http://example.com/update/yourapp.zip";
-            string str = "C:\\Temp\\FDS";
-            string installationPath = "";
-            if (!Directory.Exists(str))
-                Directory.CreateDirectory(str);
-            RegistryKey registryKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
-            if (registryKey != null)
+            var formContent = new List<KeyValuePair<string, string>> {
+                        new KeyValuePair<string, string>("serial_number", AppConstants.SerialNumber),
+                        new KeyValuePair<string, string>("mac_address",AppConstants.MACAddress),
+                        new KeyValuePair<string, string>("device_uuid", AppConstants.UUId)
+                    };
+            var response = await client.PostAsync(AppConstants.EndPoints.AutoUpdate, new FormUrlEncodedContent(formContent));
+            if (response.IsSuccessStatusCode)
             {
-                object obj = registryKey.GetValue("FDS");
-                if (obj != null)
-                    installationPath = Path.GetDirectoryName(obj.ToString());
+                var responseString = await response.Content.ReadAsStringAsync();
+                AutoUpdateResponse UpdateResponse = JsonConvert.DeserializeObject<AutoUpdateResponse>(responseString);
+
+                var getresponse = await client.GetAsync(AppConstants.EndPoints.AutoUpdate + UpdateResponse.msg);
+                if (getresponse.IsSuccessStatusCode)
+                {
+                    var getresponseString = await response.Content.ReadAsStringAsync();
+                    AutoUpdateResponse UpdateGetResponse = JsonConvert.DeserializeObject<AutoUpdateResponse>(responseString);
+                    string Url = UpdateResponse.msg;
+                    //string url = "http://example.com/update/yourapp.zip";
+
+                    string installationPath = "";
+                    if (!Directory.Exists(TempPath))
+                        Directory.CreateDirectory(TempPath);
+                    RegistryKey registryKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
+                    if (registryKey != null)
+                    {
+                        object obj = registryKey.GetValue("FDS");
+                        if (obj != null)
+                            installationPath = Path.GetDirectoryName(obj.ToString());
+                    }
+                    this.DownloadFile(Url, TempPath);
+                }
+                //this.ReplaceFiles(str, installationPath);
+                //Directory.Delete(str, true);
             }
-            this.DownloadFile(url, str);
-            this.ReplaceFiles(str, installationPath);
-            Directory.Delete(str, true);
         }
 
         private void DownloadFile(string url, string temporaryPath)
@@ -2535,32 +2683,42 @@ namespace FDS
                 try
                 {
                     webClient.DownloadFile(url, temporaryPath);
+
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine("Error downloading file: " + ex.Message);
                 }
             }
-            ZipFile.ExtractToDirectory(Path.Combine(temporaryPath, "yourapp.zip"), temporaryPath);
-        }
-
-        private void ReplaceFiles(string temporaryPath, string installationPath)
-        {
             try
             {
-                foreach (Process process in Process.GetProcessesByName("FDS"))
-                {
-                    process.Kill();
-                    process.WaitForExit();
-                }
-                foreach (FileInfo file in new DirectoryInfo(temporaryPath).GetFiles())
-                    file.CopyTo(Path.Combine(installationPath, file.Name));
+                ZipFile.ExtractToDirectory(Path.Combine(temporaryPath, "FDS.zip"), temporaryPath);
+                string AutoUpdateExePath = Directory.GetCurrentDirectory() + "\\AutoUpdate.exe";
+                Process.Start(AutoUpdateExePath);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Console.WriteLine("Error replacing files: " + ex.Message);
+                MessageBox.Show(e.Message);
             }
+
         }
+        //private void ReplaceFiles(string temporaryPath, string installationPath)
+        //{
+        //    try
+        //    {
+        //        foreach (Process process in Process.GetProcessesByName("FDS"))
+        //        {
+        //            process.Kill();
+        //            process.WaitForExit();
+        //        }
+        //        foreach (FileInfo file in new DirectoryInfo(temporaryPath).GetFiles())
+        //            file.CopyTo(Path.Combine(installationPath, file.Name));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine("Error replacing files: " + ex.Message);
+        //    }
+        //}
         #endregion
 
         #region unwanted code for now

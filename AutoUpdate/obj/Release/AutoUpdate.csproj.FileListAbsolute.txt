@@ -1,0 +1,8 @@
+C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\AutoUpdate\bin\Release\AutoUpdate.exe.config
+C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\AutoUpdate\bin\Release\AutoUpdate.exe
+C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\AutoUpdate\bin\Release\AutoUpdate.pdb
+C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\AutoUpdate\obj\Release\AutoUpdate.csproj.AssemblyReference.cache
+C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\AutoUpdate\obj\Release\AutoUpdate.csproj.SuggestedBindingRedirects.cache
+C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\AutoUpdate\obj\Release\AutoUpdate.csproj.CoreCompileInputs.cache
+C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\AutoUpdate\obj\Release\AutoUpdate.exe
+C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\AutoUpdate\obj\Release\AutoUpdate.pdb

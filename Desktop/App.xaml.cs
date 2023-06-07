@@ -18,14 +18,8 @@ namespace FDS
     {
         protected override void OnStartup(StartupEventArgs e)
         {
-            RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
-            string AutoStartBaseDir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            string exeFile = Path.Combine(AutoStartBaseDir, "FDS.exe");
-            Assembly curAssembly = Assembly.GetExecutingAssembly();
-            key.SetValue("FDS", exeFile);
-
-            //if (SingleInstance.AlreadyRunning())
-            //    App.Current.Shutdown(); // Just shutdown the current application,if any instance found.  
+            if (SingleInstance.AlreadyRunning())
+                App.Current.Shutdown(); // Just shutdown the current application,if any instance found.  
 
             base.OnStartup(e);
         }
