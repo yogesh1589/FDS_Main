@@ -176,7 +176,7 @@ namespace FDS
 
             //#endregion
         }
-       
+
         public void FDSMain_Loaded(object sender, RoutedEventArgs e)
         {
             //CredDelete("FDS_Key_Key1", 1, 0);
@@ -573,51 +573,14 @@ namespace FDS
 
         public async void GetcountryCode()
         {
-            //var response = await client.GetAsync(AppConstants.EndPoints.CountryCode);
-            //if (response.IsSuccessStatusCode)
-            //{
-            //    var responseString = await response.Content.ReadAsStringAsync();
-            //    CountryCodeResponse responseData = JsonConvert.DeserializeObject<CountryCodeResponse>(responseString);
-            //    List<CountryCode> countryList = responseData.data;
-
-            //    //ObservableCollection<string> countries = new ObservableCollection<string>();
-            //    ////List<string> CountryCode = new List<string>();
-            //    ////List<CountryCode> countryList = new List<CountryCode>();
-
-            //    //if (countries.Count > 0 && countries != null)
-            //    //{
-            //    //    foreach (var country in countryList)
-            //    //    {
-            //    //        new CountryCode { country_code = country.country_code, phone_code = country.phone_code };
-            //    //        countries.Add(country.phone_code);
-            //    //    }
-            //    //}
-
-            //    //VM.AllCountries = countryList;
-            //    //cmbCountryCode.ItemsSource = VM.AllCountries;
-
-            //}
-
             var response = await client.GetAsync(AppConstants.EndPoints.CountryCode);
             if (response.IsSuccessStatusCode)
             {
                 var responseString = await response.Content.ReadAsStringAsync();
                 CountryCodeResponse responseData = JsonConvert.DeserializeObject<CountryCodeResponse>(responseString);
                 List<CountryCode> countryList = responseData.data;
-
-                //ObservableCollection<string> countries = new ObservableCollection<string>();
-
-                //if (countryList.Count > 0 && countryList != null)
-                //{
-                //    foreach (var country in countryList)
-                //    {
-                //        countries.Add(country.DisplayText);
-                //    }
-                //}
-
                 VM.AllCountries = countryList;
                 cmbCountryCode.ItemsSource = VM.AllCountries;
-
             }
         }
         private void cmbCountryCode_DropDownClosed(object sender, EventArgs e)
@@ -937,14 +900,14 @@ namespace FDS
                     var responseString = await response.Content.ReadAsStringAsync();
                     QRCodeResponse = JsonConvert.DeserializeObject<QRCodeResponse>(responseString);
                     int LengthAllowed = 512;
-                    foreach (var user in userList)
-                    {
-                        //MessageBox.Show("Credentials has been saved: ", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                        KeyManager.SaveValue("Key1", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(0, LengthAllowed) : QRCodeResponse.Public_key);
-                        KeyManager.SaveValue("Key2", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(LengthAllowed, QRCodeResponse.Public_key.Length - LengthAllowed) : "");
-                        KeyManager.SaveValue("Authentication_token", QRCodeResponse.Authentication_token);
-                        KeyManager.SaveValue("Authorization_token", QRCodeResponse.Authorization_token);
-                    }
+                    //foreach (var user in userList)
+                    //{
+                    //MessageBox.Show("Credentials has been saved: ", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                    KeyManager.SaveValue("Key1", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(0, LengthAllowed) : QRCodeResponse.Public_key);
+                    KeyManager.SaveValue("Key2", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(LengthAllowed, QRCodeResponse.Public_key.Length - LengthAllowed) : "");
+                    KeyManager.SaveValue("Authentication_token", QRCodeResponse.Authentication_token);
+                    KeyManager.SaveValue("Authorization_token", QRCodeResponse.Authorization_token);
+                    //}
                     RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));
                     timerQRCode.IsEnabled = false;
                     if (MenuChange)
