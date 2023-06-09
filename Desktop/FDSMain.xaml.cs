@@ -110,7 +110,7 @@ namespace FDS
         public bool IsServiceActive = true;
         List<string> userList = new List<string>();
         string applicationName = "FDS";
-        string TempPath = "C:\\Temp\\FDS";
+        string TempPath = @"C:\web\Temp\FDS";
         ViewModel VM = new ViewModel();
         public ObservableCollection<CountryCode> AllCounties { get; }
         #endregion
@@ -204,7 +204,7 @@ namespace FDS
                 //        }
                 //    }
                 //}
-
+                //AutoUpdate();
                 bool valid = CheckAllKeys();
 
                 if (!valid)
@@ -1254,7 +1254,7 @@ namespace FDS
                 int idx = plainText.LastIndexOf('}');
                 var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
                 var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);//Replace('', ' ').Replace('', ' ').Replace("false", "true"));// replace used to test services
-                                                                                               //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
+                                                                                                                        //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
 
                 DateTime localDate = DateTime.Now.ToLocalTime();
                 txtUpdatedOn.Text = localDate.ToString();
@@ -1715,76 +1715,54 @@ namespace FDS
             Process[] chromeInstances = Process.GetProcessesByName("chrome");
             if (chromeInstances.Length == 0)
             {
-                int beforevalue = 0;
-                int aftervalue = 0;
-                var str = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                var connectionString = "Data Source=" + str + "\\Google\\Chrome\\User Data\\Default\\Network\\Cookies";
-                if (File.Exists(connectionString))
+                string chromeProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\";
+                List<string> profiles = new List<string>();
+                string defaultProfilePath = Path.Combine(chromeProfilePath, "Default");
+                if (Directory.Exists(defaultProfilePath))
                 {
+                    profiles.Add(defaultProfilePath);
+                }
+                if (Directory.Exists(chromeProfilePath))
+                {
+                    string[] profileDirectories = Directory.GetDirectories(chromeProfilePath, "Profile *");
 
-                    string SelectQuery = "Select Count(1) From Cookies";
-                    if (whitelistedDomain.Count > 0)
+                    foreach (string profileDir in profileDirectories)
                     {
-                        SelectQuery += " WHERE ";
-                        foreach (string domain in whitelistedDomain)
-                        {
-                            SelectQuery += "  host_key not like " + domain + " And";
-                        }
-                        SelectQuery = SelectQuery.Remove(SelectQuery.Length - 4);
-                    }
-
-                    using (SQLiteConnection conn = new SQLiteConnection(connectionString))
-                    using (SQLiteCommand SelectCmd = new SQLiteCommand())
-                    {
-                        conn.Open();
-                        SelectCmd.Connection = conn;
-                        SelectCmd.CommandText = SelectQuery;
-                        using (SQLiteDataReader dr = SelectCmd.ExecuteReader())
-                        {
-                            while (dr.Read())
-                            {
-                                beforevalue = Convert.ToInt32(dr[0].ToString());
-                            }
-                        }
-                    }
-
-                    using (SQLiteConnection connection = new SQLiteConnection(connectionString))
-                    using (SQLiteCommand cmd = connection.CreateCommand())
-                    {
-                        connection.Open();
-                        string query = "DELETE FROM Cookies";
-                        if (whitelistedDomain.Count > 0)
-                        {
-                            query += " WHERE ";
-                            foreach (string domain in whitelistedDomain)
-                            {
-                                query += " host_key not like " + domain + " And";
-                            }
-                            query = query.Remove(query.Length - 4);
-                        }
-                        cmd.CommandText = query;
-                        cmd.Prepare();
-                        cmd.ExecuteNonQuery();
-                        connection.Close();
-                    }
-
-                    using (SQLiteConnection conn1 = new SQLiteConnection(connectionString))
-                    using (SQLiteCommand SelectCmd1 = new SQLiteCommand())
-                    {
-                        conn1.Open();
-                        SelectCmd1.Connection = conn1;
-                        SelectCmd1.CommandText = SelectQuery;
-                        using (SQLiteDataReader dr = SelectCmd1.ExecuteReader())
-                        {
-                            while (dr.Read())
-                            {
-                                aftervalue = Convert.ToInt32(dr[0].ToString());
-                            }
-                        }
-                        TotalCount = beforevalue - aftervalue;
-
+                        string profilePath = Path.Combine(chromeProfilePath, profileDir);
+                        profiles.Add(profilePath);
                     }
                 }
+                foreach (var profile in profiles)
+                {
+                    if (File.Exists(profile))
+                    {
+                        string CookiesPath = Path.Combine(profile, "Network\\Cookies");
+                        if (File.Exists(CookiesPath))
+                        {
+                            using (SQLiteConnection connection = new SQLiteConnection("Data Source=" + CookiesPath + ";Version=3;New=False;Compress=True;"))
+                            {
+                                connection.Open();
+                                using (SQLiteCommand command = new SQLiteCommand("DELETE FROM urls", connection))
+                                {
+                                    string query = "DELETE FROM Cookies";
+                                    if (whitelistedDomain.Count > 0)
+                                    {
+                                        query += " WHERE ";
+                                        foreach (string domain in whitelistedDomain)
+                                        {
+                                            query += " host_key not like " + domain + " And";
+                                        }
+                                        query = query.Remove(query.Length - 4);
+                                    }
+                                    command.CommandText = query;
+                                    command.Prepare();
+                                    TotalCount += command.ExecuteNonQuery();
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Display the count of items deleted
                 Console.WriteLine("Total number of cookies deleted: " + TotalCount);
             }
@@ -1796,45 +1774,38 @@ namespace FDS
             Process[] firefoxInstances = Process.GetProcessesByName("firefox");
             if (firefoxInstances.Length == 0)
             {
-                string firefoxPath = GetFirefoxPath();
-                string profilePath = GetFirefoxProfilePath(firefoxPath);
+                string firefoxProfilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Mozilla", "Firefox", "Profiles");
+                string[] profileDirectories = Directory.GetDirectories(firefoxProfilePath);
 
-                if (profilePath != null)
+                foreach (string profileDir in profileDirectories)
                 {
-                    try
+                    string cookiesFilePath = Path.Combine(profileDir, "cookies.sqlite");
+                    if (File.Exists(cookiesFilePath))
                     {
-                        string cookiesFilePath = Path.Combine(profilePath, "cookies.sqlite");
-                        if (File.Exists(cookiesFilePath))
+                        using (SQLiteConnection connection = new SQLiteConnection(string.Format("Data Source={0};", cookiesFilePath)))
                         {
-                            using (SQLiteConnection connection = new SQLiteConnection(string.Format("Data Source={0};", cookiesFilePath)))
+                            connection.Open();
+                            using (SQLiteCommand command = connection.CreateCommand())
                             {
-                                connection.Open();
-                                using (SQLiteCommand command = connection.CreateCommand())
+                                string query = "DELETE FROM moz_cookies";
+                                if (whitelistedDomain.Count > 0)
                                 {
-                                    string query = "DELETE FROM moz_cookies";
-                                    if (whitelistedDomain.Count > 0)
+                                    query += " WHERE ";
+                                    foreach (string domain in whitelistedDomain)
                                     {
-                                        query += " WHERE ";
-                                        foreach (string domain in whitelistedDomain)
-                                        {
-                                            query += "  host not like " + domain + " And";
-                                        }
-                                        query = query.Remove(query.Length - 4);
+                                        query += "  host not like " + domain + " And";
                                     }
-                                    command.CommandText = query;
-                                    TotalCount = command.ExecuteNonQuery();
+                                    query = query.Remove(query.Length - 4);
                                 }
+                                command.CommandText = query;
+                                TotalCount += command.ExecuteNonQuery();
                             }
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine("Error clearing Firefox cookies: {0}", ex.Message);
-                    }
                 }
-
-                Console.WriteLine("{0} Firefox cookies deleted", TotalCount);
             }
+            Console.WriteLine("{0} Firefox cookies deleted", TotalCount);
+
             return TotalCount;
         }
         public void ClearIECookies()
@@ -1860,34 +1831,57 @@ namespace FDS
             Process[] msedgeInstances = Process.GetProcessesByName("msedge");
             if (msedgeInstances.Length == 0)
             {
-                var str = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                var connectionString = "Data Source=" + str + "\\Microsoft\\Edge\\User Data\\Default\\Network\\Cookies";
-                if (File.Exists(connectionString))
+                List<string> profiles = new List<string>();
+                string edgeProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Microsoft\Edge\User Data\";
+                string defaultProfilePath = Path.Combine(edgeProfilePath, "Default");
+                if (Directory.Exists(defaultProfilePath))
                 {
-                    using (SQLiteConnection connection = new SQLiteConnection(connectionString))
+                    profiles.Add(defaultProfilePath);
+                }
+                if (Directory.Exists(edgeProfilePath))
+                {
+                    string[] profileDirectories = Directory.GetDirectories(edgeProfilePath, "Profile *");
+
+                    foreach (string profileDir in profileDirectories)
                     {
-                        // Clear the cookies by deleting all records from the cookies table
-                        connection.Open();
-                        using (SQLiteCommand cmd = connection.CreateCommand())
-                        {
-                            string query = "DELETE FROM Cookies";
-                            if (whitelistedDomain.Count > 0)
-                            {
-                                query += " WHERE ";
-                                foreach (string domain in whitelistedDomain)
-                                {
-                                    query += " host_key not like " + domain + " And";
-                                }
-                                query = query.Remove(query.Length - 4);
-                            }
-                            cmd.CommandText = query;
-                            cmd.Prepare();
-                            TotalCount = cmd.ExecuteNonQuery();
-                            Console.WriteLine($"Deleted {TotalCount} cookies.");
-                        }
-                        connection.Close();
+                        string profilePath = Path.Combine(edgeProfilePath, profileDir);
+                        profiles.Add(profilePath);
                     }
                 }
+                foreach (var profile in profiles)
+                {
+                    if (File.Exists(profile))
+                    {
+                        string cookiePath = Path.Combine(profile, "Network\\Cookies");
+                        if (File.Exists(cookiePath))
+                        {
+                            using (SQLiteConnection connection = new SQLiteConnection(string.Format("Data Source={0};", cookiePath)))
+                            {
+                                // Clear the cookies by deleting all records from the cookies table
+                                connection.Open();
+                                using (SQLiteCommand cmd = connection.CreateCommand())
+                                {
+                                    string query = "DELETE FROM Cookies";
+                                    if (whitelistedDomain.Count > 0)
+                                    {
+                                        query += " WHERE ";
+                                        foreach (string domain in whitelistedDomain)
+                                        {
+                                            query += " host_key not like " + domain + " And";
+                                        }
+                                        query = query.Remove(query.Length - 4);
+                                    }
+                                    cmd.CommandText = query;
+                                    cmd.Prepare();
+                                    TotalCount += cmd.ExecuteNonQuery();
+
+                                }
+                                connection.Close();
+                            }
+                        }
+                    }
+                }
+                Console.WriteLine($"Deleted {TotalCount} cookies.");
             }
             return TotalCount;
         }
@@ -1898,10 +1892,10 @@ namespace FDS
             if (msedgeInstances.Length == 0)
             {
                 var str = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                var connectionString = "Data Source=" + str + "\\Opera Software\\Opera Stable\\Network\\Cookies";
-                if (File.Exists(connectionString))
+                var cookiePath = str + "\\Opera Software\\Opera Stable\\Network\\Cookies";
+                if (File.Exists(cookiePath))
                 {
-                    using (SQLiteConnection connection = new SQLiteConnection(connectionString))
+                    using (SQLiteConnection connection = new SQLiteConnection(string.Format("Data Source={0};", cookiePath)))
                     {
                         // Clear the cookies by deleting all records from the cookies table
                         connection.Open();
@@ -1943,25 +1937,39 @@ namespace FDS
         public int ClearChromeHistory()
         {
             int TotalCount = 0;
-            string chromeHistoryPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\Default\History";
             Process[] chromeInstances = Process.GetProcessesByName("chrome");
             if (chromeInstances.Length == 0)
             {
-                RegistryKey regKey = Registry.CurrentUser.OpenSubKey(@"Software\Google\Chrome\BLBeacon");
-                if (regKey != null)
+                List<string> profiles = new List<string>();
+                string chromeProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\";
+                string defaultProfilePath = Path.Combine(chromeProfilePath, "Default");
+                if (Directory.Exists(defaultProfilePath))
                 {
-                    object val = regKey.GetValue("version");
-                    if (val != null)
+                    profiles.Add(defaultProfilePath);
+                }
+                if (Directory.Exists(chromeProfilePath))
+                {
+                    string[] profileDirectories = Directory.GetDirectories(chromeProfilePath, "Profile *");
+
+                    foreach (string profileDir in profileDirectories)
                     {
-                        string historyPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\Default\History";
-                        if (System.IO.File.Exists(historyPath))
+                        string profilePath = Path.Combine(chromeProfilePath, profileDir);
+                        profiles.Add(profilePath);
+                    }
+                }
+                foreach (var profile in profiles)
+                {
+                    if (System.IO.File.Exists(profile))
+                    {
+                        string historyPath = Path.Combine(profile, "History");
+                        if (File.Exists(historyPath))
                         {
                             using (SQLiteConnection connection = new SQLiteConnection("Data Source=" + historyPath + ";Version=3;New=False;Compress=True;"))
                             {
                                 connection.Open();
                                 using (SQLiteCommand command = new SQLiteCommand("DELETE FROM urls", connection))
                                 {
-                                    TotalCount = command.ExecuteNonQuery();
+                                    TotalCount += command.ExecuteNonQuery();
                                 }
                                 connection.Close();
                             }
@@ -1979,176 +1987,36 @@ namespace FDS
             Process[] firefoxInstances = Process.GetProcessesByName("firefox");
             if (firefoxInstances.Length == 0)
             {
-                string firefoxPath = GetFirefoxPath();
-
-                if (firefoxPath == null)
+                try
                 {
-                    Console.WriteLine("Firefox path not found");
-                }
-                else
-                {
-                    string profilePath = GetFirefoxProfilePath(firefoxPath);
-                    // Delete the history files
-                    TotalCount = DeleteFirefoxHistory(profilePath);
+                    string firefoxProfilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Mozilla", "Firefox", "Profiles");
 
-                    Console.WriteLine("Deleted {0} history items from the {1} Firefox profile", TotalCount, firefoxPath);
-                }
-            }
-            return TotalCount;
-        }
-        public static string GetFirefoxPath()
-        {
-            string regKey = "CurrentVersion";
-            string firefoxPath = null;
-            try
-            {
-                RegistryKey localMachine = Environment.Is64BitProcess == true ? RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64) : Registry.LocalMachine;//Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Mozilla\Mozilla Firefox\", true);
+                    string[] profileDirectories = Directory.GetDirectories(firefoxProfilePath);
 
-                var key = localMachine.OpenSubKey(@"SOFTWARE\Mozilla\Mozilla Firefox\", true);
-                if (key != null)
-                {
-                    Object o = key.GetValue(regKey);
-                    if (o != null)
+                    foreach (string profileDir in profileDirectories)
                     {
-                        string version = o.ToString();
-                        using (RegistryKey pathKey = key.OpenSubKey(version + @"\Main"))
+                        string placesFilePath = Path.Combine(profileDir, "places.sqlite");
+                        if (File.Exists(placesFilePath))
                         {
-                            if (pathKey != null)
+                            using (SQLiteConnection connection = new SQLiteConnection($"Data Source={placesFilePath};Version=3;"))
                             {
-                                Object path = pathKey.GetValue("PathToExe");
-                                if (path != null)
+                                connection.Open();
+
+                                using (SQLiteCommand command = connection.CreateCommand())
                                 {
-                                    firefoxPath = path.ToString();
+                                    command.CommandText = "DELETE FROM moz_places";
+                                    TotalCount += command.ExecuteNonQuery();
                                 }
                             }
                         }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error getting Firefox path: {0}", ex.Message);
-            }
-
-            if (firefoxPath == null)
-            {
-                Console.WriteLine("Firefox path not found");
-            }
-
-            return firefoxPath;
-        }
-        public static string GetFirefoxProfilePath(string firefoxPath)
-        {
-            string profilePath = null;
-
-            try
-            {
-                string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                string profilesIniPath = Path.Combine(appData, "Mozilla", "Firefox", "profiles.ini");
-
-                if (File.Exists(profilesIniPath))
-                {
-                    string profileIni = File.ReadAllText(profilesIniPath);
-
-                    Match match = Regex.Match(profileIni, @"Default=([^\r\n]+)", RegexOptions.IgnoreCase);
-                    if (match.Success)
-                    {
-                        string path = match.Groups[1].Value.Replace('/', '\\');
-                        profilePath = Path.Combine(appData, "Mozilla", "Firefox", path);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error getting Firefox profile path: {0}", ex.Message);
-            }
-
-            if (profilePath == null)
-            {
-                Console.WriteLine("Firefox profile path not found");
-            }
-
-            return profilePath;
-        }
-        public static int DeleteFirefoxHistory(string profilePath)
-        {
-            int historyCount = 0;
-
-            // Delete the places.sqlite file
-            string placesFile = Path.Combine(profilePath, "places.sqlite");
-            if (File.Exists(placesFile))
-            {
-                try
-                {
-                    // Count the number of history items in the database before deleting it
-                    using (System.Data.SQLite.SQLiteConnection connection = new System.Data.SQLite.SQLiteConnection($"Data Source={placesFile};Version=3;"))
-                    {
-                        connection.Open();
-                        using (System.Data.SQLite.SQLiteCommand command = new System.Data.SQLite.SQLiteCommand("SELECT COUNT(*) FROM moz_places;", connection))
-                        {
-                            historyCount = Convert.ToInt32(command.ExecuteScalar());
-                        }
-                    }
-
-                    // Delete the database file
-                    File.Delete(placesFile);
-                }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Error deleting places.sqlite: {0}", ex.Message);
+                    // Handle any exceptions that occur while clearing Firefox history
                 }
             }
-
-
-            // Delete the places.sqlite-shm file
-            string placesShmFile = Path.Combine(profilePath, "places.sqlite-shm");
-            if (File.Exists(placesShmFile))
-            {
-                try
-                {
-                    // Delete the file
-                    File.Delete(placesShmFile);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Error deleting places.sqlite-shm: {0}", ex.Message);
-                }
-            }
-
-            // Delete the places.sqlite-wal file
-            string placesWalFile = Path.Combine(profilePath, "places.sqlite-wal");
-            if (File.Exists(placesWalFile))
-            {
-                try
-                {
-                    // Delete the file
-                    File.Delete(placesWalFile);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Error deleting places.sqlite-wal: {0}", ex.Message);
-                }
-            }
-
-            // Delete the formhistory.sqlite file
-            string formHistoryFile = Path.Combine(profilePath, "formhistory.sqlite");
-            if (File.Exists(formHistoryFile))
-            {
-                try
-                {
-                    // Delete the file
-                    File.Delete(formHistoryFile);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Error deleting formhistory.sqlite: {0}", ex.Message);
-                }
-            }
-
-            Console.WriteLine("Deleted {0} history items", historyCount);
-
-
-            return historyCount;
+            return TotalCount;
         }
         public void ClearIEHitory()
         {
@@ -2186,25 +2054,50 @@ namespace FDS
             if (msedgeInstances.Length == 0)
             {
                 // Connect to the Edge History database
-                string historyPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Microsoft\Edge\User Data\Default\History";
-                if (System.IO.File.Exists(historyPath))
+                //string historyPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Microsoft\Edge\User Data\Default\History";
+                List<string> profiles = new List<string>();
+                string edgeProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Microsoft\Edge\User Data\";
+                string defaultProfilePath = Path.Combine(edgeProfilePath, "Default");
+                if (Directory.Exists(defaultProfilePath))
                 {
-                    string connectionString = "Data Source=" + historyPath + ";Version=3;New=False;Compress=True;";
-                    using (SQLiteConnection connection = new SQLiteConnection(connectionString))
+                    profiles.Add(defaultProfilePath);
+                }
+                if (Directory.Exists(edgeProfilePath))
+                {
+                    string[] profileDirectories = Directory.GetDirectories(edgeProfilePath, "Profile *");
+
+                    foreach (string profileDir in profileDirectories)
                     {
-                        connection.Open();
-
-                        // Delete all browsing history records
-                        using (SQLiteCommand command = new SQLiteCommand("DELETE FROM urls;", connection))
-                        {
-                            TotalCount = command.ExecuteNonQuery();
-                            Console.WriteLine($"Deleted {TotalCount} browsing history items.");
-                        }
-
-                        // Disconnect from the database
-                        connection.Close();
+                        string profilePath = Path.Combine(edgeProfilePath, profileDir);
+                        profiles.Add(profilePath);
                     }
                 }
+                foreach (var profile in profiles)
+                {
+                    if (System.IO.File.Exists(profile))
+                    {
+                        string historyPath = Path.Combine(profile, "History");
+                        if (File.Exists(historyPath))
+                        {
+                            string connectionString = "Data Source=" + historyPath + ";Version=3;New=False;Compress=True;";
+                            using (SQLiteConnection connection = new SQLiteConnection(connectionString))
+                            {
+                                connection.Open();
+
+                                // Delete all browsing history records
+                                using (SQLiteCommand command = new SQLiteCommand("DELETE FROM urls;", connection))
+                                {
+                                    TotalCount += command.ExecuteNonQuery();
+
+                                }
+
+                                // Disconnect from the database
+                                connection.Close();
+                            }
+                        }
+                    }
+                }
+                Console.WriteLine($"Deleted {TotalCount} browsing history items.");
             }
             return TotalCount;
         }
@@ -2252,28 +2145,50 @@ namespace FDS
             Process[] chromeInstances = Process.GetProcessesByName("chrome");
             if (chromeInstances.Length == 0)
             {
-                //// Path to the Chrome cache folder
-                string cachePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\Default\Cache\Cache_Data";
-                if (Directory.Exists(cachePath))
+                List<string> profiles = new List<string>();
+                string chromeProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\";
+                string defaultProfilePath = Path.Combine(chromeProfilePath, "Default");
+                if (Directory.Exists(defaultProfilePath))
                 {
+                    profiles.Add(defaultProfilePath);
+                }
+                if (Directory.Exists(chromeProfilePath))
+                {
+                    string[] profileDirectories = Directory.GetDirectories(chromeProfilePath, "Profile *");
 
-                    // Clear the cache folder
-                    foreach (string file in Directory.GetFiles(cachePath))
+                    foreach (string profileDir in profileDirectories)
                     {
-                        try
-                        {
-                            TotalSize += file.Length;
-                            File.Delete(file);
-                            TotalCount++;
-                        }
-                        catch (IOException) { } // handle any exceptions here
+                        string profilePath = Path.Combine(chromeProfilePath, profileDir);
+                        profiles.Add(profilePath);
                     }
-                    Console.WriteLine($"Total {TotalSize} files cleared from Chrome cache.");
                 }
-                else
+                foreach (var profile in profiles)
                 {
-                    Console.WriteLine("Chrome Cache file not found.");
+                    if (File.Exists(profile))
+                    {
+                        string CachePath = Path.Combine(profile, "Cache\\Cache_Data");
+                        if (File.Exists(CachePath))
+                        {
+                            // Clear the cache folder
+                            foreach (string file in Directory.GetFiles(CachePath))
+                            {
+                                try
+                                {
+                                    TotalSize += file.Length;
+                                    File.Delete(file);
+                                    TotalCount++;
+                                }
+                                catch (IOException) { } // handle any exceptions here
+                            }
+
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Chrome Cache file not found.");
+                    }
                 }
+                Console.WriteLine($"Total {TotalSize} files cleared from Chrome cache.");
             }
             return TotalSize;
         }
@@ -2284,20 +2199,17 @@ namespace FDS
             Process[] firefoxInstances = Process.GetProcessesByName("firefox");
             if (firefoxInstances.Length == 0)
             {
-                string firefoxPath = GetFirefoxPath();
-                string profilePath = GetFirefoxProfilePath(firefoxPath);
+                string firefoxProfilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Mozilla", "Firefox", "Profiles");
+                string[] profileDirectories = Directory.GetDirectories(firefoxProfilePath);
 
-                if (profilePath != null)
+                foreach (string profileDir in profileDirectories)
                 {
                     string[] cacheFolders = { "cache2", "shader-cache", "browser-extension-data", "startupCache", "thumbnails" };
-
                     foreach (string folder in cacheFolders)
                     {
-                        string cachePath = Path.Combine(profilePath, folder);
-
+                        string cachePath = Path.Combine(profileDir, folder);
                         if (Directory.Exists(cachePath))
                         {
-
                             foreach (string file in Directory.GetFiles(cachePath))
                             {
                                 try
@@ -2319,13 +2231,7 @@ namespace FDS
                             Console.WriteLine($"{folder} cache folder not found");
                         }
                     }
-
                 }
-                else
-                {
-                    Console.WriteLine("Firefox profile not found");
-                }
-
                 Console.WriteLine("{0} Firefox cache items deleted", TotalSize);
             }
             return TotalSize;
@@ -2338,26 +2244,46 @@ namespace FDS
             if (msedgeInstances.Length == 0)
             {
                 // Connect to the Edge cache database
-                string cachePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Microsoft\Edge\User Data\Default\Cache\Cache_Data";
-                if (Directory.Exists(cachePath))
+                //string cachePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Microsoft\Edge\User Data\Default\Cache\Cache_Data";
+                List<string> profiles = new List<string>();
+                string edgeProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Microsoft\Edge\User Data\";
+                string defaultProfilePath = Path.Combine(edgeProfilePath, "Default");
+                if (Directory.Exists(defaultProfilePath))
                 {
-                    // Clear the cache folder
-                    foreach (string file in Directory.GetFiles(cachePath))
+                    profiles.Add(defaultProfilePath);
+                }
+                if (Directory.Exists(edgeProfilePath))
+                {
+                    string[] profileDirectories = Directory.GetDirectories(edgeProfilePath, "Profile *");
+
+                    foreach (string profileDir in profileDirectories)
                     {
-                        try
-                        {
-                            TotalSize += file.Length;
-                            File.Delete(file);
-                            TotalCount++;
-                        }
-                        catch (IOException) { } // handle any exceptions here
+                        string profilePath = Path.Combine(edgeProfilePath, profileDir);
+                        profiles.Add(profilePath);
                     }
-                    Console.WriteLine($"Total {TotalSize} files cleared from Chrome cache.");
                 }
-                else
+                foreach (var profile in profiles)
                 {
-                    Console.WriteLine("Chrome Cache file not found.");
+                    if (File.Exists(profile))
+                    {
+                        string cachePath = Path.Combine(profile, "Cache\\Cache_Data");
+                        if (File.Exists(cachePath))
+                        {
+                            // Clear the cache folder
+                            foreach (string file in Directory.GetFiles(cachePath))
+                            {
+                                try
+                                {
+                                    TotalSize += file.Length;
+                                    File.Delete(file);
+                                    TotalCount++;
+                                }
+                                catch (IOException) { } // handle any exceptions here
+                            }
+                        }
+                    }
                 }
+                Console.WriteLine($"Total {TotalSize} files cleared from Chrome cache.");
             }
             return TotalSize;
         }
@@ -2620,33 +2546,32 @@ namespace FDS
                     var getresponseString = await response.Content.ReadAsStringAsync();
                     AutoUpdateResponse UpdateGetResponse = JsonConvert.DeserializeObject<AutoUpdateResponse>(responseString);
                     string Url = UpdateResponse.msg;
-                    //string url = "http://example.com/update/yourapp.zip";
+                    //string Url = "https://drive.google.com/file/d/1_NSLQCaWrI_cLwqy51KJdGxhlEr-C6ZI/view?usp=sharing";
 
-                    string installationPath = "";
-                    if (!Directory.Exists(TempPath))
-                        Directory.CreateDirectory(TempPath);
-                    RegistryKey registryKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
-                    if (registryKey != null)
-                    {
-                        object obj = registryKey.GetValue("FDS");
-                        if (obj != null)
-                            installationPath = Path.GetDirectoryName(obj.ToString());
-                    }
-                    this.DownloadFile(Url, TempPath);
-                }
-                //this.ReplaceFiles(str, installationPath);
-                //Directory.Delete(str, true);
+            string installationPath = "";
+            if (!Directory.Exists(TempPath))
+                Directory.CreateDirectory(TempPath);
+            RegistryKey registryKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
+            if (registryKey != null)
+            {
+                object obj = registryKey.GetValue("FDS");
+                if (obj != null)
+                    installationPath = Path.GetDirectoryName(obj.ToString());
+            }
+            this.DownloadFile(Url, TempPath + "\\FDS.zip");
+              }
+            //    //this.ReplaceFiles(str, installationPath);
+            //    //Directory.Delete(str, true);
             }
         }
 
-        private void DownloadFile(string url, string temporaryPath)
+        private void DownloadFile(string url, string temporaryZipPath)
         {
-            using (WebClient webClient = new WebClient())
+            using (var client = new WebClient())
             {
                 try
                 {
-                    webClient.DownloadFile(url, temporaryPath);
-
+                    client.DownloadFile(url, temporaryZipPath);
                 }
                 catch (Exception ex)
                 {
@@ -2655,7 +2580,7 @@ namespace FDS
             }
             try
             {
-                ZipFile.ExtractToDirectory(Path.Combine(temporaryPath, "FDS.zip"), temporaryPath);
+                ZipFile.ExtractToDirectory(temporaryZipPath, TempPath);
                 string AutoUpdateExePath = Directory.GetCurrentDirectory() + "\\AutoUpdate.exe";
                 Process.Start(AutoUpdateExePath);
             }

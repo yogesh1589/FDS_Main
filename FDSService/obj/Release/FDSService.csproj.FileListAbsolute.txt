@@ -1,0 +1,8 @@
+C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\FDSService\obj\Release\FDSService.csproj.AssemblyReference.cache
+C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\FDSService\obj\Release\FDSService.csproj.SuggestedBindingRedirects.cache
+C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\FDSService\obj\Release\FDSService.csproj.CoreCompileInputs.cache
+C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\FDSService\bin\Release\FDSService.exe.config
+C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\FDSService\bin\Release\FDSService.exe
+C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\FDSService\bin\Release\FDSService.pdb
+C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\FDSService\obj\Release\FDSService.exe
+C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\FDSService\obj\Release\FDSService.pdb
