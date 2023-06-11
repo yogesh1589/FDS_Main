@@ -11,6 +11,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace FDS.Common
 {
@@ -39,12 +40,20 @@ namespace FDS.Common
         /// <returns></returns>
         public static RSACryptoServiceProvider ImportPublicKey(string pem)
         {
-            PemReader pr = new PemReader(new StringReader(pem));
-            AsymmetricKeyParameter publicKey = (AsymmetricKeyParameter)pr.ReadObject();
-            RSAParameters rsaParams = DotNetUtilities.ToRSAParameters((RsaKeyParameters)publicKey);
+            RSACryptoServiceProvider csp = new RSACryptoServiceProvider(2048);
+            try
+            {
+                PemReader pr = new PemReader(new StringReader(pem));
+                AsymmetricKeyParameter publicKey = (AsymmetricKeyParameter)pr.ReadObject();
+                RSAParameters rsaParams = DotNetUtilities.ToRSAParameters((RsaKeyParameters)publicKey);
 
-            RSACryptoServiceProvider csp = new RSACryptoServiceProvider(2048);// cspParams);
-            csp.ImportParameters(rsaParams);
+               //;// cspParams);
+                csp.ImportParameters(rsaParams);
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
             return csp;
         }
 

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Configuration;
 using System.Linq;
 using System.Management;
 using System.Net.NetworkInformation;
@@ -17,7 +19,7 @@ namespace FDS.Common
 
         public class EndPoints
         {
-            public static Uri BaseAPI => new Uri(System.Configuration.ConfigurationManager.AppSettings["BaseUrl"]); //new Uri("https://f73f-43-230-42-140.in.ngrok.io");
+            public static Uri BaseAPI => new Uri(ConfigurationManager.AppSettings["BaseUrl"]); //new Uri("https://f73f-43-230-42-140.in.ngrok.io");
             public const string Otp = "otp/";
             public const string DeviceToken = "device/token/activate/";
             public const string Start = "device/auth/start/";
@@ -37,7 +39,8 @@ namespace FDS.Common
             public const string AutoUpdate = "update/";
         }
         public const string DeviceType = "1";
-        public const string CodeVersion = "1.0";
+        public static string CodeVersion = ConfigurationManager.AppSettings["CodeVersion"];
+      
         public static string OSVersion
         {
             get

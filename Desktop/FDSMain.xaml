@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:FDS"
         xmlns:VM="clr-namespace:FDS.DTO.Responses"
         mc:Ignorable="d"
         Title="FDS"
@@ -406,7 +405,7 @@
                             <Border  CornerRadius="20" Background="White" Height="30" Width="170"  Margin="0,0,0,20" VerticalAlignment="Bottom" HorizontalAlignment="Center">
                                 <Grid>
                                     <TextBlock x:Name="lblUpdatedOn" HorizontalAlignment="Left" VerticalAlignment="Center"  Margin="10,0,0,0" Foreground="Black" FontSize="10" >Updated:</TextBlock>
-                                    <TextBlock x:Name="txtUpdatedOn" HorizontalAlignment="Left" VerticalAlignment="Center"  Margin="70,0,0,0" Foreground="#868C94" FontSize="10" ></TextBlock>
+                                    <TextBlock x:Name="txtUpdatedOn" HorizontalAlignment="Left" VerticalAlignment="Center"  Margin="60,0,0,0" Foreground="#868C94" FontSize="10" ></TextBlock>
                                 </Grid>
                             </Border>
                         </Grid>
@@ -521,6 +520,9 @@
                     </Button>
                 </StackPanel>
                 <Image Source="Assets/GetStarted.png" HorizontalAlignment="Left" Height="50" Width="126" Margin="18,0,0,0"></Image>
+                <Grid>
+                    <TextBlock x:Name="txtCodeVersion" VerticalAlignment="Bottom" Margin="70,0,0,0" Foreground="Blue" FontSize="10" FontWeight="DemiBold"/>
+                </Grid>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="150"  />

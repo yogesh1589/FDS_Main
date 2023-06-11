@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Management;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -16,13 +17,13 @@ namespace FDS
             {
                 // Getting collection of process  
                 Process currentProcess = Process.GetCurrentProcess();
-
+                string username = GetProcessOwner(currentProcess.Id);
                 // Check with other process already running   
                 foreach (var p in Process.GetProcesses())
                 {
                     if (p.Id != currentProcess.Id) // Check running process   
                     {
-                        if (p.ProcessName.Equals(currentProcess.ProcessName) == true)
+                        if (p.ProcessName.Equals(currentProcess.ProcessName) == true && username == Environment.UserName)
                         {
                             running = true;
                             IntPtr hFound = p.MainWindowHandle;
@@ -36,6 +37,26 @@ namespace FDS
             }
             catch { }
             return running;
+        }
+        public static string GetProcessOwner(int processId)
+        {
+            string query = "Select * From Win32_Process Where ProcessID = " + processId;
+            ManagementObjectSearcher searcher = new ManagementObjectSearcher(query);
+            ManagementObjectCollection processList = searcher.Get();
+
+            foreach (ManagementObject obj in processList)
+            {
+                string[] argList = new string[] { string.Empty, string.Empty };
+                int returnVal = Convert.ToInt32(obj.InvokeMethod("GetOwner", argList));
+                if (returnVal == 0)
+                {
+                    // return DOMAIN\user 
+                    //return argList[1] + "\\" + argList[0];
+                    return argList[0];
+                }
+            }
+
+            return "NO OWNER";
         }
     }
 }

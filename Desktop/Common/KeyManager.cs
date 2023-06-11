@@ -12,14 +12,15 @@ namespace FDS.Common
     public class KeyManager
     {
 
-        public static void SaveValue(string key, string value)
+        public static void SaveValue(string key, string value,string username)
         {
             using (var cred = new Credential())
             {
                 cred.Password = value;
                 cred.Target = AppConstants.KeyPrfix + key;
                 cred.Type = CredentialType.Generic;
-                cred.PersistanceType = PersistanceType.Enterprise;
+                cred.PersistanceType = PersistanceType.LocalComputer;
+                cred.Username = username;
                 cred.Save();
             }
         }

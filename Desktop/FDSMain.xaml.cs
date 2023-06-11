@@ -44,6 +44,7 @@ using System.DirectoryServices.AccountManagement;
 using Windows.Storage;
 using System.ComponentModel;
 using System.Windows.Data;
+using System.Configuration;
 
 namespace FDS
 {
@@ -113,56 +114,70 @@ namespace FDS
         string TempPath = @"C:\web\Temp\FDS";
         ViewModel VM = new ViewModel();
         public ObservableCollection<CountryCode> AllCounties { get; }
+        public string CodeVersion = "";
         #endregion
 
         #region Application initialization / Load
         public FDSMain()
         {
-            InitializeComponent();
-            DataContext = new ViewModel();
-            QRGeneratortimer = new DispatcherTimer();
-            QRGeneratortimer.Interval = TimeSpan.FromMilliseconds(100);
-            QRGeneratortimer.Tick += QRGeneratortimer_Tick;
+            try
+            {
+                int insCount = AlreadyRunningInstance();
+                if (insCount > 1)
+                    App.Current.Shutdown();
 
-            timerQRCode = new DispatcherTimer();
-            timerQRCode.Interval = TimeSpan.FromMilliseconds(1000);
-            timerQRCode.Tick += timerQRCode_Tick;
+                InitializeComponent();
+                DataContext = new ViewModel();
+                QRGeneratortimer = new DispatcherTimer();
+                QRGeneratortimer.Interval = TimeSpan.FromMilliseconds(100);
+                QRGeneratortimer.Tick += QRGeneratortimer_Tick;
 
-            timerDeviceLogin = new DispatcherTimer();
-            timerDeviceLogin.Interval = TimeSpan.FromMilliseconds(1000 * 5);
-            timerDeviceLogin.Tick += TimerDeviceLogin_Tick;
+                timerQRCode = new DispatcherTimer();
+                timerQRCode.Interval = TimeSpan.FromMilliseconds(1000);
+                timerQRCode.Tick += timerQRCode_Tick;
 
-            timerLastUpdate = new DispatcherTimer();
-            timerLastUpdate.Interval = TimeSpan.FromMilliseconds(10000);
-            timerLastUpdate.Tick += TimerLastUpdate_Tick;
-            timerLastUpdate.IsEnabled = false;
+                timerDeviceLogin = new DispatcherTimer();
+                timerDeviceLogin.Interval = TimeSpan.FromMilliseconds(1000 * 5);
+                timerDeviceLogin.Tick += TimerDeviceLogin_Tick;
 
-            CronLastUpdate = new DispatcherTimer();
-            CronLastUpdate.Interval = TimeSpan.FromMilliseconds(59000);
-            CronLastUpdate.Tick += CronLastUpdate_Tick;
-            CronLastUpdate.IsEnabled = false;
+                timerLastUpdate = new DispatcherTimer();
+                timerLastUpdate.Interval = TimeSpan.FromMilliseconds(10000);
+                timerLastUpdate.Tick += TimerLastUpdate_Tick;
+                timerLastUpdate.IsEnabled = false;
 
-            UninstallResponseTimer = new DispatcherTimer();
-            UninstallResponseTimer.Tick += UninstallResponseTimer_Tick;
-            UninstallResponseTimer.Interval = TimeSpan.FromMilliseconds(1000 * 60); // in miliseconds
+                CronLastUpdate = new DispatcherTimer();
+                CronLastUpdate.Interval = TimeSpan.FromMilliseconds(59000);
+                CronLastUpdate.Tick += CronLastUpdate_Tick;
+                CronLastUpdate.IsEnabled = false;
 
-            icon = new System.Windows.Forms.NotifyIcon();
-            icon.Icon = new System.Drawing.Icon(Path.Combine(BaseDir, "Assets/FDSDesktopLogo.ico"));//new System.Drawing.Icon(Path.Combine(Directory.GetParent(System.Environment.CurrentDirectory).Parent.FullName + "\\Assets\\FDSDesktopLogo.ico"));
-            icon.Visible = true;
-            icon.BalloonTipText = "The app has been minimised. Click the tray icon to show.";
-            icon.BalloonTipTitle = "FDS (Scanning & Cleaning)";
-            icon.BalloonTipIcon = System.Windows.Forms.ToolTipIcon.Info;
-            icon.Click += Icon_Click;
+                UninstallResponseTimer = new DispatcherTimer();
+                UninstallResponseTimer.Tick += UninstallResponseTimer_Tick;
+                UninstallResponseTimer.Interval = TimeSpan.FromMilliseconds(1000 * 60); // in miliseconds
 
-            lblSerialNumber.Text = lblPopSerialNumber.Text = AppConstants.SerialNumber;
-            lblUserName.Text = lblDeviceName.Text = AppConstants.MachineName;
-            string mac = AppConstants.MACAddress;
+                icon = new System.Windows.Forms.NotifyIcon();
+                icon.Icon = new System.Drawing.Icon(Path.Combine(BaseDir, "Assets/FDSDesktopLogo.ico"));//new System.Drawing.Icon(Path.Combine(Directory.GetParent(System.Environment.CurrentDirectory).Parent.FullName + "\\Assets\\FDSDesktopLogo.ico"));
+                icon.Visible = true;
+                icon.BalloonTipText = "The app has been minimised. Click the tray icon to show.";
+                icon.BalloonTipTitle = "FDS (Scanning & Cleaning)";
+                icon.BalloonTipIcon = System.Windows.Forms.ToolTipIcon.Info;
+                icon.Click += Icon_Click;
 
-            thisWindow = GetWindow(this);
-            client = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI };
-            IsUninstallFlagUpdated();
-            //cmbCountryCode.DropDownOpened += cmbCountryCode_DropDownOpened;
-            cmbCountryCode.DropDownClosed += cmbCountryCode_DropDownClosed;
+                //lblSerialNumber.Text = lblPopSerialNumber.Text = AppConstants.SerialNumber;
+                //lblUserName.Text = lblDeviceName.Text = AppConstants.MachineName;
+                //string mac = AppConstants.MACAddress;
+
+                thisWindow = GetWindow(this);
+                client = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI };
+                IsUninstallFlagUpdated();
+                //cmbCountryCode.DropDownOpened += cmbCountryCode_DropDownOpened;
+                cmbCountryCode.DropDownClosed += cmbCountryCode_DropDownClosed;
+                txtCodeVersion.Text = AppConstants.CodeVersion;
+
+    }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
             //whitelistedDomain.Add("'%.google.com%'");
             //whitelistedDomain.Add("'%.clickup.com%'");
             //whitelistedDomain.Add("'%.slack.com%'");
@@ -176,7 +191,55 @@ namespace FDS
 
             //#endregion
         }
+        public static int AlreadyRunningInstance()
+        {
+            bool running = false;
+            int InstanceCount = 0;
+            try
+            {
 
+                // Getting collection of process  
+                Process currentProcess = Process.GetCurrentProcess();
+
+                //MessageBox.Show("username" + username);
+                Process[] processes = Process.GetProcessesByName("FDS");
+                // Check with other process already running   
+                foreach (var p in processes)
+                {
+                    string username = GetProcessOwner(p.Id);
+                    if (p.ProcessName.ToLower() == "fds" && username == Environment.UserName)
+                    {
+                        InstanceCount++;
+                        running = true;
+                        IntPtr hFound = p.MainWindowHandle;
+                        if (User32API.IsIconic(hFound)) // If application is in ICONIC mode then  
+                            User32API.ShowWindow(hFound, User32API.SW_RESTORE);
+                        User32API.SetForegroundWindow(hFound); // Activate the window, if process is already running  
+                    }
+                }
+            }
+            catch { }
+            return InstanceCount;
+        }
+        public static string GetProcessOwner(int processId)
+        {
+            string query = "Select * From Win32_Process Where ProcessID = " + processId;
+            ManagementObjectSearcher searcher = new ManagementObjectSearcher(query);
+            ManagementObjectCollection processList = searcher.Get();
+            string username = ";";
+            foreach (ManagementObject obj in processList)
+            {
+                string[] argList = new string[] { string.Empty, string.Empty };
+                int returnVal = Convert.ToInt32(obj.InvokeMethod("GetOwner", argList));
+                if (returnVal == 0)
+                {
+                    // return DOMAIN\user 
+                    //return argList[1] + "\\" + argList[0];
+                    username = argList[0];
+                }
+            }
+            return username;
+        }
         public void FDSMain_Loaded(object sender, RoutedEventArgs e)
         {
             //CredDelete("FDS_Key_Key1", 1, 0);
@@ -223,7 +286,7 @@ namespace FDS
                     RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
                     string AutoStartBaseDir = applicationPath;
                     string exeFile = Path.Combine(AutoStartBaseDir, "FDS.exe");
-                    key.SetValue("FDS", exeFile);
+                    key.SetValue("FDS", exeFile + " --opened-at-login --minimize");
 
                     #endregion
 
@@ -462,32 +525,24 @@ namespace FDS
                 {
                     RSADevice = new RSACryptoServiceProvider(2048);
                     RSAParam = RSADevice.ExportParameters(true);
-                    KeyManager.SaveValue("Modulus", Convert.ToBase64String(RSAParam.Modulus));
-                    KeyManager.SaveValue("Exponent", Convert.ToBase64String(RSAParam.Exponent));
-                    KeyManager.SaveValue("D", Convert.ToBase64String(RSAParam.D));
-                    KeyManager.SaveValue("P", Convert.ToBase64String(RSAParam.P));
-                    KeyManager.SaveValue("Q", Convert.ToBase64String(RSAParam.Q));
-                    KeyManager.SaveValue("DP", Convert.ToBase64String(RSAParam.DP));
-                    KeyManager.SaveValue("DQ", Convert.ToBase64String(RSAParam.DQ));
-                    KeyManager.SaveValue("InverseQ", Convert.ToBase64String(RSAParam.InverseQ));
-
-
-                    //foreach (var user in userList)
-                    //{
-                    //    RSADevice = new RSACryptoServiceProvider(2048);
-                    //    RSAParam = RSADevice.ExportParameters(true);
-                    //    KeyManager.SaveValue("Modulus", Convert.ToBase64String(RSAParam.Modulus), user);
-                    //    KeyManager.SaveValue("Exponent", Convert.ToBase64String(RSAParam.Exponent), user);
-                    //    KeyManager.SaveValue("D", Convert.ToBase64String(RSAParam.D), user);
-                    //    KeyManager.SaveValue("P", Convert.ToBase64String(RSAParam.P), user);
-                    //    KeyManager.SaveValue("Q", Convert.ToBase64String(RSAParam.Q), user);
-                    //    KeyManager.SaveValue("DP", Convert.ToBase64String(RSAParam.DP), user);
-                    //    KeyManager.SaveValue("DQ", Convert.ToBase64String(RSAParam.DQ), user);
-                    //    KeyManager.SaveValue("InverseQ", Convert.ToBase64String(RSAParam.InverseQ), user);
-                    //}
-
-
+                    RegistryKey softwareKey = Registry.LocalMachine.OpenSubKey("Software");
+                    RegistryKey key = softwareKey.OpenSubKey("FDS");
+                    // Fetch values from the MyApp key
+                    if (key != null)
+                    {
+                        KeyManager.SaveValue("Modulus", (string)key.GetValue(AppConstants.KeyPrfix + "Modulus"), Environment.UserName);
+                        KeyManager.SaveValue("Exponent", (string)key.GetValue(AppConstants.KeyPrfix + "Exponent"), Environment.UserName);
+                        KeyManager.SaveValue("D", (string)key.GetValue(AppConstants.KeyPrfix + "D"), Environment.UserName);
+                        KeyManager.SaveValue("P", (string)key.GetValue(AppConstants.KeyPrfix + "P"), Environment.UserName);
+                        KeyManager.SaveValue("DP", (string)key.GetValue(AppConstants.KeyPrfix + "DP"), Environment.UserName);
+                        KeyManager.SaveValue("DQ", (string)key.GetValue(AppConstants.KeyPrfix + "DQ"), Environment.UserName);
+                        KeyManager.SaveValue("Q", (string)key.GetValue(AppConstants.KeyPrfix + "Q"), Environment.UserName);
+                        KeyManager.SaveValue("InverseQ", (string)key.GetValue(AppConstants.KeyPrfix + "InverseQ"), Environment.UserName);
+                    }
+                    else
+                        return false;
                 }
+
                 RSAParam = new RSAParameters
                 {
                     InverseQ = Convert.FromBase64String(KeyManager.GetValue("InverseQ")),
@@ -507,18 +562,36 @@ namespace FDS
                 var Authentication_token = KeyManager.GetValue("Authentication_token");
                 var Authorization_token = KeyManager.GetValue("Authorization_token");
                 bool ValidServerKey = !string.IsNullOrEmpty(key1) && !string.IsNullOrEmpty(key2) && !string.IsNullOrEmpty(Authentication_token) && !string.IsNullOrEmpty(Authorization_token);
-                if (ValidServerKey)
+                if (!ValidServerKey)
                 {
-                    QRCodeResponse = new QRCodeResponse
+                    RegistryKey softwareKey = Registry.LocalMachine.OpenSubKey("Software");
+                    RegistryKey myAppKey = softwareKey.OpenSubKey("FDS");
+
+                    // Fetch values from the MyApp key
+                    if (myAppKey != null)
                     {
-                        Public_key = KeyManager.GetValue("Key1") + KeyManager.GetValue("Key2"),
-                        Authentication_token = KeyManager.GetValue("Authentication_token"),
-                        Authorization_token = KeyManager.GetValue("Authorization_token")
-                    };
-                    RSAServer = new RSACryptoServiceProvider(2048);
-                    RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));
+                        KeyManager.SaveValue("Key1", (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Key1"), Environment.UserName);
+                        KeyManager.SaveValue("Key2", (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Key2"), Environment.UserName);
+                        KeyManager.SaveValue("Authentication_token", (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Authentication_token"), Environment.UserName);
+                        KeyManager.SaveValue("Authorization_token", (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Authorization_token"), Environment.UserName);
+
+                        // Close the keys
+                        myAppKey.Close();
+                        softwareKey.Close();
+                    }
+                    else
+                        return false;
+
                 }
-                return ValidServerKey && ValidDeviceKey;
+                QRCodeResponse = new QRCodeResponse
+                {
+                    Public_key = KeyManager.GetValue("Key1") + KeyManager.GetValue("Key2"),
+                    Authentication_token = KeyManager.GetValue("Authentication_token"),
+                    Authorization_token = KeyManager.GetValue("Authorization_token")
+                };
+                RSAServer = new RSACryptoServiceProvider(2048);
+                RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));
+                return true;
             }
             catch (Exception ex)
             {
@@ -527,6 +600,34 @@ namespace FDS
             }
 
         }
+        //private List<string> GetKeysDetails()
+        //{
+        //    List<string> EncKey = new List<string>();
+
+        //    RegistryKey softwareKey = Registry.LocalMachine.OpenSubKey("Software");
+        //    RegistryKey myAppKey = softwareKey.OpenSubKey("FDS");
+
+        //    // Fetch values from the MyApp key
+        //    if (myAppKey != null)
+        //    {
+        //        string Key1 = (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Key1");
+        //        string Key2 = (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Key2");
+        //        string PublicKey = Key1 + Key2;
+        //        string Authentication_token = (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Authentication_token");
+        //        string Authorization_token = (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Authorization_token");
+
+        //        EncKey.Add("PublicKey=" + PublicKey);
+        //        EncKey.Add("Authentication_token=" + Authentication_token);
+        //        EncKey.Add("Authorization_token=" + Authorization_token);
+
+
+        //        // Close the keys
+        //        myAppKey.Close();
+        //        softwareKey.Close();
+        //    }
+
+        //    return EncKey;
+        //}
         #endregion
 
         #region Authentication methods
@@ -551,17 +652,7 @@ namespace FDS
         private void cmbCountryCode_KeyUp(object sender, KeyEventArgs e)
         {
             string searchKeyword = cmbCountryCode.Text.ToLower();
-            // bool isNumeric = double.TryParse(searchKeyword, out double numericValue);
-            //cmbCountryCode.Items.Filter = item =>
-            //{
-            //    if (item.ToString().ToLower().Contains(searchKeyword))
-            //        return true;
-            //    else
-            //        return false;
-            //};
-            //cmbCountryCode.IsDropDownOpen = true;
-            //e.Handled = true;
-
+            
 
             // Filter the Countries collection based on the search text
             var filteredCountries = VM.AllCountries.Where(c => c.DisplayText.ToLower().Contains(searchKeyword));
@@ -890,6 +981,7 @@ namespace FDS
         {
             try
             {
+                RSAParameters RSAParam;
                 var formContent = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("qr_code_token", DeviceResponse.qr_code_token),
                                                                         new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),};
                 var response = await client.PostAsync(AppConstants.EndPoints.CheckAuth, new FormUrlEncodedContent(formContent));
@@ -903,13 +995,37 @@ namespace FDS
                     //foreach (var user in userList)
                     //{
                     //MessageBox.Show("Credentials has been saved: ", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                    KeyManager.SaveValue("Key1", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(0, LengthAllowed) : QRCodeResponse.Public_key);
-                    KeyManager.SaveValue("Key2", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(LengthAllowed, QRCodeResponse.Public_key.Length - LengthAllowed) : "");
-                    KeyManager.SaveValue("Authentication_token", QRCodeResponse.Authentication_token);
-                    KeyManager.SaveValue("Authorization_token", QRCodeResponse.Authorization_token);
+
+                    KeyManager.SaveValue("Key1", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(0, LengthAllowed) : QRCodeResponse.Public_key, Environment.UserName);
+                    KeyManager.SaveValue("Key2", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(LengthAllowed, QRCodeResponse.Public_key.Length - LengthAllowed) : "", Environment.UserName);
+                    KeyManager.SaveValue("Authentication_token", QRCodeResponse.Authentication_token, Environment.UserName);
+                    KeyManager.SaveValue("Authorization_token", QRCodeResponse.Authorization_token, Environment.UserName);
                     //}
                     RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));
                     timerQRCode.IsEnabled = false;
+
+                    RSADevice = new RSACryptoServiceProvider(2048);
+                    RSAParam = RSADevice.ExportParameters(true);
+                    RegistryKey key = Registry.LocalMachine.CreateSubKey("Software");
+                    RegistryKey myAppKey = key.CreateSubKey("FDS");
+                    if (myAppKey != null)
+                    {
+                        // Add a value to the key
+                        myAppKey.SetValue(AppConstants.KeyPrfix + "Key1", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(0, LengthAllowed) : QRCodeResponse.Public_key);
+                        myAppKey.SetValue(AppConstants.KeyPrfix + "Key2", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(LengthAllowed, QRCodeResponse.Public_key.Length - LengthAllowed) : "");
+                        myAppKey.SetValue(AppConstants.KeyPrfix + "Authentication_token", QRCodeResponse.Authentication_token);
+                        myAppKey.SetValue(AppConstants.KeyPrfix + "Authorization_token", QRCodeResponse.Authorization_token);
+                        myAppKey.SetValue(AppConstants.KeyPrfix + "Modulus", Convert.ToBase64String(RSAParam.Modulus));
+                        myAppKey.SetValue(AppConstants.KeyPrfix + "Exponent", Convert.ToBase64String(RSAParam.Exponent));
+                        myAppKey.SetValue(AppConstants.KeyPrfix + "D", Convert.ToBase64String(RSAParam.D));
+                        myAppKey.SetValue(AppConstants.KeyPrfix + "P", Convert.ToBase64String(RSAParam.P));
+                        myAppKey.SetValue(AppConstants.KeyPrfix + "Q", Convert.ToBase64String(RSAParam.Q));
+                        myAppKey.SetValue(AppConstants.KeyPrfix + "DP", Convert.ToBase64String(RSAParam.DP));
+                        myAppKey.SetValue(AppConstants.KeyPrfix + "DQ", Convert.ToBase64String(RSAParam.DQ));
+                        myAppKey.SetValue(AppConstants.KeyPrfix + "InverseQ", Convert.ToBase64String(RSAParam.InverseQ));
+                    }
+
+                    key.Close();
                     if (MenuChange)
                     {
                         LoadMenu(Screens.Landing);
@@ -1159,7 +1275,7 @@ namespace FDS
             {
                 serial_number = AppConstants.SerialNumber,
                 mac_address = AppConstants.MACAddress,
-                authorization_token = KeyManager.GetValue("authorization_token"),
+                authorization_token = KeyManager.GetValue("Authorization_token"),
                 device_uuid = AppConstants.UUId
 
             };
@@ -1254,7 +1370,7 @@ namespace FDS
                 int idx = plainText.LastIndexOf('}');
                 var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
                 var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);//Replace('', ' ').Replace('', ' ').Replace("false", "true"));// replace used to test services
-                                                                                                                        //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
+                                                                                               //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
 
                 DateTime localDate = DateTime.Now.ToLocalTime();
                 txtUpdatedOn.Text = localDate.ToString();
@@ -2375,7 +2491,7 @@ namespace FDS
                 {
                     if (key != null)
                     {
-                        //MessageBox.Show("Uninstall key " + key);
+
                         foreach (string subKeyName in key.GetSubKeyNames())
                         {
                             //MessageBox.Show("Uninstall subKeyName " + subKeyName);
@@ -2421,7 +2537,7 @@ namespace FDS
             var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
             if (response.IsSuccessStatusCode)
             {
-                MessageBox.Show(responseData.msg, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                //MessageBox.Show(responseData.msg, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 UninstallResponseTimer.Start();
             }
             else
@@ -2548,20 +2664,20 @@ namespace FDS
                     string Url = UpdateResponse.msg;
                     //string Url = "https://drive.google.com/file/d/1_NSLQCaWrI_cLwqy51KJdGxhlEr-C6ZI/view?usp=sharing";
 
-            string installationPath = "";
-            if (!Directory.Exists(TempPath))
-                Directory.CreateDirectory(TempPath);
-            RegistryKey registryKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
-            if (registryKey != null)
-            {
-                object obj = registryKey.GetValue("FDS");
-                if (obj != null)
-                    installationPath = Path.GetDirectoryName(obj.ToString());
-            }
-            this.DownloadFile(Url, TempPath + "\\FDS.zip");
-              }
-            //    //this.ReplaceFiles(str, installationPath);
-            //    //Directory.Delete(str, true);
+                    string installationPath = "";
+                    if (!Directory.Exists(TempPath))
+                        Directory.CreateDirectory(TempPath);
+                    RegistryKey registryKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
+                    if (registryKey != null)
+                    {
+                        object obj = registryKey.GetValue("FDS");
+                        if (obj != null)
+                            installationPath = Path.GetDirectoryName(obj.ToString());
+                    }
+                    this.DownloadFile(Url, TempPath + "\\FDS.zip");
+                }
+                //    //this.ReplaceFiles(str, installationPath);
+                //    //Directory.Delete(str, true);
             }
         }
 
