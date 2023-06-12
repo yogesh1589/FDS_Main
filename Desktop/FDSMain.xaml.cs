@@ -1891,30 +1891,33 @@ namespace FDS
             if (firefoxInstances.Length == 0)
             {
                 string firefoxProfilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Mozilla", "Firefox", "Profiles");
-                string[] profileDirectories = Directory.GetDirectories(firefoxProfilePath);
-
-                foreach (string profileDir in profileDirectories)
+                if (Directory.Exists(firefoxProfilePath))
                 {
-                    string cookiesFilePath = Path.Combine(profileDir, "cookies.sqlite");
-                    if (File.Exists(cookiesFilePath))
+                    string[] profileDirectories = Directory.GetDirectories(firefoxProfilePath);
+
+                    foreach (string profileDir in profileDirectories)
                     {
-                        using (SQLiteConnection connection = new SQLiteConnection(string.Format("Data Source={0};", cookiesFilePath)))
+                        string cookiesFilePath = Path.Combine(profileDir, "cookies.sqlite");
+                        if (File.Exists(cookiesFilePath))
                         {
-                            connection.Open();
-                            using (SQLiteCommand command = connection.CreateCommand())
+                            using (SQLiteConnection connection = new SQLiteConnection(string.Format("Data Source={0};", cookiesFilePath)))
                             {
-                                string query = "DELETE FROM moz_cookies";
-                                if (whitelistedDomain.Count > 0)
+                                connection.Open();
+                                using (SQLiteCommand command = connection.CreateCommand())
                                 {
-                                    query += " WHERE ";
-                                    foreach (string domain in whitelistedDomain)
+                                    string query = "DELETE FROM moz_cookies";
+                                    if (whitelistedDomain.Count > 0)
                                     {
-                                        query += "  host not like " + domain + " And";
+                                        query += " WHERE ";
+                                        foreach (string domain in whitelistedDomain)
+                                        {
+                                            query += "  host not like " + domain + " And";
+                                        }
+                                        query = query.Remove(query.Length - 4);
                                     }
-                                    query = query.Remove(query.Length - 4);
+                                    command.CommandText = query;
+                                    TotalCount += command.ExecuteNonQuery();
                                 }
-                                command.CommandText = query;
-                                TotalCount += command.ExecuteNonQuery();
                             }
                         }
                     }
@@ -2106,22 +2109,24 @@ namespace FDS
                 try
                 {
                     string firefoxProfilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Mozilla", "Firefox", "Profiles");
-
-                    string[] profileDirectories = Directory.GetDirectories(firefoxProfilePath);
-
-                    foreach (string profileDir in profileDirectories)
+                    if (Directory.Exists(firefoxProfilePath))
                     {
-                        string placesFilePath = Path.Combine(profileDir, "places.sqlite");
-                        if (File.Exists(placesFilePath))
-                        {
-                            using (SQLiteConnection connection = new SQLiteConnection($"Data Source={placesFilePath};Version=3;"))
-                            {
-                                connection.Open();
+                        string[] profileDirectories = Directory.GetDirectories(firefoxProfilePath);
 
-                                using (SQLiteCommand command = connection.CreateCommand())
+                        foreach (string profileDir in profileDirectories)
+                        {
+                            string placesFilePath = Path.Combine(profileDir, "places.sqlite");
+                            if (File.Exists(placesFilePath))
+                            {
+                                using (SQLiteConnection connection = new SQLiteConnection($"Data Source={placesFilePath};Version=3;"))
                                 {
-                                    command.CommandText = "DELETE FROM moz_places";
-                                    TotalCount += command.ExecuteNonQuery();
+                                    connection.Open();
+
+                                    using (SQLiteCommand command = connection.CreateCommand())
+                                    {
+                                        command.CommandText = "DELETE FROM moz_places";
+                                        TotalCount += command.ExecuteNonQuery();
+                                    }
                                 }
                             }
                         }
@@ -2316,35 +2321,38 @@ namespace FDS
             if (firefoxInstances.Length == 0)
             {
                 string firefoxProfilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Mozilla", "Firefox", "Profiles");
-                string[] profileDirectories = Directory.GetDirectories(firefoxProfilePath);
-
-                foreach (string profileDir in profileDirectories)
+                if (Directory.Exists(firefoxProfilePath))
                 {
-                    string[] cacheFolders = { "cache2", "shader-cache", "browser-extension-data", "startupCache", "thumbnails" };
-                    foreach (string folder in cacheFolders)
+                    string[] profileDirectories = Directory.GetDirectories(firefoxProfilePath);
+
+                    foreach (string profileDir in profileDirectories)
                     {
-                        string cachePath = Path.Combine(profileDir, folder);
-                        if (Directory.Exists(cachePath))
+                        string[] cacheFolders = { "cache2", "shader-cache", "browser-extension-data", "startupCache", "thumbnails" };
+                        foreach (string folder in cacheFolders)
                         {
-                            foreach (string file in Directory.GetFiles(cachePath))
+                            string cachePath = Path.Combine(profileDir, folder);
+                            if (Directory.Exists(cachePath))
                             {
-                                try
+                                foreach (string file in Directory.GetFiles(cachePath))
                                 {
-                                    FileInfo info = new FileInfo(file);
-                                    TotalCount++;
-                                    TotalSize += info.Length;
-                                    File.Delete(file);
+                                    try
+                                    {
+                                        FileInfo info = new FileInfo(file);
+                                        TotalCount++;
+                                        TotalSize += info.Length;
+                                        File.Delete(file);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Console.WriteLine($"Error deleting file: {ex.Message}");
+                                    }
                                 }
-                                catch (Exception ex)
-                                {
-                                    Console.WriteLine($"Error deleting file: {ex.Message}");
-                                }
+                                Console.WriteLine($"Deleted {TotalCount} file of total {TotalSize} bytes of {folder} cache");
                             }
-                            Console.WriteLine($"Deleted {TotalCount} file of total {TotalSize} bytes of {folder} cache");
-                        }
-                        else
-                        {
-                            Console.WriteLine($"{folder} cache folder not found");
+                            else
+                            {
+                                Console.WriteLine($"{folder} cache folder not found");
+                            }
                         }
                     }
                 }
@@ -2601,7 +2609,22 @@ namespace FDS
                                         UninstallResponseTimer.Stop();
                                         timerLastUpdate.Stop();
                                         timerDeviceLogin.Stop();
-                                        CredDelete("FDS_Key_Key1", 1, 0);
+                                        CredDelete(AppConstants.KeyPrfix + "Key1", 1, 0);
+                                        CredDelete(AppConstants.KeyPrfix + "Key2", 1, 0); 
+                                        CredDelete(AppConstants.KeyPrfix + "D", 1, 0);
+                                        CredDelete(AppConstants.KeyPrfix + "P", 1, 0);
+                                        CredDelete(AppConstants.KeyPrfix + "Q", 1, 0);
+                                        CredDelete(AppConstants.KeyPrfix + "DP", 1, 0);
+                                        CredDelete(AppConstants.KeyPrfix + "DQ", 1, 0);
+                                        CredDelete(AppConstants.KeyPrfix + "Exponent", 1, 0);
+                                        CredDelete(AppConstants.KeyPrfix + "InverseQ", 1, 0);
+                                        CredDelete(AppConstants.KeyPrfix + "Modulus", 1, 0);
+                                        CredDelete(AppConstants.KeyPrfix + "InverseQ", 1, 0);
+                                        CredDelete(AppConstants.KeyPrfix + "Authentication_token", 1, 0);
+                                        CredDelete(AppConstants.KeyPrfix + "Authorization_token", 1, 0);
+
+                                        string keyPath = @"SOFTWARE\FDS";
+                                        DeleteRegistryKey(keyPath);
                                         Process.Start("cmd.exe", "/C " + uninstallString);
                                         Process[] processes = Process.GetProcessesByName(applicationName);
                                         Process[] processArray = processes;
@@ -2639,6 +2662,10 @@ namespace FDS
             {
                 MessageBox.Show(responseData.error, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+        public static void DeleteRegistryKey(string keyPath)
+        {
+            Registry.LocalMachine.DeleteSubKeyTree(keyPath);
         }
         #endregion
 

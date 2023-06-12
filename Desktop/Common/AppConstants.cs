@@ -78,14 +78,27 @@ namespace FDS.Common
             get
             {
                 string mac = string.Empty;
-                ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM Win32_NetworkAdapterConfiguration where IPEnabled=true");
-                foreach (ManagementObject mo in searcher.Get())
+                //ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM Win32_NetworkAdapterConfiguration where IPEnabled=true");
+                //foreach (ManagementObject mo in searcher.Get())
+                //{
+                //    mac = mo["MACAddress"].ToString();
+                //    break;
+                //}
+                ////string mac = (from o in objects orderby o["IPConnectionMetric"] select o["MACAddress"].ToString()).FirstOrDefault();
+                ///
+
+                NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
+
+                foreach (NetworkInterface adapter in interfaces)
                 {
-                    mac = mo["MACAddress"].ToString();
-                    break;
+                    if (adapter.NetworkInterfaceType == NetworkInterfaceType.Ethernet && adapter.Name == "Ethernet")
+                    {
+                        mac = adapter.GetPhysicalAddress().ToString();
+                    }
                 }
-                //string mac = (from o in objects orderby o["IPConnectionMetric"] select o["MACAddress"].ToString()).FirstOrDefault();
-                return mac;
+                string formattedMacAddress = string.Join(":", Enumerable.Range(0, 6).Select(i => mac.Substring(i * 2, 2)));
+
+                return formattedMacAddress;
             }
         }
         public static string UUId
