@@ -1152,11 +1152,12 @@ namespace FDS
                     LoadMenu(Screens.Landing);
                 }
             }
-            else
+            else if(response.StatusCode == HttpStatusCode.BadGateway)
             {
                 //timerLastUpdate.IsEnabled = false;
                 //btnGetStarted_Click(btnGetStarted, null);
                 //MessageBox.Show("An error occurred in CheckDeviceHealth: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                timerLastUpdate.IsEnabled = true;
                 lblCompliant.Text = "Ooops! Will be back soon.";
                 string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
                 BitmapImage DeviceDeactive = new BitmapImage();
@@ -1165,6 +1166,21 @@ namespace FDS
                 DeviceDeactive.EndInit();
                 imgCompliant.Source = DeviceDeactive;
                 LoadMenu(Screens.Landing);
+            }
+            else if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                timerLastUpdate.IsEnabled = false;
+                cleanSystem();
+                btnGetStarted_Click(btnGetStarted, null);
+                MessageBox.Show("Your device has been deleted", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                //lblCompliant.Text = "Ooops! Will be back soon.";
+                //string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
+                //BitmapImage DeviceDeactive = new BitmapImage();
+                //DeviceDeactive.BeginInit();
+                //DeviceDeactive.UriSource = new Uri(ImagePath);
+                //DeviceDeactive.EndInit();
+                //imgCompliant.Source = DeviceDeactive;
+                //LoadMenu(Screens.Landing);
             }
         }
         private async Task DeviceConfigurationCheck()
@@ -1338,7 +1354,7 @@ namespace FDS
             {
                 //timerLastUpdate.IsEnabled = false;
                 //btnGetStarted_Click(btnGetStarted, null);
-                MessageBox.Show("An error occurred in GetDeviceDetails: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                //MessageBox.Show("An error occurred in GetDeviceDetails: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -1381,7 +1397,7 @@ namespace FDS
             {
                 //timerLastUpdate.IsEnabled = false;
                 //btnGetStarted_Click(btnGetStarted, null);
-                MessageBox.Show("An error occurred in RetrieveServices: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                //MessageBox.Show("An error occurred in RetrieveServices: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
         #endregion
@@ -2747,6 +2763,28 @@ namespace FDS
                 MessageBox.Show(e.Message);
             }
 
+        }
+        private void cleanSystem()
+        {
+            UninstallResponseTimer.Stop();
+            timerLastUpdate.Stop();
+            timerDeviceLogin.Stop();
+            CredDelete(AppConstants.KeyPrfix + "Key1", 1, 0);
+            CredDelete(AppConstants.KeyPrfix + "Key2", 1, 0);
+            CredDelete(AppConstants.KeyPrfix + "D", 1, 0);
+            CredDelete(AppConstants.KeyPrfix + "P", 1, 0);
+            CredDelete(AppConstants.KeyPrfix + "Q", 1, 0);
+            CredDelete(AppConstants.KeyPrfix + "DP", 1, 0);
+            CredDelete(AppConstants.KeyPrfix + "DQ", 1, 0);
+            CredDelete(AppConstants.KeyPrfix + "Exponent", 1, 0);
+            CredDelete(AppConstants.KeyPrfix + "InverseQ", 1, 0);
+            CredDelete(AppConstants.KeyPrfix + "Modulus", 1, 0);
+            CredDelete(AppConstants.KeyPrfix + "InverseQ", 1, 0);
+            CredDelete(AppConstants.KeyPrfix + "Authentication_token", 1, 0);
+            CredDelete(AppConstants.KeyPrfix + "Authorization_token", 1, 0);
+
+            string keyPath = @"SOFTWARE\FDS";
+            DeleteRegistryKey(keyPath);
         }
         //private void ReplaceFiles(string temporaryPath, string installationPath)
         //{
