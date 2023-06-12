@@ -152,7 +152,7 @@ namespace FDS
 
                 UninstallResponseTimer = new DispatcherTimer();
                 UninstallResponseTimer.Tick += UninstallResponseTimer_Tick;
-                UninstallResponseTimer.Interval = TimeSpan.FromMilliseconds(1000 * 60); // in miliseconds
+                UninstallResponseTimer.Interval = TimeSpan.FromMilliseconds(10000); // in miliseconds
 
                 icon = new System.Windows.Forms.NotifyIcon();
                 icon.Icon = new System.Drawing.Icon(Path.Combine(BaseDir, "Assets/FDSDesktopLogo.ico"));//new System.Drawing.Icon(Path.Combine(Directory.GetParent(System.Environment.CurrentDirectory).Parent.FullName + "\\Assets\\FDSDesktopLogo.ico"));
@@ -173,7 +173,7 @@ namespace FDS
                 cmbCountryCode.DropDownClosed += cmbCountryCode_DropDownClosed;
                 txtCodeVersion.Text = AppConstants.CodeVersion;
 
-    }
+            }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
@@ -511,37 +511,37 @@ namespace FDS
         {
             try
             {
-                string InverseQ = KeyManager.GetValue("InverseQ");
-                string DQ = KeyManager.GetValue("DQ");
-                string DP = KeyManager.GetValue("DP");
-                string Q = KeyManager.GetValue("Q");
-                string P = KeyManager.GetValue("P");
-                string D = KeyManager.GetValue("D");
-                string Exponent = KeyManager.GetValue("Exponent");
-                string Modulus = KeyManager.GetValue("Modulus");
-                bool ValidDeviceKey = !string.IsNullOrEmpty(InverseQ) && !string.IsNullOrEmpty(DQ) && !string.IsNullOrEmpty(DP) && !string.IsNullOrEmpty(Q) && !string.IsNullOrEmpty(P) && !string.IsNullOrEmpty(D) && !string.IsNullOrEmpty(Exponent) && !string.IsNullOrEmpty(Modulus);
+                //string InverseQ = KeyManager.GetValue("InverseQ");
+                //string DQ = KeyManager.GetValue("DQ");
+                //string DP = KeyManager.GetValue("DP");
+                //string Q = KeyManager.GetValue("Q");
+                //string P = KeyManager.GetValue("P");
+                //string D = KeyManager.GetValue("D");
+                //string Exponent = KeyManager.GetValue("Exponent");
+                //string Modulus = KeyManager.GetValue("Modulus");
+                //bool ValidDeviceKey = !string.IsNullOrEmpty(InverseQ) && !string.IsNullOrEmpty(DQ) && !string.IsNullOrEmpty(DP) && !string.IsNullOrEmpty(Q) && !string.IsNullOrEmpty(P) && !string.IsNullOrEmpty(D) && !string.IsNullOrEmpty(Exponent) && !string.IsNullOrEmpty(Modulus);
                 RSAParameters RSAParam;
-                if (!ValidDeviceKey)
+                //if (!ValidDeviceKey)
+                //{
+                RSADevice = new RSACryptoServiceProvider(2048);
+                RSAParam = RSADevice.ExportParameters(true);
+                RegistryKey softwareKey = Registry.LocalMachine.OpenSubKey("Software");
+                RegistryKey key = softwareKey.OpenSubKey("FDS");
+                // Fetch values from the MyApp key
+                if (key != null)
                 {
-                    RSADevice = new RSACryptoServiceProvider(2048);
-                    RSAParam = RSADevice.ExportParameters(true);
-                    RegistryKey softwareKey = Registry.LocalMachine.OpenSubKey("Software");
-                    RegistryKey key = softwareKey.OpenSubKey("FDS");
-                    // Fetch values from the MyApp key
-                    if (key != null)
-                    {
-                        KeyManager.SaveValue("Modulus", (string)key.GetValue(AppConstants.KeyPrfix + "Modulus"), Environment.UserName);
-                        KeyManager.SaveValue("Exponent", (string)key.GetValue(AppConstants.KeyPrfix + "Exponent"), Environment.UserName);
-                        KeyManager.SaveValue("D", (string)key.GetValue(AppConstants.KeyPrfix + "D"), Environment.UserName);
-                        KeyManager.SaveValue("P", (string)key.GetValue(AppConstants.KeyPrfix + "P"), Environment.UserName);
-                        KeyManager.SaveValue("DP", (string)key.GetValue(AppConstants.KeyPrfix + "DP"), Environment.UserName);
-                        KeyManager.SaveValue("DQ", (string)key.GetValue(AppConstants.KeyPrfix + "DQ"), Environment.UserName);
-                        KeyManager.SaveValue("Q", (string)key.GetValue(AppConstants.KeyPrfix + "Q"), Environment.UserName);
-                        KeyManager.SaveValue("InverseQ", (string)key.GetValue(AppConstants.KeyPrfix + "InverseQ"), Environment.UserName);
-                    }
-                    else
-                        return false;
+                    KeyManager.SaveValue("Modulus", (string)key.GetValue(AppConstants.KeyPrfix + "Modulus"), Environment.UserName);
+                    KeyManager.SaveValue("Exponent", (string)key.GetValue(AppConstants.KeyPrfix + "Exponent"), Environment.UserName);
+                    KeyManager.SaveValue("D", (string)key.GetValue(AppConstants.KeyPrfix + "D"), Environment.UserName);
+                    KeyManager.SaveValue("P", (string)key.GetValue(AppConstants.KeyPrfix + "P"), Environment.UserName);
+                    KeyManager.SaveValue("DP", (string)key.GetValue(AppConstants.KeyPrfix + "DP"), Environment.UserName);
+                    KeyManager.SaveValue("DQ", (string)key.GetValue(AppConstants.KeyPrfix + "DQ"), Environment.UserName);
+                    KeyManager.SaveValue("Q", (string)key.GetValue(AppConstants.KeyPrfix + "Q"), Environment.UserName);
+                    KeyManager.SaveValue("InverseQ", (string)key.GetValue(AppConstants.KeyPrfix + "InverseQ"), Environment.UserName);
                 }
+                else
+                    return false;
+                //}
 
                 RSAParam = new RSAParameters
                 {
@@ -564,8 +564,8 @@ namespace FDS
                 bool ValidServerKey = !string.IsNullOrEmpty(key1) && !string.IsNullOrEmpty(key2) && !string.IsNullOrEmpty(Authentication_token) && !string.IsNullOrEmpty(Authorization_token);
                 if (!ValidServerKey)
                 {
-                    RegistryKey softwareKey = Registry.LocalMachine.OpenSubKey("Software");
-                    RegistryKey myAppKey = softwareKey.OpenSubKey("FDS");
+                    RegistryKey softKey = Registry.LocalMachine.OpenSubKey("Software");
+                    RegistryKey myAppKey = softKey.OpenSubKey("FDS");
 
                     // Fetch values from the MyApp key
                     if (myAppKey != null)
@@ -652,7 +652,7 @@ namespace FDS
         private void cmbCountryCode_KeyUp(object sender, KeyEventArgs e)
         {
             string searchKeyword = cmbCountryCode.Text.ToLower();
-            
+
 
             // Filter the Countries collection based on the search text
             var filteredCountries = VM.AllCountries.Where(c => c.DisplayText.ToLower().Contains(searchKeyword));
@@ -1369,8 +1369,8 @@ namespace FDS
                 var plainText = RetriveDecrypt(responseData.Data);
                 int idx = plainText.LastIndexOf('}');
                 var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
-                var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);//Replace('', ' ').Replace('', ' ').Replace("false", "true"));// replace used to test services
-                                                                                               //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
+                var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result.Replace("false", "true"));//Replace('', ' ').Replace('', ' ').Replace("false", "true"));// replace used to test services
+                                                                                                                        //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
 
                 DateTime localDate = DateTime.Now.ToLocalTime();
                 txtUpdatedOn.Text = localDate.ToString();
@@ -1850,15 +1850,15 @@ namespace FDS
                 }
                 foreach (var profile in profiles)
                 {
-                    if (File.Exists(profile))
+                    if (Directory.Exists(profile))
                     {
                         string CookiesPath = Path.Combine(profile, "Network\\Cookies");
                         if (File.Exists(CookiesPath))
                         {
-                            using (SQLiteConnection connection = new SQLiteConnection("Data Source=" + CookiesPath + ";Version=3;New=False;Compress=True;"))
+                            using (SQLiteConnection connection = new SQLiteConnection("Data Source=" + CookiesPath))
                             {
                                 connection.Open();
-                                using (SQLiteCommand command = new SQLiteCommand("DELETE FROM urls", connection))
+                                using (SQLiteCommand command = connection.CreateCommand())
                                 {
                                     string query = "DELETE FROM Cookies";
                                     if (whitelistedDomain.Count > 0)
@@ -1874,6 +1874,7 @@ namespace FDS
                                     command.Prepare();
                                     TotalCount += command.ExecuteNonQuery();
                                 }
+                                connection.Close();
                             }
                         }
                     }
@@ -1969,7 +1970,7 @@ namespace FDS
                 }
                 foreach (var profile in profiles)
                 {
-                    if (File.Exists(profile))
+                    if (Directory.Exists(profile))
                     {
                         string cookiePath = Path.Combine(profile, "Network\\Cookies");
                         if (File.Exists(cookiePath))
@@ -2078,7 +2079,7 @@ namespace FDS
                 }
                 foreach (var profile in profiles)
                 {
-                    if (System.IO.File.Exists(profile))
+                    if (Directory.Exists(profile))
                     {
                         string historyPath = Path.Combine(profile, "History");
                         if (File.Exists(historyPath))
@@ -2195,7 +2196,7 @@ namespace FDS
                 }
                 foreach (var profile in profiles)
                 {
-                    if (System.IO.File.Exists(profile))
+                    if (Directory.Exists(profile))
                     {
                         string historyPath = Path.Combine(profile, "History");
                         if (File.Exists(historyPath))
@@ -2285,10 +2286,10 @@ namespace FDS
                 }
                 foreach (var profile in profiles)
                 {
-                    if (File.Exists(profile))
+                    if (Directory.Exists(profile))
                     {
                         string CachePath = Path.Combine(profile, "Cache\\Cache_Data");
-                        if (File.Exists(CachePath))
+                        if (Directory.Exists(CachePath))
                         {
                             // Clear the cache folder
                             foreach (string file in Directory.GetFiles(CachePath))
@@ -2545,7 +2546,7 @@ namespace FDS
             var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
             if (response.IsSuccessStatusCode)
             {
-                //MessageBox.Show(responseData.msg, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(responseData.msg, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 UninstallResponseTimer.Start();
             }
             else
@@ -2583,12 +2584,14 @@ namespace FDS
                     {
                         UninstallResponseTimer.Stop();
                         btnUninstall.ToolTip = "Your uninstall request has been declined!";
+                        MessageBox.Show("Uninstall request has been rejected! Please contact your Administrator", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                         btnUninstall.Foreground = System.Windows.Media.Brushes.Red;
                     }
                     else
                     {
-                        btnUninstall.ToolTip = "Your uninstall request has been approved!";
+                        btnUninstall.ToolTip = "Your uninstall request has been approved! ";
                         btnUninstall.Foreground = System.Windows.Media.Brushes.DarkGreen;
+                        MessageBox.Show("Uninstall request has been rejected! Will process your request soon", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                         string applicationName = "FDS";
 
                         // Get the uninstall registry key for the application
@@ -2610,7 +2613,7 @@ namespace FDS
                                         timerLastUpdate.Stop();
                                         timerDeviceLogin.Stop();
                                         CredDelete(AppConstants.KeyPrfix + "Key1", 1, 0);
-                                        CredDelete(AppConstants.KeyPrfix + "Key2", 1, 0); 
+                                        CredDelete(AppConstants.KeyPrfix + "Key2", 1, 0);
                                         CredDelete(AppConstants.KeyPrfix + "D", 1, 0);
                                         CredDelete(AppConstants.KeyPrfix + "P", 1, 0);
                                         CredDelete(AppConstants.KeyPrfix + "Q", 1, 0);
@@ -2627,13 +2630,25 @@ namespace FDS
                                         DeleteRegistryKey(keyPath);
                                         Process.Start("cmd.exe", "/C " + uninstallString);
                                         Process[] processes = Process.GetProcessesByName(applicationName);
-                                        Process[] processArray = processes;
-                                        for (int index2 = 0; index2 < processArray.Length; ++index2)
+                                        //Process[] processArray = processes;
+                                        //for (int index2 = 0; index2 < processArray.Length; ++index2)
+                                        //{
+                                        //    Process process = processArray[index2];
+                                        //    process.Kill();
+                                        //    process.WaitForExit();
+                                        //    process = (Process)null;
+                                        //}
+                                        foreach (Process process in processes)
                                         {
-                                            Process process = processArray[index2];
-                                            process.Kill();
-                                            process.WaitForExit();
-                                            process = (Process)null;
+                                            try
+                                            {
+                                                process.Kill();
+                                                //Console.WriteLine($"Process with ID {process.Id} killed successfully.");
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                //Console.WriteLine($"Error killing process: {ex.Message}");
+                                            }
                                         }
                                         // Delete the registry key for the application
                                         key.DeleteSubKeyTree(applicationName);
@@ -2683,12 +2698,12 @@ namespace FDS
                 var responseString = await response.Content.ReadAsStringAsync();
                 AutoUpdateResponse UpdateResponse = JsonConvert.DeserializeObject<AutoUpdateResponse>(responseString);
 
-                var getresponse = await client.GetAsync(AppConstants.EndPoints.AutoUpdate + UpdateResponse.msg);
+                var getresponse = await client.GetAsync(AppConstants.EndPoints.AutoUpdate + "?token=" + UpdateResponse.msg);
                 if (getresponse.IsSuccessStatusCode)
                 {
-                    var getresponseString = await response.Content.ReadAsStringAsync();
-                    AutoUpdateResponse UpdateGetResponse = JsonConvert.DeserializeObject<AutoUpdateResponse>(responseString);
-                    string Url = UpdateResponse.msg;
+                    var getresponseString = await getresponse.Content.ReadAsStringAsync();
+                    AutoUpdateResponse UpdateGetResponse = JsonConvert.DeserializeObject<AutoUpdateResponse>(getresponseString);
+                    string Url = UpdateGetResponse.msg;
                     //string Url = "https://drive.google.com/file/d/1_NSLQCaWrI_cLwqy51KJdGxhlEr-C6ZI/view?usp=sharing";
 
                     string installationPath = "";
