@@ -1385,7 +1385,7 @@ namespace FDS
                 var plainText = RetriveDecrypt(responseData.Data);
                 int idx = plainText.LastIndexOf('}');
                 var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
-                var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result.Replace("false", "true"));//Replace('', ' ').Replace('', ' ').Replace("false", "true"));// replace used to test services
+                var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);//Replace('', ' ').Replace('', ' ').Replace("false", "true"));// replace used to test services
                                                                                                                         //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
 
                 DateTime localDate = DateTime.Now.ToLocalTime();
@@ -2562,7 +2562,7 @@ namespace FDS
             var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
             if (response.IsSuccessStatusCode)
             {
-                MessageBox.Show(responseData.msg, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Uninstall request has been raised", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 UninstallResponseTimer.Start();
             }
             else
@@ -2600,14 +2600,14 @@ namespace FDS
                     {
                         UninstallResponseTimer.Stop();
                         btnUninstall.ToolTip = "Your uninstall request has been declined!";
-                        MessageBox.Show("Uninstall request has been rejected! Please contact your Administrator", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                        //MessageBox.Show("Uninstall request has been rejected! Please contact your Administrator", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                         btnUninstall.Foreground = System.Windows.Media.Brushes.Red;
                     }
                     else
                     {
                         btnUninstall.ToolTip = "Your uninstall request has been approved! ";
                         btnUninstall.Foreground = System.Windows.Media.Brushes.DarkGreen;
-                        MessageBox.Show("Uninstall request has been rejected! Will process your request soon", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                        MessageBox.Show("Uninstall request has been approved! Will process your request soon", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                         string applicationName = "FDS";
 
                         // Get the uninstall registry key for the application
@@ -2625,25 +2625,7 @@ namespace FDS
                                         string uninstallString = subKey.GetValue("UninstallString").ToString();
 
                                         //MessageBox.Show(uninstallString, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                                        UninstallResponseTimer.Stop();
-                                        timerLastUpdate.Stop();
-                                        timerDeviceLogin.Stop();
-                                        CredDelete(AppConstants.KeyPrfix + "Key1", 1, 0);
-                                        CredDelete(AppConstants.KeyPrfix + "Key2", 1, 0);
-                                        CredDelete(AppConstants.KeyPrfix + "D", 1, 0);
-                                        CredDelete(AppConstants.KeyPrfix + "P", 1, 0);
-                                        CredDelete(AppConstants.KeyPrfix + "Q", 1, 0);
-                                        CredDelete(AppConstants.KeyPrfix + "DP", 1, 0);
-                                        CredDelete(AppConstants.KeyPrfix + "DQ", 1, 0);
-                                        CredDelete(AppConstants.KeyPrfix + "Exponent", 1, 0);
-                                        CredDelete(AppConstants.KeyPrfix + "InverseQ", 1, 0);
-                                        CredDelete(AppConstants.KeyPrfix + "Modulus", 1, 0);
-                                        CredDelete(AppConstants.KeyPrfix + "InverseQ", 1, 0);
-                                        CredDelete(AppConstants.KeyPrfix + "Authentication_token", 1, 0);
-                                        CredDelete(AppConstants.KeyPrfix + "Authorization_token", 1, 0);
-
-                                        string keyPath = @"SOFTWARE\FDS";
-                                        DeleteRegistryKey(keyPath);
+                                        cleanSystem();
                                         Process.Start("cmd.exe", "/C " + uninstallString);
                                         Process[] processes = Process.GetProcessesByName(applicationName);
                                         //Process[] processArray = processes;
