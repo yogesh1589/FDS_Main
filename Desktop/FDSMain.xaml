@@ -351,7 +351,7 @@
                         </Grid>
                         <Grid x:Name="cntLanding" Visibility="Hidden" Margin="30,0,30,0">
                             <Image x:Name="imgCompliant" Source="Assets/checkcircle.png" Height="160" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,40,0,0" Width="162" />
-                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="#007AFF" FontWeight="Bold" FontFamily="Radian"  FontSize="18" Margin="0,200,0,0" >Fusion Tech Partners</TextBlock>
+                            <TextBlock x:Name="txtOrganization" HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="#007AFF" FontWeight="Bold" FontFamily="Radian"  FontSize="18" Margin="0,200,0,0" >Fusion Tech Partners</TextBlock>
                             <TextBlock x:Name="lblCompliant" Text="Your system is Compliant" HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="#0C1828" FontSize="24" FontStyle="Normal" FontWeight="Black" FontFamily="Radian" Margin="0,241,0,0" ></TextBlock>
                             <Grid  HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="0,0,0,60">
                                 <Border CornerRadius="25">

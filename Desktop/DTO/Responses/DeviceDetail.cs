@@ -30,6 +30,7 @@ namespace FDS.DTO.Responses
         public bool credentials_shared { get; set; }
         public bool qr_code_token_used { get; set; }
         public string device_location { get; set; }
+        public string org_name { get; set; }
         public int authenticated_by { get; set; }
     }
 

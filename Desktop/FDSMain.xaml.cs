@@ -27,24 +27,12 @@ using System.Management;
 using System.Windows.Interop;
 using System.Drawing;
 using Image = System.Drawing.Image;
-using CredentialManagement;
-using Org.BouncyCastle.Asn1.Ocsp;
 using Shell32;
-using System.ServiceProcess;
-using Windows.Services.Maps;
-using System.Reflection;
-using System.Net.Mail;
-using System.Globalization;
 using WpfAnimatedGif;
 using System.Net;
 using System.IO.Compression;
 using System.Collections.ObjectModel;
-using System.Windows.Controls;
-using System.DirectoryServices.AccountManagement;
-using Windows.Storage;
-using System.ComponentModel;
-using System.Windows.Data;
-using System.Configuration;
+using System.Net.NetworkInformation;
 
 namespace FDS
 {
@@ -113,6 +101,8 @@ namespace FDS
         string applicationName = "FDS";
         string TempPath = @"C:\web\Temp\FDS";
         ViewModel VM = new ViewModel();
+        bool isUninstallRequestRaised = false;
+        bool isInternetConnected = true;
         public ObservableCollection<CountryCode> AllCounties { get; }
         public string CodeVersion = "";
         #endregion
@@ -122,6 +112,7 @@ namespace FDS
         {
             try
             {
+
                 int insCount = AlreadyRunningInstance();
                 if (insCount > 1)
                     App.Current.Shutdown();
@@ -152,7 +143,7 @@ namespace FDS
 
                 UninstallResponseTimer = new DispatcherTimer();
                 UninstallResponseTimer.Tick += UninstallResponseTimer_Tick;
-                UninstallResponseTimer.Interval = TimeSpan.FromMilliseconds(10000); // in miliseconds
+                UninstallResponseTimer.Interval = TimeSpan.FromMilliseconds(1000); // in miliseconds
 
                 icon = new System.Windows.Forms.NotifyIcon();
                 icon.Icon = new System.Drawing.Icon(Path.Combine(BaseDir, "Assets/FDSDesktopLogo.ico"));//new System.Drawing.Icon(Path.Combine(Directory.GetParent(System.Environment.CurrentDirectory).Parent.FullName + "\\Assets\\FDSDesktopLogo.ico"));
@@ -190,6 +181,23 @@ namespace FDS
             //key.SetValue("FDS", exeFile);
 
             //#endregion
+        }
+        static bool CheckInternetConnection()
+        {
+            try
+            {
+                using (var ping = new Ping())
+                {
+                    const string host = "www.google.com"; // Use a reliable external host
+                    PingReply reply = ping.Send(host);
+
+                    return (reply != null && reply.Status == IPStatus.Success);
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
         public static int AlreadyRunningInstance()
         {
@@ -779,11 +787,11 @@ namespace FDS
         {
             if (string.IsNullOrWhiteSpace(txtToken.Text))
             {
-                txtTokenValidation.Text = "Please enter token";
+                txtTokenValidation.Text = "Please enter Verification code";
             }
             else if (!IsValidTokenNumber(txtToken.Text))
             {
-                txtTokenValidation.Text = "Invalid Token number";
+                txtTokenValidation.Text = "Invalid Verification code";
                 txtTokenValidation.Visibility = Visibility.Visible;
             }
             else
@@ -1106,44 +1114,62 @@ namespace FDS
 
         public async Task CheckDeviceHealth()
         {
-            var servicesObject = new RetriveServices
+            isInternetConnected = CheckInternetConnection();
+            if (isInternetConnected)
             {
-                authorization_token = KeyManager.GetValue("authorization_token"),
-                mac_address = AppConstants.MACAddress,
-                serial_number = AppConstants.SerialNumber,
-                current_user = Environment.UserName,
-                device_uuid = AppConstants.UUId,
-                //app_version
-                //os_version
-            };
-            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
-            //var payload = JsonConvert.SerializeObject(servicesObject).ToString();
+                var servicesObject = new RetriveServices
+                {
+                    authorization_token = KeyManager.GetValue("authorization_token"),
+                    mac_address = AppConstants.MACAddress,
+                    serial_number = AppConstants.SerialNumber,
+                    current_user = Environment.UserName,
+                    device_uuid = AppConstants.UUId,
+                    //app_version
+                    //os_version
+                };
+                var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
+                //var payload = JsonConvert.SerializeObject(servicesObject).ToString();
 
-            var formContent = new List<KeyValuePair<string, string>> {
+                var formContent = new List<KeyValuePair<string, string>> {
                 new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("authentication_token")) ,
                 new KeyValuePair<string, string>("payload", payload),
                 new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
             };
 
-            var response = await client.PostAsync(AppConstants.EndPoints.DeviceHealth, new FormUrlEncodedContent(formContent));
+                var response = await client.PostAsync(AppConstants.EndPoints.DeviceHealth, new FormUrlEncodedContent(formContent));
 
-            if (response.IsSuccessStatusCode)
-            {
-
-                var responseString = await response.Content.ReadAsStringAsync();
-                var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-                var plainText = RetriveDecrypt(responseData.Data);
-                int idx = plainText.LastIndexOf('}');
-                var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
-                var HealthData = JsonConvert.DeserializeObject<HealthCheckResponse>(result);
-                if (HealthData.call_config)
+                if (response.IsSuccessStatusCode)
                 {
-                    await DeviceConfigurationCheck();
+
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
+                    var plainText = RetriveDecrypt(responseData.Data);
+                    int idx = plainText.LastIndexOf('}');
+                    var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
+                    var HealthData = JsonConvert.DeserializeObject<HealthCheckResponse>(result);
+                    if (HealthData.call_config)
+                    {
+                        await DeviceConfigurationCheck();
+                    }
+                    else
+                        await GetDeviceDetails();
+                    if (IsServiceActive)
+                    {
+                        lblCompliant.Text = "Your system is Compliant";
+                        string ImagePath = Path.Combine(BaseDir, "Assets/DeviceActive.png");
+                        BitmapImage DeviceDeactive = new BitmapImage();
+                        DeviceDeactive.BeginInit();
+                        DeviceDeactive.UriSource = new Uri(ImagePath);
+                        DeviceDeactive.EndInit();
+                        imgCompliant.Source = DeviceDeactive;
+                        LoadMenu(Screens.Landing);
+                    }
                 }
-                if (IsServiceActive)
+                else if (response.StatusCode == HttpStatusCode.BadGateway)
                 {
-                    lblCompliant.Text = "Your system is Compliant";
-                    string ImagePath = Path.Combine(BaseDir, "Assets/DeviceActive.png");
+                    timerLastUpdate.IsEnabled = true;
+                    lblCompliant.Text = "Ooops! Will be back soon.";
+                    string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
                     BitmapImage DeviceDeactive = new BitmapImage();
                     DeviceDeactive.BeginInit();
                     DeviceDeactive.UriSource = new Uri(ImagePath);
@@ -1151,36 +1177,31 @@ namespace FDS
                     imgCompliant.Source = DeviceDeactive;
                     LoadMenu(Screens.Landing);
                 }
+                else if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    timerLastUpdate.IsEnabled = false;
+                    if (isUninstallRequestRaised)
+                    {
+                        UninstallProgram();
+                    }
+                    else
+                        cleanSystem();
+                    //btnGetStarted_Click(btnGetStarted, null);
+                    LoadMenu(Screens.GetStart);
+                    MessageBox.Show("Your device has been deleted", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
             }
-            else if(response.StatusCode == HttpStatusCode.BadGateway)
+            else
             {
-                //timerLastUpdate.IsEnabled = false;
-                //btnGetStarted_Click(btnGetStarted, null);
-                //MessageBox.Show("An error occurred in CheckDeviceHealth: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 timerLastUpdate.IsEnabled = true;
-                lblCompliant.Text = "Ooops! Will be back soon.";
+                lblCompliant.Text = "No Internet Connection!";
                 string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
                 BitmapImage DeviceDeactive = new BitmapImage();
                 DeviceDeactive.BeginInit();
                 DeviceDeactive.UriSource = new Uri(ImagePath);
                 DeviceDeactive.EndInit();
                 imgCompliant.Source = DeviceDeactive;
-                LoadMenu(Screens.Landing);
-            }
-            else if (response.StatusCode == HttpStatusCode.Unauthorized)
-            {
-                timerLastUpdate.IsEnabled = false;
-                cleanSystem();
-                btnGetStarted_Click(btnGetStarted, null);
-                MessageBox.Show("Your device has been deleted", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                //lblCompliant.Text = "Ooops! Will be back soon.";
-                //string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
-                //BitmapImage DeviceDeactive = new BitmapImage();
-                //DeviceDeactive.BeginInit();
-                //DeviceDeactive.UriSource = new Uri(ImagePath);
-                //DeviceDeactive.EndInit();
-                //imgCompliant.Source = DeviceDeactive;
-                //LoadMenu(Screens.Landing);
+                
             }
         }
         private async Task DeviceConfigurationCheck()
@@ -1320,6 +1341,7 @@ namespace FDS
                     lblSerialNumber.Text = lblPopSerialNumber.Text = deviceDetail.serial_number;
                     lblUserName.Text = lblDeviceName.Text = deviceDetail.device_name;
                     lblLocation.Text = deviceDetail.device_location != null ? deviceDetail.device_location.ToString() : "";
+                    txtOrganization.Text = deviceDetail.org_name != null ? deviceDetail.org_name.ToString() : txtOrganization.Text;
                     DateTime convertedDate = DateTime.Parse(Convert.ToString(deviceDetail.updated_on));
                     DateTime localDate = convertedDate.ToLocalTime();
                     txtUpdatedOn.Text = deviceDetail.updated_on != null ? localDate.ToString() : "";
@@ -1386,7 +1408,7 @@ namespace FDS
                 int idx = plainText.LastIndexOf('}');
                 var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
                 var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);//Replace('', ' ').Replace('', ' ').Replace("false", "true"));// replace used to test services
-                                                                                                                        //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
+                                                                                               //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
 
                 DateTime localDate = DateTime.Now.ToLocalTime();
                 txtUpdatedOn.Text = localDate.ToString();
@@ -2562,7 +2584,10 @@ namespace FDS
             var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
             if (response.IsSuccessStatusCode)
             {
-                MessageBox.Show("Uninstall request has been raised", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Uninstall request has been raised successfully!", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                isUninstallRequestRaised = true;
+                btnUninstall.ToolTip = "Your uninstall request is pending.";
+                btnUninstall.Foreground = System.Windows.Media.Brushes.Gold;
                 UninstallResponseTimer.Start();
             }
             else
@@ -2607,7 +2632,7 @@ namespace FDS
                     {
                         btnUninstall.ToolTip = "Your uninstall request has been approved! ";
                         btnUninstall.Foreground = System.Windows.Media.Brushes.DarkGreen;
-                        MessageBox.Show("Uninstall request has been approved! Will process your request soon", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                        //MessageBox.Show("Uninstall request has been approved! Will process your request soon", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                         string applicationName = "FDS";
 
                         // Get the uninstall registry key for the application
