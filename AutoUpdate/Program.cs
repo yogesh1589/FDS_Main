@@ -6,6 +6,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -16,8 +18,9 @@ namespace AutoUpdate
         public static void Main(string[] args)
         {
             Program pgm = new Program();
-            string TempPath = "C:\\Temp\\FDS";
-            Console.WriteLine("Hi! you are about to update your FDS application");
+            string TempFDSPath = "C:\\web\\Temp\\FDS";
+            string TempPath = "C:\\web\\Temp";
+            //Console.WriteLine("Hi! you are about to update your FDS application");
             string installationPath = "";
             if (!Directory.Exists(TempPath))
                 Directory.CreateDirectory(TempPath);
@@ -28,27 +31,74 @@ namespace AutoUpdate
                 if (obj != null)
                     installationPath = Path.GetDirectoryName(obj.ToString());
             }
-            pgm.ReplaceFiles(TempPath,installationPath);
-        }
-        #region AutoUpdate
-       
-        private void ReplaceFiles(string temporaryPath, string installationPath)
-        {
-            try
+            //Console.WriteLine("TemPath: " + TempPath);
+            //Console.WriteLine("installationPath: " + installationPath);
+            //string[] filePaths = Directory.GetFiles(TempPath);
+            //FileSecurity fileSecurity = File.GetAccessControl(installationPath);
+
+            //// Create a rule for granting permission to Authenticated Users
+            //SecurityIdentifier authenticatedUsersSid = new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null);
+            //FileSystemAccessRule accessRule = new FileSystemAccessRule(
+            //    authenticatedUsersSid,
+            //    FileSystemRights.FullControl,
+            //    InheritanceFlags.None,
+            //    PropagationFlags.NoPropagateInherit,
+            //    AccessControlType.Allow
+            //);
+
+            //// Add the access rule to the file security
+            //fileSecurity.AddAccessRule(accessRule);
+
+            //// Apply the updated file security
+            //File.SetAccessControl(installationPath, fileSecurity);
+
+
+            foreach (Process process in Process.GetProcessesByName("FDS"))
             {
-                foreach (Process process in Process.GetProcessesByName("FDS"))
+                process.Kill();
+                process.WaitForExit();
+            }
+
+            // Iterate over the file paths and perform desired operations
+            string[] subdirectories = Directory.GetDirectories(TempFDSPath);
+            if (subdirectories.Length > 0)
+            {
+                foreach (string subdirectory in subdirectories)
                 {
-                    process.Kill();
-                    process.WaitForExit();
+                    string subdirectoryName = Path.GetFileName(subdirectory);
+                    foreach (FileInfo file in new DirectoryInfo(subdirectory).GetFiles())
+                    {
+                        string filePath = installationPath + "\\" + file.Name;
+                        if (!file.Name.Contains("AutoUpdate.exe"))
+                        {
+                            if (File.Exists(filePath))
+                            {
+                                File.Replace(TempFDSPath + "\\" + subdirectoryName + "\\" + file.Name, installationPath + "\\" + subdirectoryName +"\\"+ file.Name, null);
+                                //Console.WriteLine("File replaced successfully.");
+                            }
+                            else
+                                file.CopyTo(Path.Combine(installationPath, file.Name));
+                        }
+                    }
                 }
-                foreach (FileInfo file in new DirectoryInfo(temporaryPath).GetFiles())
-                    file.CopyTo(Path.Combine(installationPath, file.Name));
             }
-            catch (Exception ex)
+            foreach (FileInfo file in new DirectoryInfo(TempFDSPath).GetFiles())
             {
-                Console.WriteLine("Error replacing files: " + ex.Message);
+                string filePath = installationPath + "\\"+ file.Name;
+                if(!file.Name.Contains("AutoUpdate.exe"))
+                {
+                    if (File.Exists(filePath))
+                    {
+                        File.Replace(TempFDSPath + "\\" + file.Name, installationPath + "\\" + file.Name, null);
+                        //Console.WriteLine("File replaced successfully.");
+                    }
+                    else
+                        file.CopyTo(Path.Combine(installationPath, file.Name));
+                }
             }
+            string AutoUpdateExePath = Directory.GetCurrentDirectory() + "\\FDS.exe";
+            Process.Start(AutoUpdateExePath);
+            Directory.Delete(TempPath, true);
         }
-        #endregion
     }
 }

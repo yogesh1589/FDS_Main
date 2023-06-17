@@ -99,10 +99,11 @@ namespace FDS
         public bool IsServiceActive = true;
         List<string> userList = new List<string>();
         string applicationName = "FDS";
-        string TempPath = @"C:\web\Temp\FDS";
+        string TempPath = @"C:\web\Temp\";
         ViewModel VM = new ViewModel();
         bool isUninstallRequestRaised = false;
         bool isInternetConnected = true;
+        //bool IsAutoUpdated = false;
         public ObservableCollection<CountryCode> AllCounties { get; }
         public string CodeVersion = "";
         #endregion
@@ -1000,15 +1001,7 @@ namespace FDS
                     var responseString = await response.Content.ReadAsStringAsync();
                     QRCodeResponse = JsonConvert.DeserializeObject<QRCodeResponse>(responseString);
                     int LengthAllowed = 512;
-                    //foreach (var user in userList)
-                    //{
-                    //MessageBox.Show("Credentials has been saved: ", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                    KeyManager.SaveValue("Key1", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(0, LengthAllowed) : QRCodeResponse.Public_key, Environment.UserName);
-                    KeyManager.SaveValue("Key2", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(LengthAllowed, QRCodeResponse.Public_key.Length - LengthAllowed) : "", Environment.UserName);
-                    KeyManager.SaveValue("Authentication_token", QRCodeResponse.Authentication_token, Environment.UserName);
-                    KeyManager.SaveValue("Authorization_token", QRCodeResponse.Authorization_token, Environment.UserName);
-                    //}
                     RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));
                     timerQRCode.IsEnabled = false;
 
@@ -1034,6 +1027,24 @@ namespace FDS
                     }
 
                     key.Close();
+
+                    RegistryKey softKey = Registry.LocalMachine.OpenSubKey("Software");
+                    RegistryKey AppKey = softKey.OpenSubKey("FDS");
+                    if(AppKey != null)
+                    {
+                        KeyManager.SaveValue("Key1", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Key1"), Environment.UserName);
+                        KeyManager.SaveValue("Key2", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Key2"), Environment.UserName);
+                        KeyManager.SaveValue("Authentication_token", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Authentication_token"), Environment.UserName);
+                        KeyManager.SaveValue("Authorization_token", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Authorization_token"), Environment.UserName);
+                        KeyManager.SaveValue("Modulus", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Modulus"), Environment.UserName);
+                        KeyManager.SaveValue("Exponent", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Exponent"), Environment.UserName);
+                        KeyManager.SaveValue("D", (string)AppKey.GetValue(AppConstants.KeyPrfix + "D"), Environment.UserName);
+                        KeyManager.SaveValue("P", (string)AppKey.GetValue(AppConstants.KeyPrfix + "P"), Environment.UserName);
+                        KeyManager.SaveValue("DP", (string)AppKey.GetValue(AppConstants.KeyPrfix + "DP"), Environment.UserName);
+                        KeyManager.SaveValue("DQ", (string)AppKey.GetValue(AppConstants.KeyPrfix + "DQ"), Environment.UserName);
+                        KeyManager.SaveValue("Q", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Q"), Environment.UserName);
+                        KeyManager.SaveValue("InverseQ", (string)AppKey.GetValue(AppConstants.KeyPrfix + "InverseQ"), Environment.UserName);
+                    }
                     if (MenuChange)
                     {
                         LoadMenu(Screens.Landing);
@@ -1151,8 +1162,6 @@ namespace FDS
                     {
                         await DeviceConfigurationCheck();
                     }
-                    else
-                        await GetDeviceDetails();
                     if (IsServiceActive)
                     {
                         lblCompliant.Text = "Your system is Compliant";
@@ -1262,10 +1271,16 @@ namespace FDS
                                 IsServiceActive = true;
                                 await GetDeviceDetails();
                             }
-                            else if (api.Equals("7"))
-                            {
-                                AutoUpdate();
-                            }
+                            //else if (api.Equals("7"))
+                            //{
+                            //    //if (File.Exists(TempPath + "\\FDS\\" + "AutoUpdate.exe"))
+                            //    //{
+                            //    //    IsAutoUpdated = true;
+                            //    //    Directory.Delete(TempPath, true);
+                            //    //}
+                            //    //if (!IsAutoUpdated)
+                            //       // AutoUpdate();
+                            //}
                         }
                     }
                 }
@@ -1838,9 +1853,17 @@ namespace FDS
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
                     var responseData = JsonConvert.DeserializeObject<WhiteListDomainResponse>(responseString);
-                    if (responseData.whitelist_domain.Count > 0)
+                    if (responseData.device_domains.Count > 0)
                     {
-                        foreach (var domain in responseData.whitelist_domain)
+                        foreach (var domain in responseData.device_domains)
+                        {
+                            whitelistedDomain.Add("'%" + domain.domain_name + "%'");
+                        }
+                       
+                    }
+                    if (responseData.org_domains.Count > 0)
+                    {
+                        foreach (var domain in responseData.org_domains)
                         {
                             whitelistedDomain.Add("'%" + domain.domain_name + "%'");
                         }
@@ -2713,7 +2736,8 @@ namespace FDS
             var formContent = new List<KeyValuePair<string, string>> {
                         new KeyValuePair<string, string>("serial_number", AppConstants.SerialNumber),
                         new KeyValuePair<string, string>("mac_address",AppConstants.MACAddress),
-                        new KeyValuePair<string, string>("device_uuid", AppConstants.UUId)
+                        new KeyValuePair<string, string>("device_uuid", AppConstants.UUId),
+                        //new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion)
                     };
             var response = await client.PostAsync(AppConstants.EndPoints.AutoUpdate, new FormUrlEncodedContent(formContent));
             if (response.IsSuccessStatusCode)
@@ -2742,7 +2766,7 @@ namespace FDS
                     this.DownloadFile(Url, TempPath + "\\FDS.zip");
                 }
                 //    //this.ReplaceFiles(str, installationPath);
-                //    //Directory.Delete(str, true);
+               
             }
         }
 
