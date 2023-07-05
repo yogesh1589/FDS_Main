@@ -33,6 +33,9 @@ using System.Net;
 using System.IO.Compression;
 using System.Collections.ObjectModel;
 using System.Net.NetworkInformation;
+using System.Runtime.InteropServices.ComTypes;
+using System.Threading;
+using System.Windows.Forms.Design;
 
 namespace FDS
 {
@@ -99,11 +102,12 @@ namespace FDS
         public bool IsServiceActive = true;
         List<string> userList = new List<string>();
         string applicationName = "FDS";
-        string TempPath = @"C:\web\Temp\";
+        string TempPath = @"C:\web\Temp\FDS\";
+        string TempMSIPath = @"C:\web\Temp\FDS\FDSMSI\";
         ViewModel VM = new ViewModel();
         bool isUninstallRequestRaised = false;
         bool isInternetConnected = true;
-        //bool IsAutoUpdated = false;
+        bool IsAutoUpdated = false;
         public ObservableCollection<CountryCode> AllCounties { get; }
         public string CodeVersion = "";
         #endregion
@@ -138,7 +142,7 @@ namespace FDS
                 timerLastUpdate.IsEnabled = false;
 
                 CronLastUpdate = new DispatcherTimer();
-                CronLastUpdate.Interval = TimeSpan.FromMilliseconds(59000);
+                CronLastUpdate.Interval = TimeSpan.FromMinutes(1);
                 CronLastUpdate.Tick += CronLastUpdate_Tick;
                 CronLastUpdate.IsEnabled = false;
 
@@ -252,33 +256,11 @@ namespace FDS
         public void FDSMain_Loaded(object sender, RoutedEventArgs e)
         {
             //CredDelete("FDS_Key_Key1", 1, 0);
-
-            //ServiceBase[] ServicesToRun;
-            //ServicesToRun = new ServiceBase[]
-            //{
-            //            new Service()
-            //};
-            //ServiceBase.Run(ServicesToRun);
-            //LoadMenu(Screens.AuthenticationMethods);
             try
             {
-
-                //using (var context = new PrincipalContext(ContextType.Machine))
-                //{
-                //    using (var searcher = new PrincipalSearcher(new UserPrincipal(context)))
-                //    {
-                //        foreach (var result in searcher.FindAll())
-                //        {
-                //            if (result is UserPrincipal userPrincipal)
-                //            {
-                //                userList.Add(userPrincipal.SamAccountName);
-                //            }
-                //        }
-                //    }
-                //}
-                //AutoUpdate();
+                // -------Actual Code --------------------------------
                 bool valid = CheckAllKeys();
-
+                //AutoUpdate();
                 if (!valid)
                 {
                     #region Auto start on startup done by Installer
@@ -304,11 +286,17 @@ namespace FDS
                 }
                 else
                 {
+                    if (File.Exists(TempPath + "AutoUpdate.exe"))
+                    {
+                        Directory.Delete(TempPath, true);
+                    }
+
                     LoadMenu(Screens.Landing);
                     TimerLastUpdate_Tick(timerLastUpdate, null);
                     //timerLastUpdate.IsEnabled = true;
                     GetDeviceDetails();
                 }
+                // -------Actual Code --------------------------------
             }
             catch (Exception ex)
             {
@@ -342,6 +330,7 @@ namespace FDS
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
                         cntGetStart.Visibility = Visibility.Visible;
+                        btnUninstall.Visibility = Visibility.Hidden;
                         break;
                     case Screens.AuthenticationMethods:
                         AuthenticationMethods.Visibility = Visibility.Visible;
@@ -359,6 +348,7 @@ namespace FDS
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
+                        btnUninstall.Visibility = Visibility.Hidden;
                         break;
                     case Screens.AuthenticationStep1:
                         AuthenticationStep1.Visibility = Visibility.Visible;
@@ -368,6 +358,7 @@ namespace FDS
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
+                        btnUninstall.Visibility = Visibility.Hidden;
                         break;
                     case Screens.AuthenticationStep2:
                         AuthenticationStep2.Visibility = Visibility.Visible;
@@ -377,6 +368,7 @@ namespace FDS
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
+                        btnUninstall.Visibility = Visibility.Hidden;
                         break;
                     case Screens.AuthenticationStep3:
                         AuthenticationStep3.Visibility = Visibility.Visible;
@@ -385,6 +377,7 @@ namespace FDS
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
+                        btnUninstall.Visibility = Visibility.Hidden;
                         break;
                     case Screens.AuthenticationProcessing:
                         AuthenticationProcessing.Visibility = Visibility.Visible;
@@ -423,6 +416,7 @@ namespace FDS
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
+                        btnUninstall.Visibility = Visibility.Hidden;
                         break;
                     case Screens.Landing:
                         //imgWires.Visibility = Visibility.Visible;
@@ -609,34 +603,6 @@ namespace FDS
             }
 
         }
-        //private List<string> GetKeysDetails()
-        //{
-        //    List<string> EncKey = new List<string>();
-
-        //    RegistryKey softwareKey = Registry.LocalMachine.OpenSubKey("Software");
-        //    RegistryKey myAppKey = softwareKey.OpenSubKey("FDS");
-
-        //    // Fetch values from the MyApp key
-        //    if (myAppKey != null)
-        //    {
-        //        string Key1 = (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Key1");
-        //        string Key2 = (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Key2");
-        //        string PublicKey = Key1 + Key2;
-        //        string Authentication_token = (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Authentication_token");
-        //        string Authorization_token = (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Authorization_token");
-
-        //        EncKey.Add("PublicKey=" + PublicKey);
-        //        EncKey.Add("Authentication_token=" + Authentication_token);
-        //        EncKey.Add("Authorization_token=" + Authorization_token);
-
-
-        //        // Close the keys
-        //        myAppKey.Close();
-        //        softwareKey.Close();
-        //    }
-
-        //    return EncKey;
-        //}
         #endregion
 
         #region Authentication methods
@@ -650,7 +616,7 @@ namespace FDS
             Dispatcher.Invoke(() =>
             {
                 LoadMenu(Screens.QRCode);
-                timerDeviceLogin.IsEnabled = true;
+                //timerDeviceLogin.IsEnabled = true;
             });
         }
         private void btnCredential_Click(object sender, RoutedEventArgs e)
@@ -826,8 +792,8 @@ namespace FDS
                         Dispatcher.Invoke(() =>
                         {
                             LoadMenu(Screens.Landing);
-
-                            timerDeviceLogin.IsEnabled = true;
+                            devicelogin(true);
+                            //timerDeviceLogin.IsEnabled = true;
                         });
 
                     });
@@ -895,7 +861,7 @@ namespace FDS
                     var responseString = await response.Content.ReadAsStringAsync();
                     DeviceResponse = JsonConvert.DeserializeObject<DeviceResponse>(responseString);
                     IsQRGenerated = DeviceResponse != null ? true : false;
-
+                    //timerDeviceLogin.IsEnabled = true;
                     imgQR.Source = GetQRCode(DeviceResponse.qr_code_token); //BitmapToImageSource(GetQRCode(DeviceResponse.qr_code_token));
                                                                             //LoadMenu(Screens.QRCode);
                                                                             //timerDeviceLogin.IsEnabled = true;
@@ -1030,7 +996,7 @@ namespace FDS
 
                     RegistryKey softKey = Registry.LocalMachine.OpenSubKey("Software");
                     RegistryKey AppKey = softKey.OpenSubKey("FDS");
-                    if(AppKey != null)
+                    if (AppKey != null)
                     {
                         KeyManager.SaveValue("Key1", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Key1"), Environment.UserName);
                         KeyManager.SaveValue("Key2", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Key2"), Environment.UserName);
@@ -1162,6 +1128,8 @@ namespace FDS
                     {
                         await DeviceConfigurationCheck();
                     }
+                    //else
+                    //    await RetrieveCronServices();
                     if (IsServiceActive)
                     {
                         lblCompliant.Text = "Your system is Compliant";
@@ -1210,7 +1178,7 @@ namespace FDS
                 DeviceDeactive.UriSource = new Uri(ImagePath);
                 DeviceDeactive.EndInit();
                 imgCompliant.Source = DeviceDeactive;
-                
+
             }
         }
         private async Task DeviceConfigurationCheck()
@@ -1271,16 +1239,10 @@ namespace FDS
                                 IsServiceActive = true;
                                 await GetDeviceDetails();
                             }
-                            //else if (api.Equals("7"))
-                            //{
-                            //    //if (File.Exists(TempPath + "\\FDS\\" + "AutoUpdate.exe"))
-                            //    //{
-                            //    //    IsAutoUpdated = true;
-                            //    //    Directory.Delete(TempPath, true);
-                            //    //}
-                            //    //if (!IsAutoUpdated)
-                            //       // AutoUpdate();
-                            //}
+                            else if (api.Equals("7"))
+                            {
+                                AutoUpdate();
+                            }
                         }
                     }
                 }
@@ -1423,7 +1385,7 @@ namespace FDS
                 int idx = plainText.LastIndexOf('}');
                 var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
                 var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);//Replace('', ' ').Replace('', ' ').Replace("false", "true"));// replace used to test services
-                                                                                               //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
+                                                                                                                        //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
 
                 DateTime localDate = DateTime.Now.ToLocalTime();
                 txtUpdatedOn.Text = localDate.ToString();
@@ -1437,6 +1399,52 @@ namespace FDS
                 //MessageBox.Show("An error occurred in RetrieveServices: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        //public async Task RetrieveCronServices()
+        //{
+        //    var servicesObject = new RetriveServices
+        //    {
+        //        authorization_token = KeyManager.GetValue("authorization_token"),
+        //        mac_address = AppConstants.MACAddress,
+        //        serial_number = AppConstants.SerialNumber,
+        //        device_uuid = AppConstants.UUId
+        //    };
+        //    var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
+
+        //    var formContent = new List<KeyValuePair<string, string>> {
+        //                new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
+        //                new KeyValuePair<string, string>("payload", payload),
+        //                new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
+        //            };
+
+        //    var response = await client.PostAsync(AppConstants.EndPoints.DeviceServices, new FormUrlEncodedContent(formContent));
+
+        //    if (response.IsSuccessStatusCode)
+        //    {
+        //        var responseString = await response.Content.ReadAsStringAsync();
+        //        var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
+        //        var plainText = RetriveDecrypt(responseData.Data);
+        //        int idx = plainText.LastIndexOf('}');
+        //        var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
+        //        var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);
+                
+        //        else
+        //        {
+        //            foreach (var services in servicesResponse.Services)
+        //            {
+        //                foreach (var subservice in services.Subservices)
+        //                {
+        //                    if (subservice.Sub_service_active)
+        //                    {
+        //                        var schedule = CrontabSchedule.Parse(subservice.Execution_period);
+        //                        var nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
+        //                        lstCron.Add(subservice, nextRunTime);
+        //                    }
+        //                }
+        //            }
+        //        }
+        //        //CronLastUpdate.Start();
+        //    }
+        //}
         #endregion
 
         #region Encryption / Decryption
@@ -1594,50 +1602,32 @@ namespace FDS
                 MessageBox.Show("An error occurred in LogServicesData: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        private async void CronLastUpdate_Tick(object sender, EventArgs e)
-        {
-            try
-            {
-                foreach (var key in lstCron)
-                {
-                    SubservicesData SubservicesData = key.Key;
-                    //var responseData = JsonConvert.DeserializeObject<SubservicesData>(key.Key.);
-                    //if (DateTime.Now. == key.Value)
-                    //{
-                    if (DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute)
-                    {
-                        ExecuteSubService(SubservicesData);
-                        DateTime localDate = DateTime.Now.ToLocalTime();
-                        txtUpdatedOn.Text = localDate.ToString();
-                    }
-                }
-            }
-            catch (Exception ex) { }
-        }
         private void ExecuteServices(ServicesResponse servicesResponse)
         {
             try
             {
                 if (IsServiceActive)
                 {
+                    lstCron.Clear();
                     foreach (var services in servicesResponse.Services)
                     {
                         foreach (var subservice in services.Subservices)
                         {
                             if (subservice.Sub_service_active)
                             {
+                                //var schedule = CrontabSchedule.Parse(subservice.Execution_period);
+                                //var nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
+                                //lstCron.Add(subservice, nextRunTime);
                                 if (subservice.Execute_now)
                                 {
                                     ExecuteSubService(subservice);
                                     //MessageBox.Show("Executed Service: " + subservice.Name + " for user " + WindowsIdentity.GetCurrent().Name, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                                 }
-                                else if (subservice.Execution_period.ToString().ToLower() != "null")
+                                else
                                 {
                                     var schedule = CrontabSchedule.Parse(subservice.Execution_period);
-                                    var nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
+                                    DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
                                     lstCron.Add(subservice, nextRunTime);
-                                    if (nextRunTime != null && nextRunTime == DateTime.Now)
-                                        ExecuteSubService(subservice);
                                 }
                             }
                         }
@@ -1649,6 +1639,36 @@ namespace FDS
             {
                 MessageBox.Show("An error occurred while executing services: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+        private async void CronLastUpdate_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                Dictionary<SubservicesData, DateTime> serviceToRemove = new Dictionary<SubservicesData, DateTime>();
+                if (lstCron.Count > 0)
+                {
+                    foreach (var key in lstCron)
+                    {
+                        SubservicesData SubservicesData = key.Key;
+                        if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute)
+                        {
+                            ExecuteSubService(SubservicesData);
+                            DateTime localDate = DateTime.Now.ToLocalTime();
+                            txtUpdatedOn.Text = localDate.ToString();
+
+                            var schedule = CrontabSchedule.Parse(SubservicesData.Execution_period);
+                            DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
+                            serviceToRemove.Add(SubservicesData, nextRunTime);
+                        }
+                    }
+                    foreach (var key in serviceToRemove)
+                    {
+                        lstCron[key.Key] = key.Value;
+                    }
+                    serviceToRemove.Clear();
+                }
+            }
+            catch (Exception ex) { }
         }
         private void ExecuteSubService(SubservicesData subservices)
         {
@@ -1859,7 +1879,7 @@ namespace FDS
                         {
                             whitelistedDomain.Add("'%" + domain.domain_name + "%'");
                         }
-                       
+
                     }
                     if (responseData.org_domains.Count > 0)
                     {
@@ -2292,7 +2312,7 @@ namespace FDS
             {
                 // Set the path to the Opera profile directory
                 string historyPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\Opera Software\Opera Stable\";
-                if (System.IO.File.Exists(historyPath))
+                if (Directory.Exists(historyPath))
                 {
                     // Connect to the history database file
                     using (SQLiteConnection connection = new SQLiteConnection("Data Source=" + historyPath + "History"))
@@ -2676,14 +2696,7 @@ namespace FDS
                                         cleanSystem();
                                         Process.Start("cmd.exe", "/C " + uninstallString);
                                         Process[] processes = Process.GetProcessesByName(applicationName);
-                                        //Process[] processArray = processes;
-                                        //for (int index2 = 0; index2 < processArray.Length; ++index2)
-                                        //{
-                                        //    Process process = processArray[index2];
-                                        //    process.Kill();
-                                        //    process.WaitForExit();
-                                        //    process = (Process)null;
-                                        //}
+
                                         foreach (Process process in processes)
                                         {
                                             try
@@ -2724,77 +2737,6 @@ namespace FDS
                 MessageBox.Show(responseData.error, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        public static void DeleteRegistryKey(string keyPath)
-        {
-            Registry.LocalMachine.DeleteSubKeyTree(keyPath);
-        }
-        #endregion
-
-        #region AutoUpdate
-        private async void AutoUpdate()
-        {
-            var formContent = new List<KeyValuePair<string, string>> {
-                        new KeyValuePair<string, string>("serial_number", AppConstants.SerialNumber),
-                        new KeyValuePair<string, string>("mac_address",AppConstants.MACAddress),
-                        new KeyValuePair<string, string>("device_uuid", AppConstants.UUId),
-                        //new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion)
-                    };
-            var response = await client.PostAsync(AppConstants.EndPoints.AutoUpdate, new FormUrlEncodedContent(formContent));
-            if (response.IsSuccessStatusCode)
-            {
-                var responseString = await response.Content.ReadAsStringAsync();
-                AutoUpdateResponse UpdateResponse = JsonConvert.DeserializeObject<AutoUpdateResponse>(responseString);
-
-                var getresponse = await client.GetAsync(AppConstants.EndPoints.AutoUpdate + "?token=" + UpdateResponse.msg);
-                if (getresponse.IsSuccessStatusCode)
-                {
-                    var getresponseString = await getresponse.Content.ReadAsStringAsync();
-                    AutoUpdateResponse UpdateGetResponse = JsonConvert.DeserializeObject<AutoUpdateResponse>(getresponseString);
-                    string Url = UpdateGetResponse.msg;
-                    //string Url = "https://drive.google.com/file/d/1_NSLQCaWrI_cLwqy51KJdGxhlEr-C6ZI/view?usp=sharing";
-
-                    string installationPath = "";
-                    if (!Directory.Exists(TempPath))
-                        Directory.CreateDirectory(TempPath);
-                    RegistryKey registryKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
-                    if (registryKey != null)
-                    {
-                        object obj = registryKey.GetValue("FDS");
-                        if (obj != null)
-                            installationPath = Path.GetDirectoryName(obj.ToString());
-                    }
-                    this.DownloadFile(Url, TempPath + "\\FDS.zip");
-                }
-                //    //this.ReplaceFiles(str, installationPath);
-               
-            }
-        }
-
-        private void DownloadFile(string url, string temporaryZipPath)
-        {
-            using (var client = new WebClient())
-            {
-                try
-                {
-                    client.DownloadFile(url, temporaryZipPath);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Error downloading file: " + ex.Message);
-                }
-            }
-            try
-            {
-                ZipFile.ExtractToDirectory(temporaryZipPath, TempPath);
-                string AutoUpdateExePath = Directory.GetCurrentDirectory() + "\\AutoUpdate.exe";
-                Process.Start(AutoUpdateExePath);
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show(e.Message);
-            }
-
-        }
         private void cleanSystem()
         {
             UninstallResponseTimer.Stop();
@@ -2817,23 +2759,70 @@ namespace FDS
             string keyPath = @"SOFTWARE\FDS";
             DeleteRegistryKey(keyPath);
         }
-        //private void ReplaceFiles(string temporaryPath, string installationPath)
-        //{
-        //    try
-        //    {
-        //        foreach (Process process in Process.GetProcessesByName("FDS"))
-        //        {
-        //            process.Kill();
-        //            process.WaitForExit();
-        //        }
-        //        foreach (FileInfo file in new DirectoryInfo(temporaryPath).GetFiles())
-        //            file.CopyTo(Path.Combine(installationPath, file.Name));
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine("Error replacing files: " + ex.Message);
-        //    }
-        //}
+        public static void DeleteRegistryKey(string keyPath)
+        {
+            Registry.LocalMachine.DeleteSubKeyTree(keyPath);
+        }
+        #endregion
+
+        #region AutoUpdate
+        private async void AutoUpdate()
+        {
+            var formContent = new List<KeyValuePair<string, string>> {
+                        new KeyValuePair<string, string>("serial_number", AppConstants.SerialNumber),
+                        new KeyValuePair<string, string>("mac_address",AppConstants.MACAddress),
+                        new KeyValuePair<string, string>("device_uuid", AppConstants.UUId),
+                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion)
+                    };
+            var response = await client.PostAsync(AppConstants.EndPoints.AutoUpdate, new FormUrlEncodedContent(formContent));
+            if (response.IsSuccessStatusCode)
+            {
+                var responseString = await response.Content.ReadAsStringAsync();
+                AutoUpdateResponse UpdateResponse = JsonConvert.DeserializeObject<AutoUpdateResponse>(responseString);
+
+                var getresponse = await client.GetAsync(AppConstants.EndPoints.AutoUpdate + "?token=" + UpdateResponse.msg);
+                if (getresponse.IsSuccessStatusCode)
+                {
+                    var getresponseString = await getresponse.Content.ReadAsStringAsync();
+                    AutoUpdateResponse UpdateGetResponse = JsonConvert.DeserializeObject<AutoUpdateResponse>(getresponseString);
+                    string Url = UpdateGetResponse.msg;
+
+                    if (!Directory.Exists(TempPath))
+                        Directory.CreateDirectory(TempPath);
+
+                    this.DownloadFile(Url, TempPath + "FDS.msi");
+                }
+            }
+        }
+        private void DownloadFile(string url, string temporaryMSIPath)
+        {
+            using (var client = new WebClient())
+            {
+                try
+                {
+                    client.DownloadFile(url, temporaryMSIPath);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error downloading file: " + ex.Message);
+                }
+            }
+            try
+            {
+                if (File.Exists(TempPath + "FDS.msi"))
+                {
+                    File.Copy(Directory.GetCurrentDirectory() + "\\AutoUpdate.exe", TempPath + "AutoUpdate.exe", true);
+                    string AutoUpdateExePath = TempPath + "AutoUpdate.exe";
+                    Process.Start(AutoUpdateExePath);
+                }
+                //MessageBox.Show("Autoupdate start");
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+            }
+
+        }
         #endregion
 
         #region unwanted code for now

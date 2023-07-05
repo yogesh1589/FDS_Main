@@ -9,6 +9,7 @@ using System.Net;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AutoUpdate
@@ -17,13 +18,10 @@ namespace AutoUpdate
     {
         public static void Main(string[] args)
         {
-            Program pgm = new Program();
-            string TempFDSPath = "C:\\web\\Temp\\FDS";
-            string TempPath = "C:\\web\\Temp";
-            //Console.WriteLine("Hi! you are about to update your FDS application");
+            string TempFDSPath = "C:\\web\\Temp\\FDS\\";
+            Console.WriteLine("Hi! you are about to update your FDS application");
+
             string installationPath = "";
-            if (!Directory.Exists(TempPath))
-                Directory.CreateDirectory(TempPath);
             RegistryKey registryKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
             if (registryKey != null)
             {
@@ -31,74 +29,70 @@ namespace AutoUpdate
                 if (obj != null)
                     installationPath = Path.GetDirectoryName(obj.ToString());
             }
-            //Console.WriteLine("TemPath: " + TempPath);
-            //Console.WriteLine("installationPath: " + installationPath);
-            //string[] filePaths = Directory.GetFiles(TempPath);
-            //FileSecurity fileSecurity = File.GetAccessControl(installationPath);
-
-            //// Create a rule for granting permission to Authenticated Users
-            //SecurityIdentifier authenticatedUsersSid = new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null);
-            //FileSystemAccessRule accessRule = new FileSystemAccessRule(
-            //    authenticatedUsersSid,
-            //    FileSystemRights.FullControl,
-            //    InheritanceFlags.None,
-            //    PropagationFlags.NoPropagateInherit,
-            //    AccessControlType.Allow
-            //);
-
-            //// Add the access rule to the file security
-            //fileSecurity.AddAccessRule(accessRule);
-
-            //// Apply the updated file security
-            //File.SetAccessControl(installationPath, fileSecurity);
-
-
-            foreach (Process process in Process.GetProcessesByName("FDS"))
+            Array.ForEach(Process.GetProcessesByName("FDS"), x => x.Kill());
+            DeleteDirectoryContents(TempFDSPath, installationPath + "\\");
+        }
+        public static void DeleteDirectoryContents(string sourcePath, string directoryPath)
+        {
+            try
             {
-                process.Kill();
-                process.WaitForExit();
-            }
+                // Get the directory info
+                DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
 
-            // Iterate over the file paths and perform desired operations
-            string[] subdirectories = Directory.GetDirectories(TempFDSPath);
-            if (subdirectories.Length > 0)
-            {
-                foreach (string subdirectory in subdirectories)
+                // Delete all files within the directory
+                foreach (FileInfo file in directoryInfo.GetFiles())
                 {
-                    string subdirectoryName = Path.GetFileName(subdirectory);
-                    foreach (FileInfo file in new DirectoryInfo(subdirectory).GetFiles())
-                    {
-                        string filePath = installationPath + "\\" + file.Name;
-                        if (!file.Name.Contains("AutoUpdate.exe"))
-                        {
-                            if (File.Exists(filePath))
-                            {
-                                File.Replace(TempFDSPath + "\\" + subdirectoryName + "\\" + file.Name, installationPath + "\\" + subdirectoryName +"\\"+ file.Name, null);
-                                //Console.WriteLine("File replaced successfully.");
-                            }
-                            else
-                                file.CopyTo(Path.Combine(installationPath, file.Name));
-                        }
-                    }
+                    Thread.Sleep(10);
+                    //Console.WriteLine(file+ " Files Deleted from installation path");
+                    file.Delete();
                 }
-            }
-            foreach (FileInfo file in new DirectoryInfo(TempFDSPath).GetFiles())
-            {
-                string filePath = installationPath + "\\"+ file.Name;
-                if(!file.Name.Contains("AutoUpdate.exe"))
+
+                // Delete all subdirectories and their contents
+                foreach (DirectoryInfo subdirectory in directoryInfo.GetDirectories())
                 {
-                    if (File.Exists(filePath))
-                    {
-                        File.Replace(TempFDSPath + "\\" + file.Name, installationPath + "\\" + file.Name, null);
-                        //Console.WriteLine("File replaced successfully.");
-                    }
-                    else
-                        file.CopyTo(Path.Combine(installationPath, file.Name));
+                    subdirectory.Delete(true);
                 }
+                Console.WriteLine("Files Deleted from installation path");
+                Thread.Sleep(2000);
+                Console.WriteLine("Start Files Extracted to installation path");
+                ExtractMSIContent(sourcePath + "FDS.msi", directoryPath);
+                Thread.Sleep(2000);
+                Console.WriteLine("Files Extracted to installation path");
+                string AutoUpdateExePath = directoryPath + "FDS.exe";
+                Process.Start(AutoUpdateExePath);
+                Console.WriteLine("start FDS from " + directoryPath);
             }
-            string AutoUpdateExePath = Directory.GetCurrentDirectory() + "\\FDS.exe";
-            Process.Start(AutoUpdateExePath);
-            Directory.Delete(TempPath, true);
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred while deleting directory contents: " + ex.Message);
+            }
+        }
+        public static void ExtractMSIContent(string msiFilePath, string outputDirectory)
+        {
+            Process process = new Process();
+            process.StartInfo.FileName = "msiexec";
+            process.StartInfo.Arguments = $"/a \"{msiFilePath}\" /qn TARGETDIR=\"{outputDirectory}\"";
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.CreateNoWindow = true;
+
+            try
+            {
+                process.Start();
+                Thread.Sleep(5000);
+                //process.BeginOutputReadLine();
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred: " + ex.Message);
+            }
+            finally
+            {
+                process.Close();
+                
+            }
         }
     }
 }
