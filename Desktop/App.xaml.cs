@@ -32,7 +32,7 @@ namespace FDS
             //    return;
             //}
             //[ProgramFilesFolder]
-            Registry.SetValue(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System", "EnableLUA", 0);
+            //Registry.SetValue(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System", "EnableLUA", 0);
             base.OnStartup(e);
         }
 

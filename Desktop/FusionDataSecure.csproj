@@ -164,12 +164,14 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Common\Cipher.cs" />
+    <Compile Include="Common\EncryptionDecryption.cs" />
     <Compile Include="Common\Enums\SubServicesEnum.cs" />
     <Compile Include="Common\RSAParametersSerializable.cs" />
     <Compile Include="DTO\Requests\LogServiceRequest.cs" />
     <Compile Include="DTO\Requests\RetriveServices.cs" />
     <Compile Include="DTO\Requests\ExecuteNow.cs" />
     <Compile Include="DTO\Responses\AutoUpdateResponse.cs" />
+    <Compile Include="DTO\Responses\ConfigDetails.cs" />
     <Compile Include="DTO\Responses\CountryCodeResponse.cs" />
     <Compile Include="DTO\Responses\DeviceConfigCheckResponse.cs" />
     <Compile Include="DTO\Responses\HealthCheckResponse.cs" />

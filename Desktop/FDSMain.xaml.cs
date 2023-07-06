@@ -36,6 +36,7 @@ using System.Net.NetworkInformation;
 using System.Runtime.InteropServices.ComTypes;
 using System.Threading;
 using System.Windows.Forms.Design;
+using System.Collections;
 
 namespace FDS
 {
@@ -108,8 +109,12 @@ namespace FDS
         bool isUninstallRequestRaised = false;
         bool isInternetConnected = true;
         bool IsAutoUpdated = false;
+        bool IsAuthenticationFromQR = false;
         public ObservableCollection<CountryCode> AllCounties { get; }
         public string CodeVersion = "";
+        string basePathEncryption = String.Format("{0}Tempfolder", AppDomain.CurrentDomain.BaseDirectory);
+        string encryptOutPutFile = @"\Main";
+
         #endregion
 
         #region Application initialization / Load
@@ -259,7 +264,16 @@ namespace FDS
             try
             {
                 // -------Actual Code --------------------------------
+                encryptOutPutFile = basePathEncryption + @"\Main";
+                if (File.Exists(encryptOutPutFile))
+                {                     
+                    string finalOutPutFile = basePathEncryption + @"\FinalDecrypt";
+                    Common.EncryptionDecryption.DecryptFile(encryptOutPutFile, finalOutPutFile);
+                    Common.EncryptionDecryption.ReadDecryptFile(finalOutPutFile);
+                }
+
                 bool valid = CheckAllKeys();
+
                 //AutoUpdate();
                 if (!valid)
                 {
@@ -400,6 +414,7 @@ namespace FDS
                         AuthenticationSuccessfull.Children.Add(imgSuccess);
                         break;
                     case Screens.AuthFailed:
+                        AuthenticationMethods.Visibility = Visibility.Hidden;
                         AuthenticationFailed.Visibility = Visibility.Visible;
                         AuthenticationStep3.Visibility = Visibility.Hidden;
                         AuthenticationSuccessfull.Visibility = Visibility.Hidden;
@@ -510,87 +525,55 @@ namespace FDS
                 MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
         private bool CheckAllKeys()
         {
             try
             {
-                //string InverseQ = KeyManager.GetValue("InverseQ");
-                //string DQ = KeyManager.GetValue("DQ");
-                //string DP = KeyManager.GetValue("DP");
-                //string Q = KeyManager.GetValue("Q");
-                //string P = KeyManager.GetValue("P");
-                //string D = KeyManager.GetValue("D");
-                //string Exponent = KeyManager.GetValue("Exponent");
-                //string Modulus = KeyManager.GetValue("Modulus");
-                //bool ValidDeviceKey = !string.IsNullOrEmpty(InverseQ) && !string.IsNullOrEmpty(DQ) && !string.IsNullOrEmpty(DP) && !string.IsNullOrEmpty(Q) && !string.IsNullOrEmpty(P) && !string.IsNullOrEmpty(D) && !string.IsNullOrEmpty(Exponent) && !string.IsNullOrEmpty(Modulus);
                 RSAParameters RSAParam;
-                //if (!ValidDeviceKey)
-                //{
+
                 RSADevice = new RSACryptoServiceProvider(2048);
                 RSAParam = RSADevice.ExportParameters(true);
-                RegistryKey softwareKey = Registry.LocalMachine.OpenSubKey("Software");
-                RegistryKey key = softwareKey.OpenSubKey("FDS");
-                // Fetch values from the MyApp key
-                if (key != null)
+
+
+                string filePath = Path.Combine(basePathEncryption, "Main");
+
+                if (!File.Exists(filePath))
                 {
-                    KeyManager.SaveValue("Modulus", (string)key.GetValue(AppConstants.KeyPrfix + "Modulus"), Environment.UserName);
-                    KeyManager.SaveValue("Exponent", (string)key.GetValue(AppConstants.KeyPrfix + "Exponent"), Environment.UserName);
-                    KeyManager.SaveValue("D", (string)key.GetValue(AppConstants.KeyPrfix + "D"), Environment.UserName);
-                    KeyManager.SaveValue("P", (string)key.GetValue(AppConstants.KeyPrfix + "P"), Environment.UserName);
-                    KeyManager.SaveValue("DP", (string)key.GetValue(AppConstants.KeyPrfix + "DP"), Environment.UserName);
-                    KeyManager.SaveValue("DQ", (string)key.GetValue(AppConstants.KeyPrfix + "DQ"), Environment.UserName);
-                    KeyManager.SaveValue("Q", (string)key.GetValue(AppConstants.KeyPrfix + "Q"), Environment.UserName);
-                    KeyManager.SaveValue("InverseQ", (string)key.GetValue(AppConstants.KeyPrfix + "InverseQ"), Environment.UserName);
-                }
-                else
                     return false;
-                //}
+                }
 
                 RSAParam = new RSAParameters
                 {
-                    InverseQ = Convert.FromBase64String(KeyManager.GetValue("InverseQ")),
-                    DQ = Convert.FromBase64String(KeyManager.GetValue("DQ")),
-                    DP = Convert.FromBase64String(KeyManager.GetValue("DP")),
-                    Q = Convert.FromBase64String(KeyManager.GetValue("Q")),
-                    P = Convert.FromBase64String(KeyManager.GetValue("P")),
-                    D = Convert.FromBase64String(KeyManager.GetValue("D")),
-                    Exponent = Convert.FromBase64String(KeyManager.GetValue("Exponent")),
-                    Modulus = Convert.FromBase64String(KeyManager.GetValue("Modulus"))
+                    InverseQ = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.InverseQ) ? string.Empty : ConfigDetails.InverseQ),
+                    DQ = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.DQ) ? string.Empty : ConfigDetails.DQ),
+                    DP = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.DP) ? string.Empty : ConfigDetails.DP),
+                    Q = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.Q) ? string.Empty : ConfigDetails.Q),
+                    P = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.P) ? string.Empty : ConfigDetails.P),
+                    D = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.D) ? string.Empty : ConfigDetails.D),
+                    Exponent = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.Exponent) ? string.Empty : ConfigDetails.Exponent),
+                    Modulus = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.Modulus) ? string.Empty : ConfigDetails.Modulus),
                 };
+
                 RSADevice = new RSACryptoServiceProvider(2048);
                 RSADevice.ImportParameters(RSAParam);
 
-                var key1 = KeyManager.GetValue("Key1");
-                var key2 = KeyManager.GetValue("Key2");
-                var Authentication_token = KeyManager.GetValue("Authentication_token");
-                var Authorization_token = KeyManager.GetValue("Authorization_token");
+                var key1 = String.IsNullOrEmpty(ConfigDetails.Key1) ? string.Empty : ConfigDetails.Key1;
+                var key2 = String.IsNullOrEmpty(ConfigDetails.Key2) ? string.Empty : ConfigDetails.Key2;
+                var Authentication_token = String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token;
+                var Authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token;
+
+
                 bool ValidServerKey = !string.IsNullOrEmpty(key1) && !string.IsNullOrEmpty(key2) && !string.IsNullOrEmpty(Authentication_token) && !string.IsNullOrEmpty(Authorization_token);
                 if (!ValidServerKey)
                 {
-                    RegistryKey softKey = Registry.LocalMachine.OpenSubKey("Software");
-                    RegistryKey myAppKey = softKey.OpenSubKey("FDS");
-
-                    // Fetch values from the MyApp key
-                    if (myAppKey != null)
-                    {
-                        KeyManager.SaveValue("Key1", (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Key1"), Environment.UserName);
-                        KeyManager.SaveValue("Key2", (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Key2"), Environment.UserName);
-                        KeyManager.SaveValue("Authentication_token", (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Authentication_token"), Environment.UserName);
-                        KeyManager.SaveValue("Authorization_token", (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Authorization_token"), Environment.UserName);
-
-                        // Close the keys
-                        myAppKey.Close();
-                        softwareKey.Close();
-                    }
-                    else
-                        return false;
-
+                    return false;
                 }
                 QRCodeResponse = new QRCodeResponse
                 {
-                    Public_key = KeyManager.GetValue("Key1") + KeyManager.GetValue("Key2"),
-                    Authentication_token = KeyManager.GetValue("Authentication_token"),
-                    Authorization_token = KeyManager.GetValue("Authorization_token")
+                    Public_key = key1 + key2,
+                    Authentication_token = Authentication_token,
+                    Authorization_token = Authorization_token
                 };
                 RSAServer = new RSACryptoServiceProvider(2048);
                 RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));
@@ -603,6 +586,103 @@ namespace FDS
             }
 
         }
+
+        //private bool CheckAllKeys()
+        //{
+        //    try
+        //    {
+        //        //string InverseQ = KeyManager.GetValue("InverseQ");
+        //        //string DQ = KeyManager.GetValue("DQ");
+        //        //string DP = KeyManager.GetValue("DP");
+        //        //string Q = KeyManager.GetValue("Q");
+        //        //string P = KeyManager.GetValue("P");
+        //        //string D = KeyManager.GetValue("D");
+        //        //string Exponent = KeyManager.GetValue("Exponent");
+        //        //string Modulus = KeyManager.GetValue("Modulus");
+        //        //bool ValidDeviceKey = !string.IsNullOrEmpty(InverseQ) && !string.IsNullOrEmpty(DQ) && !string.IsNullOrEmpty(DP) && !string.IsNullOrEmpty(Q) && !string.IsNullOrEmpty(P) && !string.IsNullOrEmpty(D) && !string.IsNullOrEmpty(Exponent) && !string.IsNullOrEmpty(Modulus);
+        //        RSAParameters RSAParam;
+        //        //if (!ValidDeviceKey)
+        //        //{
+        //        RSADevice = new RSACryptoServiceProvider(2048);
+        //        RSAParam = RSADevice.ExportParameters(true);
+        //        //RegistryKey softwareKey = Registry.LocalMachine.OpenSubKey("Software");
+        //        //RegistryKey key = softwareKey.OpenSubKey("FDS");
+        //        //// Fetch values from the MyApp key
+        //        //if (key != null)
+        //        //{
+        //        //    KeyManager.SaveValue("Modulus", (string)key.GetValue(AppConstants.KeyPrfix + "Modulus"), Environment.UserName);
+        //        //    KeyManager.SaveValue("Exponent", (string)key.GetValue(AppConstants.KeyPrfix + "Exponent"), Environment.UserName);
+        //        //    KeyManager.SaveValue("D", (string)key.GetValue(AppConstants.KeyPrfix + "D"), Environment.UserName);
+        //        //    KeyManager.SaveValue("P", (string)key.GetValue(AppConstants.KeyPrfix + "P"), Environment.UserName);
+        //        //    KeyManager.SaveValue("DP", (string)key.GetValue(AppConstants.KeyPrfix + "DP"), Environment.UserName);
+        //        //    KeyManager.SaveValue("DQ", (string)key.GetValue(AppConstants.KeyPrfix + "DQ"), Environment.UserName);
+        //        //    KeyManager.SaveValue("Q", (string)key.GetValue(AppConstants.KeyPrfix + "Q"), Environment.UserName);
+        //        //    KeyManager.SaveValue("InverseQ", (string)key.GetValue(AppConstants.KeyPrfix + "InverseQ"), Environment.UserName);
+        //        //}
+        //        //else
+        //        //    return false;
+        //        //}
+        //        
+        //        //RSAParam = new RSAParameters
+        //        //{
+        //        //    InverseQ = Convert.FromBase64String(KeyManager.GetValue("InverseQ")),
+        //        //    DQ = Convert.FromBase64String(KeyManager.GetValue("DQ")),
+        //        //    DP = Convert.FromBase64String(KeyManager.GetValue("DP")),
+        //        //    Q = Convert.FromBase64String(KeyManager.GetValue("Q")),
+        //        //    P = Convert.FromBase64String(KeyManager.GetValue("P")),
+        //        //    D = Convert.FromBase64String(KeyManager.GetValue("D")),
+        //        //    Exponent = Convert.FromBase64String(KeyManager.GetValue("Exponent")),
+        //        //    Modulus = Convert.FromBase64String(KeyManager.GetValue("Modulus"))
+        //        //};
+
+        //        RSADevice = new RSACryptoServiceProvider(2048);
+        //        RSADevice.ImportParameters(RSAParam);
+
+
+
+        //        //var key1 = KeyManager.GetValue("Key1");
+        //        //var key2 = KeyManager.GetValue("Key2");
+        //        //var Authentication_token = KeyManager.GetValue("Authentication_token");
+        //        //var Authorization_token = KeyManager.GetValue("Authorization_token");
+        //        bool ValidServerKey = !string.IsNullOrEmpty(key1) && !string.IsNullOrEmpty(key2) && !string.IsNullOrEmpty(Authentication_token) && !string.IsNullOrEmpty(Authorization_token);
+        //        if (!ValidServerKey)
+        //        {
+        //            RegistryKey softKey = Registry.LocalMachine.OpenSubKey("Software");
+        //            RegistryKey myAppKey = softKey.OpenSubKey("FDS");
+
+        //            // Fetch values from the MyApp key
+        //            if (myAppKey != null)
+        //            {
+        //                KeyManager.SaveValue("Key1", (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Key1"), Environment.UserName);
+        //                KeyManager.SaveValue("Key2", (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Key2"), Environment.UserName);
+        //                KeyManager.SaveValue("Authentication_token", (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Authentication_token"), Environment.UserName);
+        //                KeyManager.SaveValue("Authorization_token", (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Authorization_token"), Environment.UserName);
+
+        //                // Close the keys
+        //                myAppKey.Close();
+        //                softwareKey.Close();
+        //            }
+        //            else
+        //                return false;
+
+        //        }
+        //        QRCodeResponse = new QRCodeResponse
+        //        {
+        //            Public_key = KeyManager.GetValue("Key1") + KeyManager.GetValue("Key2"),
+        //            Authentication_token = KeyManager.GetValue("Authentication_token"),
+        //            Authorization_token = KeyManager.GetValue("Authorization_token")
+        //        };
+        //        RSAServer = new RSACryptoServiceProvider(2048);
+        //        RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));
+        //        return true;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        //        return false;
+        //    }
+
+        //}
         #endregion
 
         #region Authentication methods
@@ -766,10 +846,12 @@ namespace FDS
         }
         private async void QRGeneratortimer_Tick(object sender, EventArgs e)
         {
-            if (IsQRGenerated == true)
+            if (!IsAuthenticationFromQR)
             {
-                QRGeneratortimer.Stop();
-                var formContent = new List<KeyValuePair<string, string>> {
+                if (IsQRGenerated == true)
+                {
+                    QRGeneratortimer.Stop();
+                    var formContent = new List<KeyValuePair<string, string>> {
                         new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
                         new KeyValuePair<string, string>("assing_to_user", txtEmail.Text),
                         new KeyValuePair<string, string>("phone_no", txtPhoneNubmer.Text),
@@ -778,29 +860,30 @@ namespace FDS
                         new KeyValuePair<string, string>("token", txtEmailToken.Text),
                         new KeyValuePair<string, string>("qr_code_token", DeviceResponse.qr_code_token)
                     };
-                Dispatcher.Invoke(() =>
-                {
-                    LoadMenu(Screens.AuthenticationProcessing);
-                });
-
-                var response = await client.PostAsync(AppConstants.EndPoints.DeviceToken, new FormUrlEncodedContent(formContent));
-                if (response.IsSuccessStatusCode)
-                {
                     Dispatcher.Invoke(() =>
                     {
-                        LoadMenu(Screens.AuthSuccessfull);
+                        LoadMenu(Screens.AuthenticationProcessing);
+                    });
+
+                    var response = await client.PostAsync(AppConstants.EndPoints.DeviceToken, new FormUrlEncodedContent(formContent));
+                    if (response.IsSuccessStatusCode)
+                    {
                         Dispatcher.Invoke(() =>
                         {
-                            LoadMenu(Screens.Landing);
-                            devicelogin(true);
-                            //timerDeviceLogin.IsEnabled = true;
-                        });
+                            LoadMenu(Screens.AuthSuccessfull);
+                            Dispatcher.Invoke(() =>
+                            {
+                                LoadMenu(Screens.Landing);
+                                devicelogin(true);
+                                //timerDeviceLogin.IsEnabled = true;
+                            });
 
-                    });
-                }
-                else
-                {
-                    LoadMenu(Screens.AuthFailed);
+                        });
+                    }
+                    else
+                    {
+                        LoadMenu(Screens.AuthFailed);
+                    }
                 }
             }
         }
@@ -823,7 +906,7 @@ namespace FDS
             }
             else
             {
-                QRGeneratortimer.Start();
+                //QRGeneratortimer.Start();
                 GenerateQRCode();
             }
         }
@@ -863,11 +946,10 @@ namespace FDS
                     IsQRGenerated = DeviceResponse != null ? true : false;
                     //timerDeviceLogin.IsEnabled = true;
                     imgQR.Source = GetQRCode(DeviceResponse.qr_code_token); //BitmapToImageSource(GetQRCode(DeviceResponse.qr_code_token));
-                                                                            //LoadMenu(Screens.QRCode);
-                                                                            //timerDeviceLogin.IsEnabled = true;
-                                                                            //await devicelogin(true);
-                                                                            //MessageBox.Show("QR generated successfully: " + DeviceResponse.qr_code_token + "with " + response.IsSuccessStatusCode, "success", MessageBoxButton.OK, MessageBoxImage.Information);
 
+                    IsAuthenticationFromQR = string.IsNullOrEmpty(txtEmailToken.Text) ? true : false;
+                    QRGeneratortimer.Start();
+                    timerDeviceLogin.Start();
 
                 }
                 else
@@ -973,47 +1055,89 @@ namespace FDS
 
                     RSADevice = new RSACryptoServiceProvider(2048);
                     RSAParam = RSADevice.ExportParameters(true);
-                    RegistryKey key = Registry.LocalMachine.CreateSubKey("Software");
-                    RegistryKey myAppKey = key.CreateSubKey("FDS");
-                    if (myAppKey != null)
+
+                    //New Code--
+                    string filePath = Path.Combine(basePathEncryption, "TempFile");
+                    encryptOutPutFile = basePathEncryption + @"\Main";
+
+                    if (!Directory.Exists(basePathEncryption))
                     {
-                        // Add a value to the key
-                        myAppKey.SetValue(AppConstants.KeyPrfix + "Key1", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(0, LengthAllowed) : QRCodeResponse.Public_key);
-                        myAppKey.SetValue(AppConstants.KeyPrfix + "Key2", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(LengthAllowed, QRCodeResponse.Public_key.Length - LengthAllowed) : "");
-                        myAppKey.SetValue(AppConstants.KeyPrfix + "Authentication_token", QRCodeResponse.Authentication_token);
-                        myAppKey.SetValue(AppConstants.KeyPrfix + "Authorization_token", QRCodeResponse.Authorization_token);
-                        myAppKey.SetValue(AppConstants.KeyPrfix + "Modulus", Convert.ToBase64String(RSAParam.Modulus));
-                        myAppKey.SetValue(AppConstants.KeyPrfix + "Exponent", Convert.ToBase64String(RSAParam.Exponent));
-                        myAppKey.SetValue(AppConstants.KeyPrfix + "D", Convert.ToBase64String(RSAParam.D));
-                        myAppKey.SetValue(AppConstants.KeyPrfix + "P", Convert.ToBase64String(RSAParam.P));
-                        myAppKey.SetValue(AppConstants.KeyPrfix + "Q", Convert.ToBase64String(RSAParam.Q));
-                        myAppKey.SetValue(AppConstants.KeyPrfix + "DP", Convert.ToBase64String(RSAParam.DP));
-                        myAppKey.SetValue(AppConstants.KeyPrfix + "DQ", Convert.ToBase64String(RSAParam.DQ));
-                        myAppKey.SetValue(AppConstants.KeyPrfix + "InverseQ", Convert.ToBase64String(RSAParam.InverseQ));
+                        DirectoryInfo di = Directory.CreateDirectory(basePathEncryption);
                     }
 
-                    key.Close();
-
-                    RegistryKey softKey = Registry.LocalMachine.OpenSubKey("Software");
-                    RegistryKey AppKey = softKey.OpenSubKey("FDS");
-                    if (AppKey != null)
+                    if (!File.Exists(filePath))
                     {
-                        KeyManager.SaveValue("Key1", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Key1"), Environment.UserName);
-                        KeyManager.SaveValue("Key2", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Key2"), Environment.UserName);
-                        KeyManager.SaveValue("Authentication_token", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Authentication_token"), Environment.UserName);
-                        KeyManager.SaveValue("Authorization_token", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Authorization_token"), Environment.UserName);
-                        KeyManager.SaveValue("Modulus", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Modulus"), Environment.UserName);
-                        KeyManager.SaveValue("Exponent", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Exponent"), Environment.UserName);
-                        KeyManager.SaveValue("D", (string)AppKey.GetValue(AppConstants.KeyPrfix + "D"), Environment.UserName);
-                        KeyManager.SaveValue("P", (string)AppKey.GetValue(AppConstants.KeyPrfix + "P"), Environment.UserName);
-                        KeyManager.SaveValue("DP", (string)AppKey.GetValue(AppConstants.KeyPrfix + "DP"), Environment.UserName);
-                        KeyManager.SaveValue("DQ", (string)AppKey.GetValue(AppConstants.KeyPrfix + "DQ"), Environment.UserName);
-                        KeyManager.SaveValue("Q", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Q"), Environment.UserName);
-                        KeyManager.SaveValue("InverseQ", (string)AppKey.GetValue(AppConstants.KeyPrfix + "InverseQ"), Environment.UserName);
+
+                        List<string> lstConfig = new List<string>();
+                        lstConfig.Add(AppConstants.KeyPrfix + "Key1 : " + (QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(0, LengthAllowed) : QRCodeResponse.Public_key));
+                        lstConfig.Add(AppConstants.KeyPrfix + "Key2 : " + (QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(LengthAllowed, QRCodeResponse.Public_key.Length - LengthAllowed) : ""));
+                        lstConfig.Add(AppConstants.KeyPrfix + "Authentication_token : " + QRCodeResponse.Authentication_token);
+                        lstConfig.Add(AppConstants.KeyPrfix + "Authorization_token : " + QRCodeResponse.Authorization_token);
+                        lstConfig.Add(AppConstants.KeyPrfix + "Modulus : " + Convert.ToBase64String(RSAParam.Modulus));
+                        lstConfig.Add(AppConstants.KeyPrfix + "Exponent : " + Convert.ToBase64String(RSAParam.Exponent));
+                        lstConfig.Add(AppConstants.KeyPrfix + "D : " + Convert.ToBase64String(RSAParam.D));
+                        lstConfig.Add(AppConstants.KeyPrfix + "P :" + Convert.ToBase64String(RSAParam.P));
+                        lstConfig.Add(AppConstants.KeyPrfix + "Q : " + Convert.ToBase64String(RSAParam.Q));
+                        lstConfig.Add(AppConstants.KeyPrfix + "DP : " + Convert.ToBase64String(RSAParam.DP));
+                        lstConfig.Add(AppConstants.KeyPrfix + "DQ : " + Convert.ToBase64String(RSAParam.DQ));
+                        lstConfig.Add(AppConstants.KeyPrfix + "InverseQ : " + Convert.ToBase64String(RSAParam.InverseQ));
+
+                        string[] myTokens = lstConfig.ToArray();
+                        File.WriteAllLines(filePath, myTokens);
+
+                        Common.EncryptionDecryption.EncryptFile(filePath, encryptOutPutFile);                      
+                        if (File.Exists(encryptOutPutFile))
+                        {
+                            string finalOutPutFile = basePathEncryption + @"\FinalDecrypt";
+                            Common.EncryptionDecryption.DecryptFile(encryptOutPutFile, finalOutPutFile);
+                            Common.EncryptionDecryption.ReadDecryptFile(finalOutPutFile);
+                        }
                     }
+
+
+
+                    //RegistryKey key = Registry.LocalMachine.CreateSubKey("Software");
+                    //RegistryKey myAppKey = key.CreateSubKey("FDS");
+                    //if (myAppKey != null)
+                    //{
+                    //    // Add a value to the key
+                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "Key1", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(0, LengthAllowed) : QRCodeResponse.Public_key);
+                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "Key2", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(LengthAllowed, QRCodeResponse.Public_key.Length - LengthAllowed) : "");
+                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "Authentication_token", QRCodeResponse.Authentication_token);
+                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "Authorization_token", QRCodeResponse.Authorization_token);
+                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "Modulus", Convert.ToBase64String(RSAParam.Modulus));
+                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "Exponent", Convert.ToBase64String(RSAParam.Exponent));
+                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "D", Convert.ToBase64String(RSAParam.D));
+                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "P", Convert.ToBase64String(RSAParam.P));
+                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "Q", Convert.ToBase64String(RSAParam.Q));
+                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "DP", Convert.ToBase64String(RSAParam.DP));
+                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "DQ", Convert.ToBase64String(RSAParam.DQ));
+                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "InverseQ", Convert.ToBase64String(RSAParam.InverseQ));
+                    //}
+
+                    //key.Close();
+
+                    //RegistryKey softKey = Registry.LocalMachine.OpenSubKey("Software");
+                    //RegistryKey AppKey = softKey.OpenSubKey("FDS");
+                    //if (AppKey != null)
+                    //{
+                    //    KeyManager.SaveValue("Key1", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Key1"), Environment.UserName);
+                    //    KeyManager.SaveValue("Key2", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Key2"), Environment.UserName);
+                    //    KeyManager.SaveValue("Authentication_token", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Authentication_token"), Environment.UserName);
+                    //    KeyManager.SaveValue("Authorization_token", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Authorization_token"), Environment.UserName);
+                    //    KeyManager.SaveValue("Modulus", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Modulus"), Environment.UserName);
+                    //    KeyManager.SaveValue("Exponent", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Exponent"), Environment.UserName);
+                    //    KeyManager.SaveValue("D", (string)AppKey.GetValue(AppConstants.KeyPrfix + "D"), Environment.UserName);
+                    //    KeyManager.SaveValue("P", (string)AppKey.GetValue(AppConstants.KeyPrfix + "P"), Environment.UserName);
+                    //    KeyManager.SaveValue("DP", (string)AppKey.GetValue(AppConstants.KeyPrfix + "DP"), Environment.UserName);
+                    //    KeyManager.SaveValue("DQ", (string)AppKey.GetValue(AppConstants.KeyPrfix + "DQ"), Environment.UserName);
+                    //    KeyManager.SaveValue("Q", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Q"), Environment.UserName);
+                    //    KeyManager.SaveValue("InverseQ", (string)AppKey.GetValue(AppConstants.KeyPrfix + "InverseQ"), Environment.UserName);
+                    //}
                     if (MenuChange)
                     {
                         LoadMenu(Screens.Landing);
+                        timerDeviceLogin.IsEnabled = false;
                         await KeyExchange().ConfigureAwait(false);
                         //timerLastUpdate.IsEnabled = true;
                     }
@@ -1053,7 +1177,8 @@ namespace FDS
             //};
             var exchangeObject = new KeyExchange
             {
-                authorization_token = KeyManager.GetValue("authorization_token"),
+                authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
+                //authorization_token = KeyManager.GetValue("authorization_token"),
                 mac_address = AppConstants.MACAddress,
                 public_key = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(RSAKeys.ExportPublicKey(RSADevice))),
                 serial_number = AppConstants.SerialNumber,
@@ -1063,7 +1188,7 @@ namespace FDS
             var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(exchangeObject))));
 
             var formContent = new List<KeyValuePair<string, string>> {
-                        new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
+                        new KeyValuePair<string, string>("authentication_token", String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token) ,
                         new KeyValuePair<string, string>("payload", payload),
                         new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion)
                     };
@@ -1096,7 +1221,8 @@ namespace FDS
             {
                 var servicesObject = new RetriveServices
                 {
-                    authorization_token = KeyManager.GetValue("authorization_token"),
+                    authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
+                    //authorization_token = KeyManager.GetValue("authorization_token"),
                     mac_address = AppConstants.MACAddress,
                     serial_number = AppConstants.SerialNumber,
                     current_user = Environment.UserName,
@@ -1108,7 +1234,7 @@ namespace FDS
                 //var payload = JsonConvert.SerializeObject(servicesObject).ToString();
 
                 var formContent = new List<KeyValuePair<string, string>> {
-                new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("authentication_token")) ,
+                new KeyValuePair<string, string>("authentication_token", String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token) ,
                 new KeyValuePair<string, string>("payload", payload),
                 new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
             };
@@ -1162,7 +1288,10 @@ namespace FDS
                         UninstallProgram();
                     }
                     else
+                    {
                         cleanSystem();
+                        DeviceResponse.qr_code_token = null;
+                    }
                     //btnGetStarted_Click(btnGetStarted, null);
                     LoadMenu(Screens.GetStart);
                     MessageBox.Show("Your device has been deleted", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -1185,7 +1314,8 @@ namespace FDS
         {
             var servicesObject = new RetriveServices
             {
-                authorization_token = KeyManager.GetValue("authorization_token"),
+                authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
+                //authorization_token = KeyManager.GetValue("authorization_token"),
                 mac_address = AppConstants.MACAddress,
                 serial_number = AppConstants.SerialNumber,
                 device_uuid = AppConstants.UUId,
@@ -1193,7 +1323,7 @@ namespace FDS
             var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
 
             var formContent = new List<KeyValuePair<string, string>> {
-                new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
+                new KeyValuePair<string, string>("authentication_token", String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token) ,
                 new KeyValuePair<string, string>("payload", payload),
                 new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
             };
@@ -1258,7 +1388,7 @@ namespace FDS
         {
             var servicesObject = new RetriveServices
             {
-                authorization_token = KeyManager.GetValue("authorization_token"),
+                authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
                 mac_address = AppConstants.MACAddress,
                 serial_number = AppConstants.SerialNumber,
                 device_uuid = AppConstants.UUId
@@ -1266,7 +1396,7 @@ namespace FDS
             var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
 
             var formContent = new List<KeyValuePair<string, string>> {
-                new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
+                new KeyValuePair<string, string>("authentication_token", String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token) ,
                 new KeyValuePair<string, string>("payload", payload),
                 new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
             };
@@ -1289,7 +1419,7 @@ namespace FDS
             {
                 serial_number = AppConstants.SerialNumber,
                 mac_address = AppConstants.MACAddress,
-                authorization_token = KeyManager.GetValue("Authorization_token"),
+                authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
                 device_uuid = AppConstants.UUId
 
             };
@@ -1298,7 +1428,7 @@ namespace FDS
             var payload = Encrypt(message);
 
             var formContent = new List<KeyValuePair<string, string>> {
-                        new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
+                        new KeyValuePair<string, string>("authentication_token", String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token) ,
                         new KeyValuePair<string, string>("payload", payload),
                         new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion)
                         //new KeyValuePair<string, string>("os_version", AppConstants.OSVersion)
@@ -1361,7 +1491,7 @@ namespace FDS
         {
             var servicesObject = new RetriveServices
             {
-                authorization_token = KeyManager.GetValue("authorization_token"),
+                authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
                 mac_address = AppConstants.MACAddress,
                 serial_number = AppConstants.SerialNumber,
                 device_uuid = AppConstants.UUId
@@ -1369,7 +1499,7 @@ namespace FDS
             var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
 
             var formContent = new List<KeyValuePair<string, string>> {
-                        new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
+                        new KeyValuePair<string, string>("authentication_token", String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token) ,
                         new KeyValuePair<string, string>("payload", payload),
                         new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
                     };
@@ -1385,7 +1515,7 @@ namespace FDS
                 int idx = plainText.LastIndexOf('}');
                 var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
                 var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);//Replace('', ' ').Replace('', ' ').Replace("false", "true"));// replace used to test services
-                                                                                                                        //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
+                                                                                               //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
 
                 DateTime localDate = DateTime.Now.ToLocalTime();
                 txtUpdatedOn.Text = localDate.ToString();
@@ -1426,7 +1556,7 @@ namespace FDS
         //        int idx = plainText.LastIndexOf('}');
         //        var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
         //        var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);
-                
+
         //        else
         //        {
         //            foreach (var services in servicesResponse.Services)
@@ -1563,7 +1693,7 @@ namespace FDS
         {
             LogServiceRequest logServiceRequest = new LogServiceRequest
             {
-                authorization_token = KeyManager.GetValue("authorization_token"),
+                authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
                 mac_address = AppConstants.MACAddress,
                 serial_number = AppConstants.SerialNumber,
                 device_uuid = AppConstants.UUId,
@@ -1578,7 +1708,7 @@ namespace FDS
             var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(logServiceRequest))));
 
             var formContent = new List<KeyValuePair<string, string>> {
-                        new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
+                        new KeyValuePair<string, string>("authentication_token", String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token) ,
                         new KeyValuePair<string, string>("payload", payload),
                         new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
                     };
@@ -2717,7 +2847,13 @@ namespace FDS
                                     }
                                 }
                             }
+                            encryptOutPutFile = basePathEncryption + @"\Main";
+                            if (File.Exists(encryptOutPutFile))
+                            {
+                                File.Delete(encryptOutPutFile);
+                            }
                         }
+                        
                         else
                         {
                             // The application was not found in the registry
@@ -2756,13 +2892,20 @@ namespace FDS
             CredDelete(AppConstants.KeyPrfix + "Authentication_token", 1, 0);
             CredDelete(AppConstants.KeyPrfix + "Authorization_token", 1, 0);
 
-            string keyPath = @"SOFTWARE\FDS";
-            DeleteRegistryKey(keyPath);
+            ///string keyPath = @"SOFTWARE\FDS";
+            //DeleteRegistryKey(keyPath);
+
+            encryptOutPutFile = basePathEncryption + @"\Main";
+            if (File.Exists(encryptOutPutFile))
+            {
+                File.Delete(encryptOutPutFile);
+            }
+            
         }
-        public static void DeleteRegistryKey(string keyPath)
-        {
-            Registry.LocalMachine.DeleteSubKeyTree(keyPath);
-        }
+        //public static void DeleteRegistryKey(string keyPath)
+        //{
+        //    Registry.LocalMachine.DeleteSubKeyTree(keyPath);
+        //}
         #endregion
 
         #region AutoUpdate
