@@ -8,4 +8,4 @@ build_property.PlatformNeutralAssembly =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = Uninstaller
-build_property.ProjectDir = C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\Uninstaller\
+build_property.ProjectDir = F:\Fusion\FDS\windowsapp\Uninstaller\

@@ -37,10 +37,12 @@ using System.Runtime.InteropServices.ComTypes;
 using System.Threading;
 using System.Windows.Forms.Design;
 using System.Collections;
+using Windows.Storage;
+using Windows.System;
 
 namespace FDS
 {
-    /// <summary>
+    /// <summary>+
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class FDSMain : Window
@@ -169,7 +171,10 @@ namespace FDS
 
                 thisWindow = GetWindow(this);
                 client = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI };
-                IsUninstallFlagUpdated();
+                if (IsAdmin)
+                {
+                    IsUninstallFlagUpdated();
+                }
                 //cmbCountryCode.DropDownOpened += cmbCountryCode_DropDownOpened;
                 cmbCountryCode.DropDownClosed += cmbCountryCode_DropDownClosed;
                 txtCodeVersion.Text = AppConstants.CodeVersion;
@@ -266,7 +271,7 @@ namespace FDS
                 // -------Actual Code --------------------------------
                 encryptOutPutFile = basePathEncryption + @"\Main";
                 if (File.Exists(encryptOutPutFile))
-                {                     
+                {
                     string finalOutPutFile = basePathEncryption + @"\FinalDecrypt";
                     Common.EncryptionDecryption.DecryptFile(encryptOutPutFile, finalOutPutFile);
                     Common.EncryptionDecryption.ReadDecryptFile(finalOutPutFile);
@@ -279,19 +284,19 @@ namespace FDS
                 {
                     #region Auto start on startup done by Installer
 
-                    string applicationPath = "";
-                    RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
-                    if (registryKey != null)
-                    {
-                        object obj = registryKey.GetValue("FDS");
-                        if (obj != null)
-                            applicationPath = Path.GetDirectoryName(obj.ToString());
-                    }
+                    //string applicationPath = "";
+                    //RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
+                    //if (registryKey != null)
+                    //{
+                    //    object obj = registryKey.GetValue("FDS");
+                    //    if (obj != null)
+                    //        applicationPath = Path.GetDirectoryName(obj.ToString());
+                    //}                  
 
-                    RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
-                    string AutoStartBaseDir = applicationPath;
-                    string exeFile = Path.Combine(AutoStartBaseDir, "FDS.exe");
-                    key.SetValue("FDS", exeFile + " --opened-at-login --minimize");
+                    //RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+                    //string AutoStartBaseDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd(new[] { '\\' }).ToString();
+                    //string exeFile = Path.Combine(AutoStartBaseDir, "FDS.exe");
+                    //key.SetValue("FDS", exeFile + " --opened-at-login --minimize");
 
                     #endregion
 
@@ -1085,7 +1090,7 @@ namespace FDS
                         string[] myTokens = lstConfig.ToArray();
                         File.WriteAllLines(filePath, myTokens);
 
-                        Common.EncryptionDecryption.EncryptFile(filePath, encryptOutPutFile);                      
+                        Common.EncryptionDecryption.EncryptFile(filePath, encryptOutPutFile);
                         if (File.Exists(encryptOutPutFile))
                         {
                             string finalOutPutFile = basePathEncryption + @"\FinalDecrypt";
@@ -1175,6 +1180,18 @@ namespace FDS
             //    Authentication_token = KeyManager.GetValue("Authentication_token"),
             //    Authorization_token = KeyManager.GetValue("Authorization_token")
             //};
+
+            if (String.IsNullOrEmpty(ConfigDetails.Authorization_token))
+            {
+                encryptOutPutFile = basePathEncryption + @"\Main";
+                if (File.Exists(encryptOutPutFile))
+                {
+                    string finalOutPutFile = basePathEncryption + @"\FinalDecrypt";
+                    Common.EncryptionDecryption.DecryptFile(encryptOutPutFile, finalOutPutFile);
+                    Common.EncryptionDecryption.ReadDecryptFile(finalOutPutFile);
+                }
+            }
+
             var exchangeObject = new KeyExchange
             {
                 authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
@@ -1216,6 +1233,8 @@ namespace FDS
 
         public async Task CheckDeviceHealth()
         {
+
+
             isInternetConnected = CheckInternetConnection();
             if (isInternetConnected)
             {
@@ -1348,7 +1367,7 @@ namespace FDS
                         {
                             if (api.Equals("1") || api.Equals("4"))
                             {
-                                //await GetDeviceDetails();
+                                //await GetDeviceDetails();                              
                                 await RetrieveServices();
                             }
                             else if (api.Equals("2"))
@@ -1514,7 +1533,7 @@ namespace FDS
                 var plainText = RetriveDecrypt(responseData.Data);
                 int idx = plainText.LastIndexOf('}');
                 var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
-                var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);//Replace('', ' ').Replace('', ' ').Replace("false", "true"));// replace used to test services
+                var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);//.Replace("false", "true"));// replace used to test services
                                                                                                //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
 
                 DateTime localDate = DateTime.Now.ToLocalTime();
@@ -1691,6 +1710,7 @@ namespace FDS
         #region log / execute service
         private async Task LogServicesData(string authorizationCode, string subServiceName, long FileProcessed, string ServiceId, bool IsManualExecution)
         {
+             
             LogServiceRequest logServiceRequest = new LogServiceRequest
             {
                 authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
@@ -1723,6 +1743,7 @@ namespace FDS
                 var ExecuteNowResponse = await client.PutAsync(AppConstants.EndPoints.ExecuteNow + ServiceId + "/", new FormUrlEncodedContent(ExecuteNowContent));
                 if (ExecuteNowResponse.IsSuccessStatusCode)
                 {
+                     
                 }
             }
             else
@@ -1736,6 +1757,7 @@ namespace FDS
         {
             try
             {
+
                 if (IsServiceActive)
                 {
                     lstCron.Clear();
@@ -1745,6 +1767,10 @@ namespace FDS
                         {
                             if (subservice.Sub_service_active)
                             {
+                                if (subservice.Sub_service_name == "web_session_protection")
+                                {
+                                    subservice.Execute_now = true;
+                                }
                                 //var schedule = CrontabSchedule.Parse(subservice.Execution_period);
                                 //var nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
                                 //lstCron.Add(subservice, nextRunTime);
@@ -1779,8 +1805,15 @@ namespace FDS
                 {
                     foreach (var key in lstCron)
                     {
+                        bool testCheck = false;
                         SubservicesData SubservicesData = key.Key;
-                        if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute)
+                        //MessageBox.Show(SubservicesData.Name.ToString() + " = " + key.Value.ToString());
+                        if (SubservicesData.Name.ToString() == "Web Tracking Protecting")
+                        {
+                            testCheck = true;
+                        }
+                        //if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute)
+                        if ((DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute) || (testCheck == true))
                         {
                             ExecuteSubService(SubservicesData);
                             DateTime localDate = DateTime.Now.ToLocalTime();
@@ -1804,6 +1837,7 @@ namespace FDS
         {
             try
             {
+                MessageBox.Show(subservices.Sub_service_name);
                 switch (subservices.Sub_service_name)
                 {
                     case "dns_cache_protection":
@@ -1813,7 +1847,8 @@ namespace FDS
                         ClearRecycleBin(subservices);
                         break;
                     case "windows_registry_protection":
-                        ClearWindowsRegistry(subservices);
+                        if (IsAdmin)
+                        { ClearWindowsRegistry(subservices); }
                         break;
                     case "free_storage_protection":
                         DiskCleaning(subservices);
@@ -1998,6 +2033,7 @@ namespace FDS
         {
             try
             {
+               
                 var response = await client.GetAsync(AppConstants.EndPoints.WhiteListDomains + SubServiceId + "/");
                 if (response.IsSuccessStatusCode)
                 {
@@ -2023,7 +2059,7 @@ namespace FDS
                     int EdgeCount = ClearEdgeCookies();
                     int OperaCount = ClearOperaCookies();
 
-                    int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
+                    int TotalCount = ChromeCount + EdgeCount + FireFoxCount + EdgeCount + OperaCount;
 
                     LogServicesData(Sub_service_authorization_code, Sub_service_name, TotalCount, SubServiceId, ExecuteNow);
                 }
@@ -2038,11 +2074,13 @@ namespace FDS
         }
         private int ClearChromeCookie()
         {
+            
             int TotalCount = 0;
             Process[] chromeInstances = Process.GetProcessesByName("chrome");
             if (chromeInstances.Length == 0)
             {
                 string chromeProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\";
+                
                 List<string> profiles = new List<string>();
                 string defaultProfilePath = Path.Combine(chromeProfilePath, "Default");
                 if (Directory.Exists(defaultProfilePath))
@@ -2059,6 +2097,7 @@ namespace FDS
                         profiles.Add(profilePath);
                     }
                 }
+                 
                 foreach (var profile in profiles)
                 {
                     if (Directory.Exists(profile))
@@ -2090,7 +2129,7 @@ namespace FDS
                         }
                     }
                 }
-
+             
                 // Display the count of items deleted
                 Console.WriteLine("Total number of cookies deleted: " + TotalCount);
             }
@@ -2141,6 +2180,7 @@ namespace FDS
         }
         public void ClearIECookies()
         {
+            //MessageBox.Show("Second");
             foreach (string domain in whitelistedDomain)
             {
                 // Add domains to the PerSite privacy settings
@@ -2158,6 +2198,7 @@ namespace FDS
         }
         public int ClearEdgeCookies()
         {
+          
             int TotalCount = 0;
             Process[] msedgeInstances = Process.GetProcessesByName("msedge");
             if (msedgeInstances.Length == 0)
@@ -2169,6 +2210,7 @@ namespace FDS
                 {
                     profiles.Add(defaultProfilePath);
                 }
+              
                 if (Directory.Exists(edgeProfilePath))
                 {
                     string[] profileDirectories = Directory.GetDirectories(edgeProfilePath, "Profile *");
@@ -2179,6 +2221,7 @@ namespace FDS
                         profiles.Add(profilePath);
                     }
                 }
+              
                 foreach (var profile in profiles)
                 {
                     if (Directory.Exists(profile))
@@ -2255,13 +2298,13 @@ namespace FDS
         }
         private void WebHistoryCleaning(SubservicesData subservices)
         {
-            int ChromeCount = ClearChromeHistory();
-            int FireFoxCount = ClearFireFoxHistory();
+            //int ChromeCount = ClearChromeHistory();
+            //int FireFoxCount = ClearFireFoxHistory();
             int EdgeCount = ClearEdgeHistory();
+            //int OperaCount = ClearOperaHistory();
 
-            int OperaCount = ClearOperaHistory();
-
-            int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
+            int TotalCount = EdgeCount;
+            //int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
 
             LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount, Convert.ToString(subservices.Id), subservices.Execute_now);
         }
@@ -2353,6 +2396,7 @@ namespace FDS
         }
         public void ClearIEHitory()
         {
+            // MessageBox.Show("Third");
             // Get current number of history items
             int currentCount = 0;
             using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Internet Explorer\TypedURLs"))
@@ -2382,9 +2426,10 @@ namespace FDS
         }
         public int ClearEdgeHistory()
         {
+            //MessageBox.Show("History Start 1");
             int TotalCount = 0;
             Process[] msedgeInstances = Process.GetProcessesByName("msedge");
-            if (msedgeInstances.Length == 0)
+            if (msedgeInstances.Length > 0)
             {
                 // Connect to the Edge History database
                 //string historyPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Microsoft\Edge\User Data\Default\History";
@@ -2395,6 +2440,7 @@ namespace FDS
                 {
                     profiles.Add(defaultProfilePath);
                 }
+                //MessageBox.Show("History Start 2 - " + edgeProfilePath);
                 if (Directory.Exists(edgeProfilePath))
                 {
                     string[] profileDirectories = Directory.GetDirectories(edgeProfilePath, "Profile *");
@@ -2405,6 +2451,7 @@ namespace FDS
                         profiles.Add(profilePath);
                     }
                 }
+                //MessageBox.Show("History Start 3 - " + profiles.Count.ToString());
                 foreach (var profile in profiles)
                 {
                     if (Directory.Exists(profile))
@@ -2412,24 +2459,47 @@ namespace FDS
                         string historyPath = Path.Combine(profile, "History");
                         if (File.Exists(historyPath))
                         {
+
+
                             string connectionString = "Data Source=" + historyPath + ";Version=3;New=False;Compress=True;";
+
                             using (SQLiteConnection connection = new SQLiteConnection(connectionString))
                             {
                                 connection.Open();
 
-                                // Delete all browsing history records
-                                using (SQLiteCommand command = new SQLiteCommand("DELETE FROM urls;", connection))
+                                string deleteQuery = "DELETE FROM urls;";
+
+                                using (SQLiteCommand command = new SQLiteCommand(deleteQuery, connection))
                                 {
-                                    TotalCount += command.ExecuteNonQuery();
-
+                                    command.ExecuteNonQuery();
                                 }
-
-                                // Disconnect from the database
-                                connection.Close();
                             }
+
+
+
+
+
+
+                            //string connectionString = "Data Source=" + historyPath + ";Version=3;New=False;Compress=True;";
+                            //using (SQLiteConnection connection = new SQLiteConnection(connectionString))
+                            //{
+                            //    connection.Open();
+                            //    connection.Close();
+                            //    connection.Open();
+                            //    // Delete all browsing history records
+                            //    using (SQLiteCommand command = new SQLiteCommand("DELETE FROM urls;", connection))
+                            //    {
+                            //        TotalCount += command.ExecuteNonQuery();
+
+                            //    }
+
+                            //    // Disconnect from the database
+                            //    connection.Close();
+                            //}
                         }
                     }
                 }
+                //MessageBox.Show("History Start 3 - Done");
                 Console.WriteLine($"Deleted {TotalCount} browsing history items.");
             }
             return TotalCount;
@@ -2625,6 +2695,7 @@ namespace FDS
         }
         public void ClearIECache()
         {
+            // MessageBox.Show("4");
             // Get current number of cache items
             int currentCount = 0;
             using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings\Cache"))
@@ -2853,7 +2924,7 @@ namespace FDS
                                 File.Delete(encryptOutPutFile);
                             }
                         }
-                        
+
                         else
                         {
                             // The application was not found in the registry
@@ -2900,7 +2971,7 @@ namespace FDS
             {
                 File.Delete(encryptOutPutFile);
             }
-            
+
         }
         //public static void DeleteRegistryKey(string keyPath)
         //{
