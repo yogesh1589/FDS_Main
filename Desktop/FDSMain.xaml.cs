@@ -39,6 +39,7 @@ using System.Windows.Forms.Design;
 using System.Collections;
 using Windows.Storage;
 using Windows.System;
+using System.Data;
 
 namespace FDS
 {
@@ -1367,7 +1368,8 @@ namespace FDS
                         {
                             if (api.Equals("1") || api.Equals("4"))
                             {
-                                //await GetDeviceDetails();                              
+                                //await GetDeviceDetails();
+                                MessageBox.Show("Start");
                                 await RetrieveServices();
                             }
                             else if (api.Equals("2"))
@@ -1710,7 +1712,7 @@ namespace FDS
         #region log / execute service
         private async Task LogServicesData(string authorizationCode, string subServiceName, long FileProcessed, string ServiceId, bool IsManualExecution)
         {
-             
+
             LogServiceRequest logServiceRequest = new LogServiceRequest
             {
                 authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
@@ -1743,7 +1745,7 @@ namespace FDS
                 var ExecuteNowResponse = await client.PutAsync(AppConstants.EndPoints.ExecuteNow + ServiceId + "/", new FormUrlEncodedContent(ExecuteNowContent));
                 if (ExecuteNowResponse.IsSuccessStatusCode)
                 {
-                     
+
                 }
             }
             else
@@ -1767,10 +1769,7 @@ namespace FDS
                         {
                             if (subservice.Sub_service_active)
                             {
-                                if (subservice.Sub_service_name == "web_session_protection")
-                                {
-                                    subservice.Execute_now = true;
-                                }
+
                                 //var schedule = CrontabSchedule.Parse(subservice.Execution_period);
                                 //var nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
                                 //lstCron.Add(subservice, nextRunTime);
@@ -1805,15 +1804,19 @@ namespace FDS
                 {
                     foreach (var key in lstCron)
                     {
-                        bool testCheck = false;
+
                         SubservicesData SubservicesData = key.Key;
                         //MessageBox.Show(SubservicesData.Name.ToString() + " = " + key.Value.ToString());
-                        if (SubservicesData.Name.ToString() == "Web Tracking Protecting")
-                        {
-                            testCheck = true;
-                        }
-                        //if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute)
-                        if ((DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute) || (testCheck == true))
+
+                        //bool testCheck = false;
+                        //if (SubservicesData.Name.ToString() == "Web Session Protection")
+                        //if (SubservicesData.Name.ToString() == "Web Tracking Protecting")
+                        //{
+                        //    testCheck = true;
+                        //}
+                        //if ((DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute) || (testCheck == true))
+
+                        if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute)
                         {
                             ExecuteSubService(SubservicesData);
                             DateTime localDate = DateTime.Now.ToLocalTime();
@@ -1837,7 +1840,7 @@ namespace FDS
         {
             try
             {
-                MessageBox.Show(subservices.Sub_service_name);
+                //MessageBox.Show(subservices.Sub_service_name);
                 switch (subservices.Sub_service_name)
                 {
                     case "dns_cache_protection":
@@ -2033,7 +2036,7 @@ namespace FDS
         {
             try
             {
-               
+
                 var response = await client.GetAsync(AppConstants.EndPoints.WhiteListDomains + SubServiceId + "/");
                 if (response.IsSuccessStatusCode)
                 {
@@ -2074,13 +2077,13 @@ namespace FDS
         }
         private int ClearChromeCookie()
         {
-            
+
             int TotalCount = 0;
             Process[] chromeInstances = Process.GetProcessesByName("chrome");
             if (chromeInstances.Length == 0)
             {
                 string chromeProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\";
-                
+
                 List<string> profiles = new List<string>();
                 string defaultProfilePath = Path.Combine(chromeProfilePath, "Default");
                 if (Directory.Exists(defaultProfilePath))
@@ -2097,7 +2100,7 @@ namespace FDS
                         profiles.Add(profilePath);
                     }
                 }
-                 
+
                 foreach (var profile in profiles)
                 {
                     if (Directory.Exists(profile))
@@ -2129,7 +2132,7 @@ namespace FDS
                         }
                     }
                 }
-             
+
                 // Display the count of items deleted
                 Console.WriteLine("Total number of cookies deleted: " + TotalCount);
             }
@@ -2198,7 +2201,7 @@ namespace FDS
         }
         public int ClearEdgeCookies()
         {
-          
+
             int TotalCount = 0;
             Process[] msedgeInstances = Process.GetProcessesByName("msedge");
             if (msedgeInstances.Length == 0)
@@ -2210,7 +2213,7 @@ namespace FDS
                 {
                     profiles.Add(defaultProfilePath);
                 }
-              
+
                 if (Directory.Exists(edgeProfilePath))
                 {
                     string[] profileDirectories = Directory.GetDirectories(edgeProfilePath, "Profile *");
@@ -2221,7 +2224,7 @@ namespace FDS
                         profiles.Add(profilePath);
                     }
                 }
-              
+
                 foreach (var profile in profiles)
                 {
                     if (Directory.Exists(profile))
@@ -2298,22 +2301,96 @@ namespace FDS
         }
         private void WebHistoryCleaning(SubservicesData subservices)
         {
-            //int ChromeCount = ClearChromeHistory();
-            //int FireFoxCount = ClearFireFoxHistory();
-            int EdgeCount = ClearEdgeHistory();
-            //int OperaCount = ClearOperaHistory();
+            int ChromeCount = ClearChromeHistory();
+            int FireFoxCount = ClearFireFoxHistory();
+            // int EdgeCount = ClearEdgeHistory();
+            int OperaCount = ClearOperaHistory();
 
-            int TotalCount = EdgeCount;
-            //int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
+            //int TotalCount = EdgeCount + ChromeCount;
+            int TotalCount = ChromeCount + FireFoxCount + OperaCount;
 
             LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount, Convert.ToString(subservices.Id), subservices.Execute_now);
         }
+
+
+
+        static void IsChromeOpenForStandardUser(ref int cAdmin, ref int cUser)
+        {
+            Process[] chromeProcesses = Process.GetProcessesByName("chrome");
+
+            foreach (Process process in chromeProcesses)
+            {
+                string processOwner = GetProcessOwner2(process.Id);
+
+                if (processOwner.ToUpper().ToString() == "ADMIN")
+                {
+                    cAdmin++;
+                    //return false;
+                }
+                else { cUser++; }
+            }
+
+        }
+
+        static string GetProcessOwner2(int processId)
+        {
+            string query = "SELECT * FROM Win32_Process WHERE ProcessId = " + processId;
+            ManagementObjectSearcher searcher = new ManagementObjectSearcher(query);
+            ManagementObjectCollection processList = searcher.Get();
+
+            foreach (ManagementObject obj in processList)
+            {
+                string[] ownerInfo = new string[2];
+                obj.InvokeMethod("GetOwner", (object[])ownerInfo);
+                return ownerInfo[0];
+            }
+            return null;
+        }
+
         public int ClearChromeHistory()
         {
             int TotalCount = 0;
-            Process[] chromeInstances = Process.GetProcessesByName("chrome");
-            if (chromeInstances.Length == 0)
+            int cUser = 0, cAdmin = 0;
+            bool checkStas = false;
+            IsChromeOpenForStandardUser(ref cAdmin, ref cUser);
+
+            if ((cAdmin == 0) && (IsAdmin))
             {
+                checkStas = true;
+            }
+            else if ((cUser == 0) && (!IsAdmin))
+            {
+                checkStas = true;
+            }
+
+
+            //if ((cAdmin == 0) && (cUser > 0) && (!IsAdmin))
+            //{
+            //    checkStas = true;
+            //    Console.WriteLine("Chrome is open in a standard user account.");
+            //}
+            //else if ((cAdmin > 0) && (cUser == 0) && (IsAdmin))
+            //{
+            //    checkStas = true;
+            //    Console.WriteLine("Chrome is open in an admin user account.");
+            //}
+            //else if ((cAdmin > 0) && (cUser > 0))
+            //{
+            //    checkStas = true;
+            //    Console.WriteLine("Chrome is open in both account.");
+            //}
+            //else if ((cAdmin == 0) && (cUser == 0))
+            //{
+            //    checkStas = false;
+            //    Console.WriteLine("Chrome is not open in both account.");
+            //}
+
+
+
+            //Process[] chromeInstances = Process.GetProcesses("chrome");
+            if (checkStas)
+            {
+                MessageBox.Show("Chrome History Deletion Started");
                 List<string> profiles = new List<string>();
                 string chromeProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\";
                 string defaultProfilePath = Path.Combine(chromeProfilePath, "Default");
@@ -2346,6 +2423,7 @@ namespace FDS
                                     TotalCount += command.ExecuteNonQuery();
                                 }
                                 connection.Close();
+                                MessageBox.Show("Chrome History Deleted Sucessfully");
                             }
                         }
                     }
@@ -2451,59 +2529,55 @@ namespace FDS
                         profiles.Add(profilePath);
                     }
                 }
+
+
+
                 //MessageBox.Show("History Start 3 - " + profiles.Count.ToString());
                 foreach (var profile in profiles)
                 {
                     if (Directory.Exists(profile))
                     {
                         string historyPath = Path.Combine(profile, "History");
+
                         if (File.Exists(historyPath))
                         {
-
-
                             string connectionString = "Data Source=" + historyPath + ";Version=3;New=False;Compress=True;";
-
                             using (SQLiteConnection connection = new SQLiteConnection(connectionString))
                             {
                                 connection.Open();
-
-                                string deleteQuery = "DELETE FROM urls;";
-
-                                using (SQLiteCommand command = new SQLiteCommand(deleteQuery, connection))
+                                try
                                 {
-                                    command.ExecuteNonQuery();
+                                    // Perform your database operations here
+                                    // Delete all browsing history records
+                                    using (SQLiteCommand command = new SQLiteCommand("DELETE FROM urls;", connection))
+                                    {
+                                        TotalCount += command.ExecuteNonQuery();
+
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    // Handle any exceptions that occur during the transaction
+                                    Console.WriteLine("An error occurred: " + ex.Message);
+
+                                }
+                                finally
+                                {
+                                    connection.Close();
                                 }
                             }
-
-
-
-
-
-
-                            //string connectionString = "Data Source=" + historyPath + ";Version=3;New=False;Compress=True;";
-                            //using (SQLiteConnection connection = new SQLiteConnection(connectionString))
-                            //{
-                            //    connection.Open();
-                            //    connection.Close();
-                            //    connection.Open();
-                            //    // Delete all browsing history records
-                            //    using (SQLiteCommand command = new SQLiteCommand("DELETE FROM urls;", connection))
-                            //    {
-                            //        TotalCount += command.ExecuteNonQuery();
-
-                            //    }
-
-                            //    // Disconnect from the database
-                            //    connection.Close();
-                            //}
                         }
                     }
                 }
-                //MessageBox.Show("History Start 3 - Done");
-                Console.WriteLine($"Deleted {TotalCount} browsing history items.");
+
+
             }
             return TotalCount;
+            //MessageBox.Show("History Start 3 - Done");
+            Console.WriteLine($"Deleted {TotalCount} browsing history items.");
         }
+
+
         public int ClearOperaHistory()
         {
             int TotalCount = 0;

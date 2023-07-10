@@ -6,3 +6,11 @@ C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\AutoUpdate\obj\Rel
 C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\AutoUpdate\obj\Release\AutoUpdate.csproj.CoreCompileInputs.cache
 C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\AutoUpdate\obj\Release\AutoUpdate.exe
 C:\Users\DELL\Downloads\fds_desktop-master\fds_desktop-master\AutoUpdate\obj\Release\AutoUpdate.pdb
+F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\AutoUpdate.exe.config
+F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\AutoUpdate.exe
+F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\AutoUpdate.pdb
+F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.AssemblyReference.cache
+F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.SuggestedBindingRedirects.cache
+F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.CoreCompileInputs.cache
+F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.exe
+F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.pdb
