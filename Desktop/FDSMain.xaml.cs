@@ -593,102 +593,7 @@ namespace FDS
 
         }
 
-        //private bool CheckAllKeys()
-        //{
-        //    try
-        //    {
-        //        //string InverseQ = KeyManager.GetValue("InverseQ");
-        //        //string DQ = KeyManager.GetValue("DQ");
-        //        //string DP = KeyManager.GetValue("DP");
-        //        //string Q = KeyManager.GetValue("Q");
-        //        //string P = KeyManager.GetValue("P");
-        //        //string D = KeyManager.GetValue("D");
-        //        //string Exponent = KeyManager.GetValue("Exponent");
-        //        //string Modulus = KeyManager.GetValue("Modulus");
-        //        //bool ValidDeviceKey = !string.IsNullOrEmpty(InverseQ) && !string.IsNullOrEmpty(DQ) && !string.IsNullOrEmpty(DP) && !string.IsNullOrEmpty(Q) && !string.IsNullOrEmpty(P) && !string.IsNullOrEmpty(D) && !string.IsNullOrEmpty(Exponent) && !string.IsNullOrEmpty(Modulus);
-        //        RSAParameters RSAParam;
-        //        //if (!ValidDeviceKey)
-        //        //{
-        //        RSADevice = new RSACryptoServiceProvider(2048);
-        //        RSAParam = RSADevice.ExportParameters(true);
-        //        //RegistryKey softwareKey = Registry.LocalMachine.OpenSubKey("Software");
-        //        //RegistryKey key = softwareKey.OpenSubKey("FDS");
-        //        //// Fetch values from the MyApp key
-        //        //if (key != null)
-        //        //{
-        //        //    KeyManager.SaveValue("Modulus", (string)key.GetValue(AppConstants.KeyPrfix + "Modulus"), Environment.UserName);
-        //        //    KeyManager.SaveValue("Exponent", (string)key.GetValue(AppConstants.KeyPrfix + "Exponent"), Environment.UserName);
-        //        //    KeyManager.SaveValue("D", (string)key.GetValue(AppConstants.KeyPrfix + "D"), Environment.UserName);
-        //        //    KeyManager.SaveValue("P", (string)key.GetValue(AppConstants.KeyPrfix + "P"), Environment.UserName);
-        //        //    KeyManager.SaveValue("DP", (string)key.GetValue(AppConstants.KeyPrfix + "DP"), Environment.UserName);
-        //        //    KeyManager.SaveValue("DQ", (string)key.GetValue(AppConstants.KeyPrfix + "DQ"), Environment.UserName);
-        //        //    KeyManager.SaveValue("Q", (string)key.GetValue(AppConstants.KeyPrfix + "Q"), Environment.UserName);
-        //        //    KeyManager.SaveValue("InverseQ", (string)key.GetValue(AppConstants.KeyPrfix + "InverseQ"), Environment.UserName);
-        //        //}
-        //        //else
-        //        //    return false;
-        //        //}
-        //        
-        //        //RSAParam = new RSAParameters
-        //        //{
-        //        //    InverseQ = Convert.FromBase64String(KeyManager.GetValue("InverseQ")),
-        //        //    DQ = Convert.FromBase64String(KeyManager.GetValue("DQ")),
-        //        //    DP = Convert.FromBase64String(KeyManager.GetValue("DP")),
-        //        //    Q = Convert.FromBase64String(KeyManager.GetValue("Q")),
-        //        //    P = Convert.FromBase64String(KeyManager.GetValue("P")),
-        //        //    D = Convert.FromBase64String(KeyManager.GetValue("D")),
-        //        //    Exponent = Convert.FromBase64String(KeyManager.GetValue("Exponent")),
-        //        //    Modulus = Convert.FromBase64String(KeyManager.GetValue("Modulus"))
-        //        //};
 
-        //        RSADevice = new RSACryptoServiceProvider(2048);
-        //        RSADevice.ImportParameters(RSAParam);
-
-
-
-        //        //var key1 = KeyManager.GetValue("Key1");
-        //        //var key2 = KeyManager.GetValue("Key2");
-        //        //var Authentication_token = KeyManager.GetValue("Authentication_token");
-        //        //var Authorization_token = KeyManager.GetValue("Authorization_token");
-        //        bool ValidServerKey = !string.IsNullOrEmpty(key1) && !string.IsNullOrEmpty(key2) && !string.IsNullOrEmpty(Authentication_token) && !string.IsNullOrEmpty(Authorization_token);
-        //        if (!ValidServerKey)
-        //        {
-        //            RegistryKey softKey = Registry.LocalMachine.OpenSubKey("Software");
-        //            RegistryKey myAppKey = softKey.OpenSubKey("FDS");
-
-        //            // Fetch values from the MyApp key
-        //            if (myAppKey != null)
-        //            {
-        //                KeyManager.SaveValue("Key1", (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Key1"), Environment.UserName);
-        //                KeyManager.SaveValue("Key2", (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Key2"), Environment.UserName);
-        //                KeyManager.SaveValue("Authentication_token", (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Authentication_token"), Environment.UserName);
-        //                KeyManager.SaveValue("Authorization_token", (string)myAppKey.GetValue(AppConstants.KeyPrfix + "Authorization_token"), Environment.UserName);
-
-        //                // Close the keys
-        //                myAppKey.Close();
-        //                softwareKey.Close();
-        //            }
-        //            else
-        //                return false;
-
-        //        }
-        //        QRCodeResponse = new QRCodeResponse
-        //        {
-        //            Public_key = KeyManager.GetValue("Key1") + KeyManager.GetValue("Key2"),
-        //            Authentication_token = KeyManager.GetValue("Authentication_token"),
-        //            Authorization_token = KeyManager.GetValue("Authorization_token")
-        //        };
-        //        RSAServer = new RSACryptoServiceProvider(2048);
-        //        RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));
-        //        return true;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        //        return false;
-        //    }
-
-        //}
         #endregion
 
         #region Authentication methods
@@ -1369,7 +1274,7 @@ namespace FDS
                             if (api.Equals("1") || api.Equals("4"))
                             {
                                 //await GetDeviceDetails();
-                                MessageBox.Show("Start");
+                                //MessageBox.Show("Start");
                                 await RetrieveServices();
                             }
                             else if (api.Equals("2"))
@@ -1550,52 +1455,7 @@ namespace FDS
                 //MessageBox.Show("An error occurred in RetrieveServices: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        //public async Task RetrieveCronServices()
-        //{
-        //    var servicesObject = new RetriveServices
-        //    {
-        //        authorization_token = KeyManager.GetValue("authorization_token"),
-        //        mac_address = AppConstants.MACAddress,
-        //        serial_number = AppConstants.SerialNumber,
-        //        device_uuid = AppConstants.UUId
-        //    };
-        //    var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
 
-        //    var formContent = new List<KeyValuePair<string, string>> {
-        //                new KeyValuePair<string, string>("authentication_token", KeyManager.GetValue("Authentication_token")) ,
-        //                new KeyValuePair<string, string>("payload", payload),
-        //                new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
-        //            };
-
-        //    var response = await client.PostAsync(AppConstants.EndPoints.DeviceServices, new FormUrlEncodedContent(formContent));
-
-        //    if (response.IsSuccessStatusCode)
-        //    {
-        //        var responseString = await response.Content.ReadAsStringAsync();
-        //        var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-        //        var plainText = RetriveDecrypt(responseData.Data);
-        //        int idx = plainText.LastIndexOf('}');
-        //        var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
-        //        var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);
-
-        //        else
-        //        {
-        //            foreach (var services in servicesResponse.Services)
-        //            {
-        //                foreach (var subservice in services.Subservices)
-        //                {
-        //                    if (subservice.Sub_service_active)
-        //                    {
-        //                        var schedule = CrontabSchedule.Parse(subservice.Execution_period);
-        //                        var nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
-        //                        lstCron.Add(subservice, nextRunTime);
-        //                    }
-        //                }
-        //            }
-        //        }
-        //        //CronLastUpdate.Start();
-        //    }
-        //}
         #endregion
 
         #region Encryption / Decryption
@@ -1808,15 +1668,15 @@ namespace FDS
                         SubservicesData SubservicesData = key.Key;
                         //MessageBox.Show(SubservicesData.Name.ToString() + " = " + key.Value.ToString());
 
-                        //bool testCheck = false;
-                        //if (SubservicesData.Name.ToString() == "Web Session Protection")
-                        //if (SubservicesData.Name.ToString() == "Web Tracking Protecting")
-                        //{
-                        //    testCheck = true;
-                        //}
-                        //if ((DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute) || (testCheck == true))
+                        bool testCheck = false;
+                        ////if (SubservicesData.Name.ToString() == "Web Session Protection")
+                        if (SubservicesData.Name.ToString() == "Web Tracking Protecting")
+                        {
+                            testCheck = true;
+                        }
+                        if ((DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute) || (testCheck == true))
 
-                        if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute)
+                        //if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute)
                         {
                             ExecuteSubService(SubservicesData);
                             DateTime localDate = DateTime.Now.ToLocalTime();
@@ -2079,8 +1939,9 @@ namespace FDS
         {
 
             int TotalCount = 0;
-            Process[] chromeInstances = Process.GetProcessesByName("chrome");
-            if (chromeInstances.Length == 0)
+            int bCount = IsBrowserOpen("chrome");
+            //Process[] chromeInstances = Process.GetProcessesByName("chrome");
+            if (bCount == 0)
             {
                 string chromeProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\";
 
@@ -2141,8 +2002,9 @@ namespace FDS
         public int ClearFirefoxCookies()
         {
             int TotalCount = 0;
+            int bCount = IsBrowserOpen("chrome");
             Process[] firefoxInstances = Process.GetProcessesByName("firefox");
-            if (firefoxInstances.Length == 0)
+            if (bCount == 0)
             {
                 string firefoxProfilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Mozilla", "Firefox", "Profiles");
                 if (Directory.Exists(firefoxProfilePath))
@@ -2203,8 +2065,9 @@ namespace FDS
         {
 
             int TotalCount = 0;
-            Process[] msedgeInstances = Process.GetProcessesByName("msedge");
-            if (msedgeInstances.Length == 0)
+            int bCount = IsBrowserOpen("msedge");
+            //Process[] msedgeInstances = Process.GetProcessesByName("msedge");
+            if (bCount == 0)
             {
                 List<string> profiles = new List<string>();
                 string edgeProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Microsoft\Edge\User Data\";
@@ -2265,8 +2128,9 @@ namespace FDS
         public int ClearOperaCookies()
         {
             int TotalCount = 0;
-            Process[] msedgeInstances = Process.GetProcessesByName("opera");
-            if (msedgeInstances.Length == 0)
+            int bCount = IsBrowserOpen("msedge");
+            //Process[] msedgeInstances = Process.GetProcessesByName("opera");
+            if (bCount == 0)
             {
                 var str = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 var cookiePath = str + "\\Opera Software\\Opera Stable\\Network\\Cookies";
@@ -2303,33 +2167,34 @@ namespace FDS
         {
             int ChromeCount = ClearChromeHistory();
             int FireFoxCount = ClearFireFoxHistory();
-            // int EdgeCount = ClearEdgeHistory();
+            int EdgeCount = ClearEdgeHistory();
             int OperaCount = ClearOperaHistory();
 
             //int TotalCount = EdgeCount + ChromeCount;
-            int TotalCount = ChromeCount + FireFoxCount + OperaCount;
+            int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
 
             LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount, Convert.ToString(subservices.Id), subservices.Execute_now);
         }
 
 
 
-        static void IsChromeOpenForStandardUser(ref int cAdmin, ref int cUser)
+        static int IsBrowserOpen(string browser)
         {
-            Process[] chromeProcesses = Process.GetProcessesByName("chrome");
+            int bCnt = 0;
+            Process[] chromeProcesses = Process.GetProcessesByName(browser);
 
             foreach (Process process in chromeProcesses)
             {
                 string processOwner = GetProcessOwner2(process.Id);
-
-                if (processOwner.ToUpper().ToString() == "ADMIN")
+                if (!string.IsNullOrEmpty(processOwner))
                 {
-                    cAdmin++;
-                    //return false;
+                    if (System.Security.Principal.WindowsIdentity.GetCurrent().Name.ToUpper().ToString().Contains(processOwner.ToUpper().ToString()))
+                    {
+                        bCnt++;
+                    }
                 }
-                else { cUser++; }
             }
-
+            return bCnt;
         }
 
         static string GetProcessOwner2(int processId)
@@ -2350,47 +2215,14 @@ namespace FDS
         public int ClearChromeHistory()
         {
             int TotalCount = 0;
-            int cUser = 0, cAdmin = 0;
-            bool checkStas = false;
-            IsChromeOpenForStandardUser(ref cAdmin, ref cUser);
-
-            if ((cAdmin == 0) && (IsAdmin))
-            {
-                checkStas = true;
-            }
-            else if ((cUser == 0) && (!IsAdmin))
-            {
-                checkStas = true;
-            }
 
 
-            //if ((cAdmin == 0) && (cUser > 0) && (!IsAdmin))
-            //{
-            //    checkStas = true;
-            //    Console.WriteLine("Chrome is open in a standard user account.");
-            //}
-            //else if ((cAdmin > 0) && (cUser == 0) && (IsAdmin))
-            //{
-            //    checkStas = true;
-            //    Console.WriteLine("Chrome is open in an admin user account.");
-            //}
-            //else if ((cAdmin > 0) && (cUser > 0))
-            //{
-            //    checkStas = true;
-            //    Console.WriteLine("Chrome is open in both account.");
-            //}
-            //else if ((cAdmin == 0) && (cUser == 0))
-            //{
-            //    checkStas = false;
-            //    Console.WriteLine("Chrome is not open in both account.");
-            //}
-
-
-
+            int bCount = IsBrowserOpen("chrome");
+            //MessageBox.Show(bCount.ToString());
             //Process[] chromeInstances = Process.GetProcesses("chrome");
-            if (checkStas)
+            if (bCount == 0)
             {
-                MessageBox.Show("Chrome History Deletion Started");
+                //MessageBox.Show("Chrome History Deletion Started");
                 List<string> profiles = new List<string>();
                 string chromeProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\";
                 string defaultProfilePath = Path.Combine(chromeProfilePath, "Default");
@@ -2423,7 +2255,7 @@ namespace FDS
                                     TotalCount += command.ExecuteNonQuery();
                                 }
                                 connection.Close();
-                                MessageBox.Show("Chrome History Deleted Sucessfully");
+                                //MessageBox.Show("Chrome History Deleted Sucessfully");
                             }
                         }
                     }
@@ -2436,8 +2268,13 @@ namespace FDS
         public int ClearFireFoxHistory()
         {
             int TotalCount = 0;
-            Process[] firefoxInstances = Process.GetProcessesByName("firefox");
-            if (firefoxInstances.Length == 0)
+
+
+            int bCount = IsBrowserOpen("firefox");
+
+
+            //Process[] firefoxInstances = Process.GetProcessesByName("firefox");
+            if (bCount == 0)
             {
                 try
                 {
@@ -2506,8 +2343,13 @@ namespace FDS
         {
             //MessageBox.Show("History Start 1");
             int TotalCount = 0;
-            Process[] msedgeInstances = Process.GetProcessesByName("msedge");
-            if (msedgeInstances.Length > 0)
+
+
+            int bCount = IsBrowserOpen("msedge");
+
+
+            //Process[] msedgeInstances = Process.GetProcessesByName("msedge");
+            if (bCount == 0)
             {
                 // Connect to the Edge History database
                 //string historyPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Microsoft\Edge\User Data\Default\History";
@@ -2581,8 +2423,12 @@ namespace FDS
         public int ClearOperaHistory()
         {
             int TotalCount = 0;
-            Process[] OperaInstances = Process.GetProcessesByName("opera");
-            if (OperaInstances.Length == 0)
+
+
+            int bCount = IsBrowserOpen("opera");
+
+            //Process[] OperaInstances = Process.GetProcessesByName("opera");
+            if (bCount == 0)
             {
                 // Set the path to the Opera profile directory
                 string historyPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\Opera Software\Opera Stable\";
@@ -2619,8 +2465,13 @@ namespace FDS
         {
             int TotalCount = 0;
             long TotalSize = 0;
-            Process[] chromeInstances = Process.GetProcessesByName("chrome");
-            if (chromeInstances.Length == 0)
+
+
+            int bCount = IsBrowserOpen("chrome");
+
+
+            //Process[] chromeInstances = Process.GetProcessesByName("chrome");
+            if (bCount == 0)
             {
                 List<string> profiles = new List<string>();
                 string chromeProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\";
@@ -2673,8 +2524,9 @@ namespace FDS
         {
             int TotalCount = 0;
             long TotalSize = 0;
-            Process[] firefoxInstances = Process.GetProcessesByName("firefox");
-            if (firefoxInstances.Length == 0)
+            int bCount = IsBrowserOpen("firefox");
+            //Process[] firefoxInstances = Process.GetProcessesByName("firefox");
+            if (bCount == 0)
             {
                 string firefoxProfilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Mozilla", "Firefox", "Profiles");
                 if (Directory.Exists(firefoxProfilePath))
@@ -2720,8 +2572,9 @@ namespace FDS
         {
             int TotalCount = 0;
             long TotalSize = 0;
-            Process[] msedgeInstances = Process.GetProcessesByName("msedge");
-            if (msedgeInstances.Length == 0)
+            int bCount = IsBrowserOpen("msedge");
+            //Process[] msedgeInstances = Process.GetProcessesByName("msedge");
+            if (bCount == 0)
             {
                 // Connect to the Edge cache database
                 //string cachePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Microsoft\Edge\User Data\Default\Cache\Cache_Data";
@@ -2801,8 +2654,9 @@ namespace FDS
         {
             int TotalCount = 0;
             long TotalSize = 0;
-            Process[] OperaInstances = Process.GetProcessesByName("opera");
-            if (OperaInstances.Length == 0)
+            int bCount = IsBrowserOpen("opera");
+            // Process[] OperaInstances = Process.GetProcessesByName("opera");
+            if (bCount == 0)
             {
                 // Set the path to the Opera profile directory
                 string cachePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Opera Software\Opera Stable\Cache\Cache_Data";
@@ -2891,6 +2745,11 @@ namespace FDS
         }
         private async void btnUninstall_Click(object sender, RoutedEventArgs e)
         {
+            if (!IsAdmin)
+            {
+                MessageBox.Show("You Can't Uninstall, Please Contact Admin to Uninstall.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
             var formContent = new List<KeyValuePair<string, string>> {
                 new KeyValuePair<string, string>("mac_address", AppConstants.MACAddress),
                 new KeyValuePair<string, string>("serial_number", AppConstants.SerialNumber),
