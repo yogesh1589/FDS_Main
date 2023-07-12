@@ -1004,47 +1004,7 @@ namespace FDS
                             Common.EncryptionDecryption.ReadDecryptFile(finalOutPutFile);
                         }
                     }
-
-
-
-                    //RegistryKey key = Registry.LocalMachine.CreateSubKey("Software");
-                    //RegistryKey myAppKey = key.CreateSubKey("FDS");
-                    //if (myAppKey != null)
-                    //{
-                    //    // Add a value to the key
-                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "Key1", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(0, LengthAllowed) : QRCodeResponse.Public_key);
-                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "Key2", QRCodeResponse.Public_key.Length > LengthAllowed ? QRCodeResponse.Public_key.Substring(LengthAllowed, QRCodeResponse.Public_key.Length - LengthAllowed) : "");
-                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "Authentication_token", QRCodeResponse.Authentication_token);
-                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "Authorization_token", QRCodeResponse.Authorization_token);
-                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "Modulus", Convert.ToBase64String(RSAParam.Modulus));
-                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "Exponent", Convert.ToBase64String(RSAParam.Exponent));
-                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "D", Convert.ToBase64String(RSAParam.D));
-                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "P", Convert.ToBase64String(RSAParam.P));
-                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "Q", Convert.ToBase64String(RSAParam.Q));
-                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "DP", Convert.ToBase64String(RSAParam.DP));
-                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "DQ", Convert.ToBase64String(RSAParam.DQ));
-                    //    myAppKey.SetValue(AppConstants.KeyPrfix + "InverseQ", Convert.ToBase64String(RSAParam.InverseQ));
-                    //}
-
-                    //key.Close();
-
-                    //RegistryKey softKey = Registry.LocalMachine.OpenSubKey("Software");
-                    //RegistryKey AppKey = softKey.OpenSubKey("FDS");
-                    //if (AppKey != null)
-                    //{
-                    //    KeyManager.SaveValue("Key1", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Key1"), Environment.UserName);
-                    //    KeyManager.SaveValue("Key2", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Key2"), Environment.UserName);
-                    //    KeyManager.SaveValue("Authentication_token", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Authentication_token"), Environment.UserName);
-                    //    KeyManager.SaveValue("Authorization_token", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Authorization_token"), Environment.UserName);
-                    //    KeyManager.SaveValue("Modulus", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Modulus"), Environment.UserName);
-                    //    KeyManager.SaveValue("Exponent", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Exponent"), Environment.UserName);
-                    //    KeyManager.SaveValue("D", (string)AppKey.GetValue(AppConstants.KeyPrfix + "D"), Environment.UserName);
-                    //    KeyManager.SaveValue("P", (string)AppKey.GetValue(AppConstants.KeyPrfix + "P"), Environment.UserName);
-                    //    KeyManager.SaveValue("DP", (string)AppKey.GetValue(AppConstants.KeyPrfix + "DP"), Environment.UserName);
-                    //    KeyManager.SaveValue("DQ", (string)AppKey.GetValue(AppConstants.KeyPrfix + "DQ"), Environment.UserName);
-                    //    KeyManager.SaveValue("Q", (string)AppKey.GetValue(AppConstants.KeyPrfix + "Q"), Environment.UserName);
-                    //    KeyManager.SaveValue("InverseQ", (string)AppKey.GetValue(AppConstants.KeyPrfix + "InverseQ"), Environment.UserName);
-                    //}
+ 
                     if (MenuChange)
                     {
                         LoadMenu(Screens.Landing);
@@ -1629,7 +1589,10 @@ namespace FDS
                         {
                             if (subservice.Sub_service_active)
                             {
-
+                                //if(subservice.Sub_service_name == "web_session_protection")
+                                //{
+                                //    subservice.Execute_now = true;
+                                //}
                                 //var schedule = CrontabSchedule.Parse(subservice.Execution_period);
                                 //var nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
                                 //lstCron.Add(subservice, nextRunTime);
@@ -1668,15 +1631,15 @@ namespace FDS
                         SubservicesData SubservicesData = key.Key;
                         //MessageBox.Show(SubservicesData.Name.ToString() + " = " + key.Value.ToString());
 
-                        bool testCheck = false;
+                        //bool testCheck = false;
                         ////if (SubservicesData.Name.ToString() == "Web Session Protection")
-                        if (SubservicesData.Name.ToString() == "Web Tracking Protecting")
-                        {
-                            testCheck = true;
-                        }
-                        if ((DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute) || (testCheck == true))
+                        //if (SubservicesData.Name.ToString() == "Web Tracking Protecting")
+                        //{
+                        //    testCheck = true;
+                        //}
+                        //if ((DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute) || (testCheck == true))
 
-                        //if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute)
+                        if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute)
                         {
                             ExecuteSubService(SubservicesData);
                             DateTime localDate = DateTime.Now.ToLocalTime();
@@ -1700,7 +1663,7 @@ namespace FDS
         {
             try
             {
-                //MessageBox.Show(subservices.Sub_service_name);
+                MessageBox.Show(subservices.Sub_service_name);
                 switch (subservices.Sub_service_name)
                 {
                     case "dns_cache_protection":
@@ -2807,6 +2770,12 @@ namespace FDS
                     }
                     else
                     {
+
+                        encryptOutPutFile = basePathEncryption + @"\Main";
+                        if (File.Exists(encryptOutPutFile))
+                        {
+                            File.Delete(encryptOutPutFile);
+                        }
                         btnUninstall.ToolTip = "Your uninstall request has been approved! ";
                         btnUninstall.Foreground = System.Windows.Media.Brushes.DarkGreen;
                         //MessageBox.Show("Uninstall request has been approved! Will process your request soon", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -2851,11 +2820,7 @@ namespace FDS
                                     }
                                 }
                             }
-                            encryptOutPutFile = basePathEncryption + @"\Main";
-                            if (File.Exists(encryptOutPutFile))
-                            {
-                                File.Delete(encryptOutPutFile);
-                            }
+                            
                         }
 
                         else
