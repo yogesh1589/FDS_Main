@@ -1859,7 +1859,7 @@ namespace FDS
         {
             try
             {
-
+                MessageBox.Show("CheckWhiteListDomains Starts");
                 var response = await client.GetAsync(AppConstants.EndPoints.WhiteListDomains + SubServiceId + "/");
                 if (response.IsSuccessStatusCode)
                 {
@@ -1880,6 +1880,8 @@ namespace FDS
                             whitelistedDomain.Add("'%" + domain.domain_name + "%'");
                         }
                     }
+
+                    MessageBox.Show("Total " + whitelistedDomain.Count.ToString() + " whitelistedDomain");
                     int ChromeCount = ClearChromeCookie();
                     int FireFoxCount = ClearFirefoxCookies();
                     int EdgeCount = ClearEdgeCookies();
@@ -1903,7 +1905,7 @@ namespace FDS
 
             int TotalCount = 0;
             int bCount = IsBrowserOpen("chrome");
-            //Process[] chromeInstances = Process.GetProcessesByName("chrome");
+            //Process[] chromeInstances = Process.GetProcessesByName("chrome");            
             if (bCount == 0)
             {
                 string chromeProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\";
@@ -1934,6 +1936,7 @@ namespace FDS
                         {
                             using (SQLiteConnection connection = new SQLiteConnection("Data Source=" + CookiesPath))
                             {
+                                MessageBox.Show("Chrome path : " + chromeProfilePath.ToString() + " || Cookies Path " + CookiesPath.ToString());
                                 connection.Open();
                                 using (SQLiteCommand command = connection.CreateCommand())
                                 {
@@ -1952,6 +1955,7 @@ namespace FDS
                                     TotalCount += command.ExecuteNonQuery();
                                 }
                                 connection.Close();
+                                MessageBox.Show("Cookies done from Chrome");
                             }
                         }
                     }
@@ -1965,8 +1969,8 @@ namespace FDS
         public int ClearFirefoxCookies()
         {
             int TotalCount = 0;
-            int bCount = IsBrowserOpen("chrome");
-            Process[] firefoxInstances = Process.GetProcessesByName("firefox");
+            int bCount = IsBrowserOpen("firefox");
+            //Process[] firefoxInstances = Process.GetProcessesByName("firefox");
             if (bCount == 0)
             {
                 string firefoxProfilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Mozilla", "Firefox", "Profiles");
@@ -2091,7 +2095,7 @@ namespace FDS
         public int ClearOperaCookies()
         {
             int TotalCount = 0;
-            int bCount = IsBrowserOpen("msedge");
+            int bCount = IsBrowserOpen("opera");
             //Process[] msedgeInstances = Process.GetProcessesByName("opera");
             if (bCount == 0)
             {
@@ -2145,18 +2149,20 @@ namespace FDS
         {
             int bCnt = 0;
             Process[] chromeProcesses = Process.GetProcessesByName(browser);
-
+            string test = string.Empty;
             foreach (Process process in chromeProcesses)
             {
                 string processOwner = GetProcessOwner2(process.Id);
                 if (!string.IsNullOrEmpty(processOwner))
                 {
+                    test = processOwner;
                     if (System.Security.Principal.WindowsIdentity.GetCurrent().Name.ToUpper().ToString().Contains(processOwner.ToUpper().ToString()))
                     {
                         bCnt++;
                     }
                 }
             }
+            MessageBox.Show( "User1 " + WindowsIdentity.GetCurrent().Name.ToUpper().ToString() +  " User2 " + test + " Count = " + bCnt + " For Browser " + browser);
             return bCnt;
         }
 

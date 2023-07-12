@@ -14,3 +14,11 @@ F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.SuggestedBindi
 F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.CoreCompileInputs.cache
 F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.exe
 F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.pdb
+E:\FusionDataSecure\windowsapp\AutoUpdate\bin\Release\AutoUpdate.exe.config
+E:\FusionDataSecure\windowsapp\AutoUpdate\bin\Release\AutoUpdate.exe
+E:\FusionDataSecure\windowsapp\AutoUpdate\bin\Release\AutoUpdate.pdb
+E:\FusionDataSecure\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.AssemblyReference.cache
+E:\FusionDataSecure\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.SuggestedBindingRedirects.cache
+E:\FusionDataSecure\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.CoreCompileInputs.cache
+E:\FusionDataSecure\windowsapp\AutoUpdate\obj\Release\AutoUpdate.exe
+E:\FusionDataSecure\windowsapp\AutoUpdate\obj\Release\AutoUpdate.pdb

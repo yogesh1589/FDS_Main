@@ -1,21 +1,21 @@
 {
   "format": 1,
   "restore": {
-    "F:\\Fusion\\FDS\\windowsapp\\Uninstaller\\Uninstaller.csproj": {}
+    "E:\\FusionDataSecure\\windowsapp\\Uninstaller\\Uninstaller.csproj": {}
   },
   "projects": {
-    "F:\\Fusion\\FDS\\windowsapp\\Desktop\\FusionDataSecure.csproj": {
+    "E:\\FusionDataSecure\\windowsapp\\Desktop\\FusionDataSecure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "F:\\Fusion\\FDS\\windowsapp\\Desktop\\FusionDataSecure.csproj",
+        "projectUniqueName": "E:\\FusionDataSecure\\windowsapp\\Desktop\\FusionDataSecure.csproj",
         "projectName": "FDS",
-        "projectPath": "F:\\Fusion\\FDS\\windowsapp\\Desktop\\FusionDataSecure.csproj",
-        "packagesPath": "C:\\Users\\ADMIN\\.nuget\\packages\\",
-        "outputPath": "F:\\Fusion\\FDS\\windowsapp\\Desktop\\obj\\",
+        "projectPath": "E:\\FusionDataSecure\\windowsapp\\Desktop\\FusionDataSecure.csproj",
+        "packagesPath": "C:\\Users\\Suser\\.nuget\\packages\\",
+        "outputPath": "E:\\FusionDataSecure\\windowsapp\\Desktop\\obj\\",
         "projectStyle": "PackageReference",
         "skipContentFileWrite": true,
         "configFilePaths": [
-          "C:\\Users\\ADMIN\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Suser\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -149,17 +149,17 @@
         }
       }
     },
-    "F:\\Fusion\\FDS\\windowsapp\\Uninstaller\\Uninstaller.csproj": {
+    "E:\\FusionDataSecure\\windowsapp\\Uninstaller\\Uninstaller.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "F:\\Fusion\\FDS\\windowsapp\\Uninstaller\\Uninstaller.csproj",
+        "projectUniqueName": "E:\\FusionDataSecure\\windowsapp\\Uninstaller\\Uninstaller.csproj",
         "projectName": "Uninstaller",
-        "projectPath": "F:\\Fusion\\FDS\\windowsapp\\Uninstaller\\Uninstaller.csproj",
-        "packagesPath": "C:\\Users\\ADMIN\\.nuget\\packages\\",
-        "outputPath": "F:\\Fusion\\FDS\\windowsapp\\Uninstaller\\obj\\",
+        "projectPath": "E:\\FusionDataSecure\\windowsapp\\Uninstaller\\Uninstaller.csproj",
+        "packagesPath": "C:\\Users\\Suser\\.nuget\\packages\\",
+        "outputPath": "E:\\FusionDataSecure\\windowsapp\\Uninstaller\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\ADMIN\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Suser\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -173,8 +173,8 @@
           "net6.0": {
             "targetAlias": "net6.0",
             "projectReferences": {
-              "F:\\Fusion\\FDS\\windowsapp\\Desktop\\FusionDataSecure.csproj": {
-                "projectPath": "F:\\Fusion\\FDS\\windowsapp\\Desktop\\FusionDataSecure.csproj"
+              "E:\\FusionDataSecure\\windowsapp\\Desktop\\FusionDataSecure.csproj": {
+                "projectPath": "E:\\FusionDataSecure\\windowsapp\\Desktop\\FusionDataSecure.csproj"
               }
             }
           }
@@ -188,6 +188,12 @@
       "frameworks": {
         "net6.0": {
           "targetAlias": "net6.0",
+          "dependencies": {
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.3, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
@@ -199,6 +205,11 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
           "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.304\\RuntimeIdentifierGraph.json"
         }
       }
