@@ -20,15 +20,15 @@ namespace AutoUpdate
         {
             string TempFDSPath = "C:\\web\\Temp\\FDS\\";
             Console.WriteLine("Hi! you are about to update your FDS application");
-
-             string installationPath = AppDomain.CurrentDomain.BaseDirectory.TrimEnd(new[] { '\\' }).ToString();
-            //RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
-            //if (registryKey != null)
-            //{
-            //    object obj = registryKey.GetValue("FDS");
-            //    if (obj != null)
-            //        installationPath = Path.GetDirectoryName(obj.ToString());
-            //}
+            string installationPath = string.Empty;
+            //string installationPath2 = AppDomain.CurrentDomain.BaseDirectory.TrimEnd(new[] { '\\' }).ToString();
+            RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
+            if (registryKey != null)
+            {
+                object obj = registryKey.GetValue("FDS");
+                if (obj != null)
+                    installationPath = Path.GetDirectoryName(obj.ToString());
+            }
             Array.ForEach(Process.GetProcessesByName("FDS"), x => x.Kill());
             DeleteDirectoryContents(TempFDSPath, installationPath + "\\");
         }

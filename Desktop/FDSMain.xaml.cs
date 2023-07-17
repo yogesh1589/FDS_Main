@@ -285,20 +285,21 @@ namespace FDS
                 {
                     #region Auto start on startup done by Installer
 
-                    //string applicationPath = "";
-                    //RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
-                    //if (registryKey != null)
-                    //{
-                    //    object obj = registryKey.GetValue("FDS");
-                    //    if (obj != null)
-                    //        applicationPath = Path.GetDirectoryName(obj.ToString());
-                    //}                  
-
-                    //RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
-                    //string AutoStartBaseDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd(new[] { '\\' }).ToString();
-                    //string exeFile = Path.Combine(AutoStartBaseDir, "FDS.exe");
-                    //key.SetValue("FDS", exeFile + " --opened-at-login --minimize");
-
+                    string applicationPath = "";
+                    RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
+                    if (registryKey != null)
+                    {
+                        object obj = registryKey.GetValue("FDS");
+                        if (obj != null)
+                            applicationPath = Path.GetDirectoryName(obj.ToString());
+                    }
+                    if (IsAdmin)
+                    {
+                        RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+                        string AutoStartBaseDir = applicationPath;
+                        string exeFile = Path.Combine(AutoStartBaseDir, "FDS.exe");
+                        key.SetValue("FDS", exeFile + " --opened-at-login --minimize");
+                    }
                     #endregion
 
                     LoadMenu(Screens.GetStart);
@@ -1004,7 +1005,7 @@ namespace FDS
                             Common.EncryptionDecryption.ReadDecryptFile(finalOutPutFile);
                         }
                     }
- 
+
                     if (MenuChange)
                     {
                         LoadMenu(Screens.Landing);
@@ -1663,7 +1664,7 @@ namespace FDS
         {
             try
             {
-                MessageBox.Show(subservices.Sub_service_name);
+               // MessageBox.Show(subservices.Sub_service_name);
                 switch (subservices.Sub_service_name)
                 {
                     case "dns_cache_protection":
@@ -1859,7 +1860,7 @@ namespace FDS
         {
             try
             {
-                MessageBox.Show("CheckWhiteListDomains Starts");
+                //MessageBox.Show("CheckWhiteListDomains Starts");
                 var response = await client.GetAsync(AppConstants.EndPoints.WhiteListDomains + SubServiceId + "/");
                 if (response.IsSuccessStatusCode)
                 {
@@ -1881,7 +1882,7 @@ namespace FDS
                         }
                     }
 
-                    MessageBox.Show("Total " + whitelistedDomain.Count.ToString() + " whitelistedDomain");
+                  //  MessageBox.Show("Total " + whitelistedDomain.Count.ToString() + " whitelistedDomain");
                     int ChromeCount = ClearChromeCookie();
                     int FireFoxCount = ClearFirefoxCookies();
                     int EdgeCount = ClearEdgeCookies();
@@ -1936,7 +1937,7 @@ namespace FDS
                         {
                             using (SQLiteConnection connection = new SQLiteConnection("Data Source=" + CookiesPath))
                             {
-                                MessageBox.Show("Chrome path : " + chromeProfilePath.ToString() + " || Cookies Path " + CookiesPath.ToString());
+                                ///MessageBox.Show("Chrome path : " + chromeProfilePath.ToString() + " || Cookies Path " + CookiesPath.ToString());
                                 connection.Open();
                                 using (SQLiteCommand command = connection.CreateCommand())
                                 {
@@ -1955,7 +1956,7 @@ namespace FDS
                                     TotalCount += command.ExecuteNonQuery();
                                 }
                                 connection.Close();
-                                MessageBox.Show("Cookies done from Chrome");
+                                //MessageBox.Show("Cookies done from Chrome");
                             }
                         }
                     }
@@ -2162,7 +2163,7 @@ namespace FDS
                     }
                 }
             }
-            MessageBox.Show( "User1 " + WindowsIdentity.GetCurrent().Name.ToUpper().ToString() +  " User2 " + test + " Count = " + bCnt + " For Browser " + browser);
+           // MessageBox.Show("User1 " + WindowsIdentity.GetCurrent().Name.ToUpper().ToString() + " User2 " + test + " Count = " + bCnt + " For Browser " + browser);
             return bCnt;
         }
 
@@ -2826,7 +2827,7 @@ namespace FDS
                                     }
                                 }
                             }
-                            
+
                         }
 
                         else
