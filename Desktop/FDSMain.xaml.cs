@@ -40,6 +40,7 @@ using System.Collections;
 using Windows.Storage;
 using Windows.System;
 using System.Data;
+using System.Windows.Controls;
 
 namespace FDS
 {
@@ -84,7 +85,7 @@ namespace FDS
         RSACryptoServiceProvider RSADevice { get; set; }
         RSACryptoServiceProvider RSAServer { get; set; }
         private bool isLoggedIn { get; set; }
-        public byte[] Key { get; set; }
+        public byte[] EncKey { get; set; }
         bool IsAdmin => new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
         public static string BaseDir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
@@ -271,6 +272,8 @@ namespace FDS
             {
                 // -------Actual Code --------------------------------
                 encryptOutPutFile = basePathEncryption + @"\Main";
+
+                 
                 if (File.Exists(encryptOutPutFile))
                 {
                     string finalOutPutFile = basePathEncryption + @"\FinalDecrypt";
@@ -365,7 +368,12 @@ namespace FDS
                         txtEmail.Text = string.Empty;
                         txtPhoneNubmer.Text = string.Empty;
                         txtEmailToken.Text = string.Empty;
-                        txtToken.Text = string.Empty;
+                        txtDigit1.Text = string.Empty;
+                        txtDigit2.Text = string.Empty;
+                        txtDigit3.Text = string.Empty;
+                        txtDigit4.Text = string.Empty;
+                        txtDigit5.Text = string.Empty;
+                        txtDigit6.Text = string.Empty;
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
@@ -380,6 +388,12 @@ namespace FDS
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
                         btnUninstall.Visibility = Visibility.Hidden;
+                        txtDigit1.Text = string.Empty;
+                        txtDigit2.Text = string.Empty;
+                        txtDigit3.Text = string.Empty;
+                        txtDigit4.Text = string.Empty;
+                        txtDigit5.Text = string.Empty;
+                        txtDigit6.Text = string.Empty;
                         break;
                     case Screens.AuthenticationStep2:
                         AuthenticationStep2.Visibility = Visibility.Visible;
@@ -736,7 +750,7 @@ namespace FDS
         }
         private bool IsValidTokenNumber(string Token)
         {
-            return System.Text.RegularExpressions.Regex.IsMatch(Token, @"^[0-9]{6}$");
+            return System.Text.RegularExpressions.Regex.IsMatch(Token, @"^[0-9]$");
         }
         private bool IsValidEmailTokenNumber(string EmailToken)
         {
@@ -744,11 +758,13 @@ namespace FDS
         }
         private void btnStep2Next_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtToken.Text))
+            if (string.IsNullOrWhiteSpace(txtDigit1.Text) || string.IsNullOrWhiteSpace(txtDigit2.Text) || string.IsNullOrWhiteSpace(txtDigit3.Text)
+                || string.IsNullOrWhiteSpace(txtDigit4.Text) || string.IsNullOrWhiteSpace(txtDigit5.Text) || string.IsNullOrWhiteSpace(txtDigit6.Text))
             {
                 txtTokenValidation.Text = "Please enter Verification code";
             }
-            else if (!IsValidTokenNumber(txtToken.Text))
+            else if (!IsValidTokenNumber(txtDigit1.Text) && !IsValidTokenNumber(txtDigit2.Text) && !IsValidTokenNumber(txtDigit3.Text)
+                && !IsValidTokenNumber(txtDigit5.Text) && !IsValidTokenNumber(txtDigit5.Text) && !IsValidTokenNumber(txtDigit6.Text))
             {
                 txtTokenValidation.Text = "Invalid Verification code";
                 txtTokenValidation.Visibility = Visibility.Visible;
@@ -756,6 +772,47 @@ namespace FDS
             else
                 LoadMenu(Screens.AuthenticationStep3);
         }
+        private void TextBox_LostFocus(object sender, KeyEventArgs e)
+        {
+            TextBox textBox = (TextBox)sender;
+            string pastedText = Clipboard.GetText();
+            if (!string.IsNullOrEmpty(pastedText) && pastedText.Length == 6)
+            {
+                // Remove any non-digit characters
+                string digitsOnly = new string(pastedText.Where(char.IsDigit).ToArray());
+
+                // Distribute the characters across the TextBox controls
+                for (int i = 0; i < digitsOnly.Length && i < 6; i++)
+                {
+                    TextBox targetTextBox = (TextBox)FindName($"txtDigit{i + 1}");
+                    targetTextBox.Text = digitsOnly[i].ToString();
+                }
+                e.Handled = true;
+                Clipboard.Clear();
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(textBox.Text))
+                {
+                    if (char.IsDigit(textBox.Text, textBox.Text.Length - 1))
+                    {
+                        //e.Handled = true; // Suppress non-numeric input
+                        if (!(e.Key == Key.Tab || e.Key == Key.LeftShift || e.Key == Key.RightShift))
+                        {
+                            TraversalRequest request = new TraversalRequest(FocusNavigationDirection.Next);
+                            textBox.MoveFocus(request);
+                        }
+
+                    }
+                    else
+                    {
+                        textBox.Text = string.Empty;
+                        e.Handled = true;
+                    }
+                }
+            }
+        }
+
         private async void QRGeneratortimer_Tick(object sender, EventArgs e)
         {
             if (!IsAuthenticationFromQR)
@@ -763,12 +820,13 @@ namespace FDS
                 if (IsQRGenerated == true)
                 {
                     QRGeneratortimer.Stop();
+                    string VerificationCode = txtDigit1.Text + txtDigit2.Text + txtDigit3.Text + txtDigit4.Text + txtDigit5.Text + txtDigit6.Text;
                     var formContent = new List<KeyValuePair<string, string>> {
                         new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
                         new KeyValuePair<string, string>("assing_to_user", txtEmail.Text),
                         new KeyValuePair<string, string>("phone_no", txtPhoneNubmer.Text),
                         new KeyValuePair<string, string>("phone_code", txtCountryCode.Text),
-                        new KeyValuePair<string, string>("otp", txtToken.Text),
+                        new KeyValuePair<string, string>("otp", VerificationCode),
                         new KeyValuePair<string, string>("token", txtEmailToken.Text),
                         new KeyValuePair<string, string>("qr_code_token", DeviceResponse.qr_code_token)
                     };
@@ -857,11 +915,15 @@ namespace FDS
                     DeviceResponse = JsonConvert.DeserializeObject<DeviceResponse>(responseString);
                     IsQRGenerated = DeviceResponse != null ? true : false;
                     //timerDeviceLogin.IsEnabled = true;
-                    imgQR.Source = GetQRCode(DeviceResponse.qr_code_token); //BitmapToImageSource(GetQRCode(DeviceResponse.qr_code_token));
-
+                    imgQR.Source = GetQRCode(DeviceResponse.qr_code_token);
                     IsAuthenticationFromQR = string.IsNullOrEmpty(txtEmailToken.Text) ? true : false;
                     QRGeneratortimer.Start();
-                    timerDeviceLogin.Start();
+                    timerDeviceLogin.Start();//BitmapToImageSource(GetQRCode(DeviceResponse.qr_code_token));
+                                             //LoadMenu(Screens.QRCode);
+                                             //timerDeviceLogin.IsEnabled = true;
+                                             //await devicelogin(true);
+                                             //MessageBox.Show("QR generated successfully: " + DeviceResponse.qr_code_token + "with " + response.IsSuccessStatusCode, "success", MessageBoxButton.OK, MessageBoxImage.Information);
+
 
                 }
                 else
@@ -957,7 +1019,6 @@ namespace FDS
                 if (response.IsSuccessStatusCode)
                 {
                     isLoggedIn = true;
-                    timerDeviceLogin.IsEnabled = false;
                     var responseString = await response.Content.ReadAsStringAsync();
                     QRCodeResponse = JsonConvert.DeserializeObject<QRCodeResponse>(responseString);
                     int LengthAllowed = 512;
@@ -1341,7 +1402,7 @@ namespace FDS
                     txtUpdatedOn.Text = deviceDetail.updated_on != null ? localDate.ToString() : "";
 
                     //timerLastUpdate.IsEnabled = false;
-                    if (IsServiceActive)
+                    if (deviceDetail.is_active)
                     {
                         await RetrieveServices();
                         lblCompliant.Text = "Your system is Compliant";
@@ -1429,7 +1490,7 @@ namespace FDS
                 using (var aesAlg = new AesCryptoServiceProvider())
                 {
                     // Create an encryptor to perform the stream transform.
-                    Key = aesAlg.Key;
+                    EncKey = aesAlg.Key;
                     aesAlg.Mode = CipherMode.ECB;
                     aesAlg.Padding = PaddingMode.PKCS7;
                     ICryptoTransform encryptor = aesAlg.CreateEncryptor();
@@ -1447,7 +1508,7 @@ namespace FDS
                         }
                     }
                 }
-                var RsaEncrypted = RSAServer.Encrypt(Key, true);
+                var RsaEncrypted = RSAServer.Encrypt(EncKey, true);
                 return Convert.ToBase64String(RsaEncrypted.Concat(AesEncrypted).ToArray());
             }
             catch (Exception ex)
@@ -1664,7 +1725,7 @@ namespace FDS
         {
             try
             {
-               // MessageBox.Show(subservices.Sub_service_name);
+                // MessageBox.Show(subservices.Sub_service_name);
                 switch (subservices.Sub_service_name)
                 {
                     case "dns_cache_protection":
@@ -1672,6 +1733,7 @@ namespace FDS
                         break;
                     case "trash_data_protection":
                         ClearRecycleBin(subservices);
+                        //MessageBox.Show("Trash Service Executed Successfully with V" + CodeVersion);
                         break;
                     case "windows_registry_protection":
                         if (IsAdmin)
@@ -1860,7 +1922,7 @@ namespace FDS
         {
             try
             {
-                //MessageBox.Show("CheckWhiteListDomains Starts");
+                whitelistedDomain.Clear();
                 var response = await client.GetAsync(AppConstants.EndPoints.WhiteListDomains + SubServiceId + "/");
                 if (response.IsSuccessStatusCode)
                 {
@@ -1882,13 +1944,13 @@ namespace FDS
                         }
                     }
 
-                  //  MessageBox.Show("Total " + whitelistedDomain.Count.ToString() + " whitelistedDomain");
+                    //  MessageBox.Show("Total " + whitelistedDomain.Count.ToString() + " whitelistedDomain");
                     int ChromeCount = ClearChromeCookie();
                     int FireFoxCount = ClearFirefoxCookies();
                     int EdgeCount = ClearEdgeCookies();
                     int OperaCount = ClearOperaCookies();
 
-                    int TotalCount = ChromeCount + EdgeCount + FireFoxCount + EdgeCount + OperaCount;
+                    int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
 
                     LogServicesData(Sub_service_authorization_code, Sub_service_name, TotalCount, SubServiceId, ExecuteNow);
                 }
@@ -2163,7 +2225,7 @@ namespace FDS
                     }
                 }
             }
-           // MessageBox.Show("User1 " + WindowsIdentity.GetCurrent().Name.ToUpper().ToString() + " User2 " + test + " Count = " + bCnt + " For Browser " + browser);
+            // MessageBox.Show("User1 " + WindowsIdentity.GetCurrent().Name.ToUpper().ToString() + " User2 " + test + " Count = " + bCnt + " For Browser " + browser);
             return bCnt;
         }
 

@@ -16,8 +16,10 @@ namespace AutoUpdate
 {
     public class Program
     {
+        const string baseTempFileDir = "Tempfolder";
         public static void Main(string[] args)
         {
+            
             string TempFDSPath = "C:\\web\\Temp\\FDS\\";
             Console.WriteLine("Hi! you are about to update your FDS application");
             string installationPath = string.Empty;
@@ -50,7 +52,11 @@ namespace AutoUpdate
                 // Delete all subdirectories and their contents
                 foreach (DirectoryInfo subdirectory in directoryInfo.GetDirectories())
                 {
-                    subdirectory.Delete(true);
+                    if(!subdirectory.Name.Contains(baseTempFileDir))
+                    {
+                        subdirectory.Delete(true);
+                    }
+                    
                 }
                 Console.WriteLine("Files Deleted from installation path");
                 Thread.Sleep(2000);
@@ -58,7 +64,7 @@ namespace AutoUpdate
                 ExtractMSIContent(sourcePath + "FDS.msi", directoryPath);
                 Thread.Sleep(2000);
                 Console.WriteLine("Files Extracted to installation path");
-                string AutoUpdateExePath = directoryPath + "FDS.exe";
+                string AutoUpdateExePath = directoryPath + "FDS.exe";                
                 Process.Start(AutoUpdateExePath);
                 Console.WriteLine("start FDS from " + directoryPath);
             }
