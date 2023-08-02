@@ -273,7 +273,7 @@ namespace FDS
                 // -------Actual Code --------------------------------
                 encryptOutPutFile = basePathEncryption + @"\Main";
 
-                 
+                ConfigDataClear();
                 if (File.Exists(encryptOutPutFile))
                 {
                     string finalOutPutFile = basePathEncryption + @"\FinalDecrypt";
@@ -614,6 +614,7 @@ namespace FDS
         #region Authentication methods
         private void btnGetStarted_Click(object sender, RoutedEventArgs e)
         {
+            ConfigDataClear();
             LoadMenu(Screens.AuthenticationMethods);
         }
         private void btnQR_Click(object sender, RoutedEventArgs e)
@@ -645,9 +646,13 @@ namespace FDS
 
         public async void GetcountryCode()
         {
+            cmbCountryCode.IsEnabled = false;
+            txtPhoneValidation.IsEnabled = false;
             var response = await client.GetAsync(AppConstants.EndPoints.CountryCode);
             if (response.IsSuccessStatusCode)
             {
+                txtPhoneValidation.IsEnabled = true;
+                cmbCountryCode.IsEnabled = true;
                 var responseString = await response.Content.ReadAsStringAsync();
                 CountryCodeResponse responseData = JsonConvert.DeserializeObject<CountryCodeResponse>(responseString);
                 List<CountryCode> countryList = responseData.data;
@@ -1123,6 +1128,7 @@ namespace FDS
             var exchangeObject = new KeyExchange
             {
                 authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
+                //authorization_token = string.Empty,
                 //authorization_token = KeyManager.GetValue("authorization_token"),
                 mac_address = AppConstants.MACAddress,
                 public_key = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(RSAKeys.ExportPublicKey(RSADevice))),
@@ -1241,6 +1247,7 @@ namespace FDS
                     }
                     //btnGetStarted_Click(btnGetStarted, null);
                     LoadMenu(Screens.GetStart);
+                    ConfigDataClear();
                     MessageBox.Show("Your device has been deleted", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
@@ -1725,7 +1732,7 @@ namespace FDS
         {
             try
             {
-                // MessageBox.Show(subservices.Sub_service_name);
+                //MessageBox.Show(subservices.Sub_service_name);
                 switch (subservices.Sub_service_name)
                 {
                     case "dns_cache_protection":
@@ -2844,6 +2851,7 @@ namespace FDS
                         if (File.Exists(encryptOutPutFile))
                         {
                             File.Delete(encryptOutPutFile);
+                            ConfigDataClear();
                         }
                         btnUninstall.ToolTip = "Your uninstall request has been approved! ";
                         btnUninstall.Foreground = System.Windows.Media.Brushes.DarkGreen;
@@ -3056,6 +3064,21 @@ namespace FDS
         private void txtHome_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             LoadMenu(Screens.Landing);
+        }
+
+        public void ConfigDataClear()
+        {
+            ConfigDetails.Key1 = string.Empty;
+            ConfigDetails.Key2 = string.Empty;
+            ConfigDetails.Authentication_token = string.Empty;
+            ConfigDetails.Authorization_token = string.Empty;
+            ConfigDetails.Modulus = string.Empty;
+            ConfigDetails.Exponent = string.Empty;
+            ConfigDetails.D = string.Empty;
+            ConfigDetails.DP = string.Empty;
+            ConfigDetails.DQ = string.Empty;
+            ConfigDetails.Q = string.Empty;
+            ConfigDetails.InverseQ = string.Empty;
         }
 
         public void updateTrayIcon()
