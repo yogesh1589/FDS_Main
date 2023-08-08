@@ -478,5 +478,10 @@
     <Resource Include="Assets\DeviceDisable.png" />
     <Resource Include="Assets\failed.gif" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\spinner.gif">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

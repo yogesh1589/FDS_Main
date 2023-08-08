@@ -118,7 +118,7 @@ namespace FDS
         public string CodeVersion = "";
         string basePathEncryption = String.Format("{0}Tempfolder", AppDomain.CurrentDomain.BaseDirectory);
         string encryptOutPutFile = @"\Main";
-
+        System.Windows.Controls.Image imgLoader;
         #endregion
 
         #region Application initialization / Load
@@ -180,6 +180,7 @@ namespace FDS
                 //cmbCountryCode.DropDownOpened += cmbCountryCode_DropDownOpened;
                 cmbCountryCode.DropDownClosed += cmbCountryCode_DropDownClosed;
                 txtCodeVersion.Text = AppConstants.CodeVersion;
+                imgLoader = SetGIF("\\Assets\\spinner.gif");
 
             }
             catch (Exception ex)
@@ -619,7 +620,7 @@ namespace FDS
         }
         private void btnQR_Click(object sender, RoutedEventArgs e)
         {
-            GenerateQRCode();
+            GenerateQRCode("QR");
             Dispatcher.Invoke(() =>
             {
                 LoadMenu(Screens.QRCode);
@@ -644,13 +645,47 @@ namespace FDS
             cmbCountryCode.IsDropDownOpen = true;
         }
 
+        public void ClearChildrenNode()
+        {
+            if (ImageContainerCountryCode.Children.Count > 0)
+            {
+                ImageContainerCountryCode.Children.Remove(imgLoader);
+            }
+            if (ImageContainerOTP.Children.Count > 0)
+            {
+                ImageContainerOTP.Children.Remove(imgLoader);
+            }
+            if (ImageContainerToken.Children.Count > 0)
+            {
+                ImageContainerToken.Children.Remove(imgLoader);
+            }
+            if (ImageContainerQR.Children.Count > 0)
+            {
+                ImageContainerQR.Children.Remove(imgLoader);
+            }
+        }
+
         public async void GetcountryCode()
         {
             cmbCountryCode.IsEnabled = false;
             txtPhoneValidation.IsEnabled = false;
+            btnSendOTP.IsEnabled = false;
+
+
+            // Show the spinner
+            ClearChildrenNode();
+            if (ImageContainerCountryCode.Children.Count == 0)
+            {
+                ImageContainerCountryCode.Children.Add(imgLoader);
+            }
             var response = await client.GetAsync(AppConstants.EndPoints.CountryCode);
+            ClearChildrenNode();
+
+            //End
+
             if (response.IsSuccessStatusCode)
             {
+                btnSendOTP.IsEnabled = true;
                 txtPhoneValidation.IsEnabled = true;
                 cmbCountryCode.IsEnabled = true;
                 var responseString = await response.Content.ReadAsStringAsync();
@@ -671,6 +706,7 @@ namespace FDS
                 }
             }
         }
+
         private async void btnSendOTP_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -685,7 +721,20 @@ namespace FDS
                         new KeyValuePair<string, string>("phone_no", txtPhoneNubmer.Text),
                         new KeyValuePair<string, string>("phone_code", txtCountryCode.Text)
                     };
+
+
+                    // Show the spinner
+                    ClearChildrenNode();
+                    if (ImageContainerOTP.Children.Count == 0)
+                    {
+                        ImageContainerOTP.Children.Add(imgLoader);
+                    }
                     var response = await client.PostAsync(AppConstants.EndPoints.Otp, new FormUrlEncodedContent(formContent));
+
+                    ClearChildrenNode();
+                    //End
+
+
                     if (response.IsSuccessStatusCode)
                     {
                         LoadMenu(Screens.AuthenticationStep2);
@@ -882,7 +931,7 @@ namespace FDS
             else
             {
                 //QRGeneratortimer.Start();
-                GenerateQRCode();
+                GenerateQRCode("Token");
             }
         }
         private void txtstep2Back_PreviewMouseDown(object sender, MouseButtonEventArgs e)
@@ -896,10 +945,11 @@ namespace FDS
         #endregion
 
         #region generate QR
-        public async void GenerateQRCode()
+        public async void GenerateQRCode(string vals)
         {
             try
             {
+                
                 var formContent = new List<KeyValuePair<string, string>>
                 {
                     new KeyValuePair<string, string>("serial_number", AppConstants.SerialNumber),
@@ -910,26 +960,43 @@ namespace FDS
                     new KeyValuePair<string, string>("os_version", AppConstants.OSVersion),
                     new KeyValuePair<string, string>("device_uuid", AppConstants.UUId),
                 };
+ 
+                //Code for Loader
+                ClearChildrenNode();
+
+                if ((vals == "Token") && (ImageContainerToken.Children.Count == 0))
+                {
+                    ImageContainerToken.Children.Add(imgLoader);
+                }
+                else if ((vals == "QR") && (ImageContainerQR.Children.Count == 0))
+                {
+                    ImageContainerQR.Children.Add(imgLoader);
+                }
+
+                
                 var response = await client.PostAsync(AppConstants.EndPoints.Start, new FormUrlEncodedContent(formContent));
 
+ 
+                ClearChildrenNode();
+ 
                 if (response.IsSuccessStatusCode)
                 {
                     TotalSeconds = Common.AppConstants.TotalKeyActivationSeconds;
                     timerQRCode.IsEnabled = true;
+                    
                     var responseString = await response.Content.ReadAsStringAsync();
                     DeviceResponse = JsonConvert.DeserializeObject<DeviceResponse>(responseString);
+               
                     IsQRGenerated = DeviceResponse != null ? true : false;
                     //timerDeviceLogin.IsEnabled = true;
                     imgQR.Source = GetQRCode(DeviceResponse.qr_code_token);
+                  
                     IsAuthenticationFromQR = string.IsNullOrEmpty(txtEmailToken.Text) ? true : false;
+                  
                     QRGeneratortimer.Start();
-                    timerDeviceLogin.Start();//BitmapToImageSource(GetQRCode(DeviceResponse.qr_code_token));
-                                             //LoadMenu(Screens.QRCode);
-                                             //timerDeviceLogin.IsEnabled = true;
-                                             //await devicelogin(true);
-                                             //MessageBox.Show("QR generated successfully: " + DeviceResponse.qr_code_token + "with " + response.IsSuccessStatusCode, "success", MessageBoxButton.OK, MessageBoxImage.Information);
-
-
+              
+                    timerDeviceLogin.Start();
+                  
                 }
                 else
                     MessageBox.Show("API response fails while generating QR code: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);

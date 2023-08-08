@@ -1,0 +1,18 @@
+{
+  "protections": {
+    "rename": {
+    "mode": "decodable"
+  }
+  },
+  "packers": [
+    // Optional: If you want to use packers, specify them here
+  ],
+  "targets": {
+    "FDS": {
+      "outputDir": "F:\\Fusion\\FDS\\Output",
+      "rules": {
+        "true": { "rename": { "type": "all" } }
+      }
+    }
+  }
+}

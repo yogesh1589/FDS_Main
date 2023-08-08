@@ -183,7 +183,7 @@
                                            SelectedValuePath="Phone_code"
                                                   SelectedValue="{Binding SelectedCountryCode}"
                                             ItemsSource="{Binding AllCountries}" KeyUp="cmbCountryCode_KeyUp" IsEditable="True" IsTextSearchEnabled="False"/>
-
+                                        <StackPanel x:Name="ImageContainerCountryCode"  Grid.Row="4" Margin="0,10,0,0" Grid.ColumnSpan="2" Width="20" Height="15"/>
                                         <!--<ComboBox x:Name="cmbCountryCode" HorizontalAlignment="Left" Grid.Row="4" Grid.Column="0" Margin="0,10,30,0" Width="80" Text="" DisplayMemberPath="phone_code"  IsEditable="True" IsTextSearchEnabled="False" KeyUp="cmbCountryCode_KeyUp" SelectionChanged="cmbCountryCode_SelectionChanged">
                                             -->
                                         <!--SelectionChanged="cmbCountryCode_SelectionChanged" ItemTemplate="{StaticResource ComboBoxItemTemplate}"-->
@@ -212,6 +212,7 @@
                                             </blazor:BlazorWebView.Template>
                                         </blazor:BlazorWebView>-->
                                         <Button x:Name="btnSendOTP" Grid.Row="8" Click="btnSendOTP_Click" Grid.ColumnSpan="2" Style="{StaticResource sendOTPStyle}" Content="Send OTP" FontFamily="Radian" FontStyle="Normal"  FontSize="14" Foreground="White" Margin="0,20,0,0"></Button>
+                                        <StackPanel x:Name="ImageContainerOTP" Grid.Row="8" Grid.ColumnSpan="2" HorizontalAlignment="Center" VerticalAlignment="Center" Width="20" Height="15" Margin="0,20,0,0"/>
                                         <TextBlock HorizontalAlignment="Center" Grid.Row="9" Grid.ColumnSpan="2" x:Name="txtBack" Foreground="Blue" Margin="0,20,0,0" FontSize="12" FontWeight="Bold" FontFamily="Radian" PreviewMouseDown="txtBack_PreviewMouseDown" Cursor="Hand">
                                             <TextBlock.TextDecorations>
                                                 <TextDecoration/>
@@ -257,6 +258,7 @@
                                         <!--<TextBox x:Name="txtToken" HorizontalAlignment="Left" Grid.Row="1" Margin="0,10,0,0" Width="270" />-->
                                         <TextBlock x:Name="txtTokenValidation" Grid.Row="2" HorizontalAlignment="Left" Text="" Margin="0,0,0,0"  Foreground="Red" Visibility="Hidden"/>
                                         <Button x:Name="btnStep2Next" Grid.Row="3" Click="btnStep2Next_Click" Style="{StaticResource sendOTPStyle}" Content="Next" FontFamily="Radian" FontStyle="Normal"  FontSize="14" Foreground="White" Margin="0,20,0,0"></Button>
+                                       
                                         <TextBlock HorizontalAlignment="Center" Grid.Row="4" x:Name="txtstep2Back" Foreground="Blue" Margin="0,20,0,0" FontSize="12" FontWeight="Bold" FontFamily="Radian" PreviewMouseDown="txtstep2Back_PreviewMouseDown" Cursor="Hand">
                                             <TextBlock.TextDecorations>
                                                 <TextDecoration/>
@@ -282,6 +284,7 @@
                                         <TextBox x:Name="txtEmailToken" HorizontalAlignment="Left" Grid.Row="1" Margin="0,10,0,0" Width="270" />
                                         <TextBlock x:Name="txtEmailTokenValidation" Grid.Row="2" HorizontalAlignment="Left" Text="" Margin="0,0,0,0"  Foreground="Red" Visibility="Hidden"/>
                                         <Button x:Name="btnStep3Submit" Grid.Row="3" Click="btnStep3Submit_Click" Style="{StaticResource sendOTPStyle}" Content="Submit" FontFamily="Radian" FontStyle="Normal"  FontSize="14" Foreground="White" Margin="0,20,0,0"></Button>
+                                        <StackPanel x:Name="ImageContainerToken" Grid.Row="3" Width="20" Height="15" Margin="0,20,0,0"/>
                                         <TextBlock HorizontalAlignment="Center" Grid.Row="4" x:Name="txtstep3Back" Foreground="Blue" Margin="0,20,0,0" FontSize="12" FontWeight="Bold" FontFamily="Radian" PreviewMouseDown="txtstep3Back_PreviewMouseDown" Cursor="Hand">
                                             <TextBlock.TextDecorations>
                                                 <TextDecoration/>
@@ -344,6 +347,7 @@
                                         <TextBlock Grid.Row="3" Grid.Column="0" FontFamily="Radian" FontWeight="Bold" FontSize="16" Foreground="black"   TextWrapping="WrapWithOverflow" Text="3. Select device location"  HorizontalAlignment="Left" Margin="20,0,0,0"  />
                                         <TextBlock Grid.Row="4" Grid.Column="0" FontFamily="Radian" FontWeight="Bold" FontSize="16" Foreground="black"   TextWrapping="WrapWithOverflow" Text="4. Point your phone to this screen to capture the code   " HorizontalAlignment="Left" Margin="20,0,0,10" />
                                         <TextBlock Grid.Row="5" Grid.Column="0" FontFamily="Radian" FontWeight="Bold" FontSize="24" Foreground="#3D4653" TextWrapping="WrapWithOverflow" Text="Scan QR code to login" HorizontalAlignment="Left" Margin="20,0,0,0"  />
+                                                                           
                                         <Border Margin="10,0,10,0" Grid.Column="1" Grid.RowSpan="5" Background="White"  BorderThickness="4,4,4,4"  CornerRadius="28">
                                             <Border.BorderBrush>
                                                 <RadialGradientBrush RadiusX="0.6" RadiusY="0.6">
@@ -363,11 +367,13 @@
 
                                     </Grid>
                                 </StackPanel>
-                            </Border>
+                            </Border>                           
                             <TextBlock HorizontalAlignment="Center" VerticalAlignment="Bottom" x:Name="txtQRBack" Foreground="Blue" Margin="0,0,0,10" FontSize="12" FontWeight="Bold" FontFamily="Radian" PreviewMouseDown="txtBack_PreviewMouseDown" Cursor="Hand">
                                 <TextBlock.TextDecorations>
                                     <TextDecoration/>
                                 </TextBlock.TextDecorations> Back</TextBlock>
+                            <StackPanel x:Name="ImageContainerQR" HorizontalAlignment="Right" Margin="0,0,120,99" VerticalAlignment="Center" Width="35" Height="40"/>
+                            
                         </Grid>
                         <Grid x:Name="cntLanding" Visibility="Hidden" Margin="30,0,30,0">
                             <Image x:Name="imgCompliant" Source="Assets/checkcircle.png" Height="160" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,40,0,0" Width="162" />
