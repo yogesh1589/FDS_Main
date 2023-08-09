@@ -119,6 +119,7 @@ namespace FDS
         string basePathEncryption = String.Format("{0}Tempfolder", AppDomain.CurrentDomain.BaseDirectory);
         string encryptOutPutFile = @"\Main";
         System.Windows.Controls.Image imgLoader;
+        bool deviceDeletedFlag = false;
         #endregion
 
         #region Application initialization / Load
@@ -180,7 +181,7 @@ namespace FDS
                 //cmbCountryCode.DropDownOpened += cmbCountryCode_DropDownOpened;
                 cmbCountryCode.DropDownClosed += cmbCountryCode_DropDownClosed;
                 txtCodeVersion.Text = AppConstants.CodeVersion;
-                imgLoader = SetGIF("\\Assets\\spinner.gif");
+                imgLoader = SetGIF("Assets\\spinner.gif");
 
             }
             catch (Exception ex)
@@ -508,7 +509,16 @@ namespace FDS
 
         private System.Windows.Controls.Image SetGIF(string ImagePath)
         {
-            string uriString = Directory.GetCurrentDirectory() + ImagePath;
+            string uriString = string.Empty;
+            if (ImagePath.Contains("spinner"))
+            {
+                uriString = AppDomain.CurrentDomain.BaseDirectory + ImagePath;
+            }
+            else
+            {
+                uriString = Directory.GetCurrentDirectory() + ImagePath;
+            }
+            //string uriString = Directory.GetCurrentDirectory() + ImagePath;
             System.Windows.Controls.Image image = new System.Windows.Controls.Image();
             BitmapImage bitmapImage = new BitmapImage();
             bitmapImage.BeginInit();
@@ -1316,6 +1326,7 @@ namespace FDS
                     LoadMenu(Screens.GetStart);
                     ConfigDataClear();
                     MessageBox.Show("Your device has been deleted", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                    deviceDeletedFlag = true;
                 }
             }
             else
@@ -1538,7 +1549,7 @@ namespace FDS
                 var plainText = RetriveDecrypt(responseData.Data);
                 int idx = plainText.LastIndexOf('}');
                 var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
-                var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result.Replace("false", "true"));// replace used to test services
+                var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);//.Replace("false", "true"));// replace used to test services
                                                                                                //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
 
                 DateTime localDate = DateTime.Now.ToLocalTime();
@@ -1714,7 +1725,7 @@ namespace FDS
             {
                 //timerLastUpdate.IsEnabled = false;
                 //btnGetStarted_Click(btnGetStarted, null);
-                MessageBox.Show("An error occurred in LogServicesData: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                //MessageBox.Show("An error occurred in LogServicesData: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
         private void ExecuteServices(ServicesResponse servicesResponse)
@@ -1729,6 +1740,11 @@ namespace FDS
                     {
                         foreach (var subservice in services.Subservices)
                         {
+                            if (deviceDeletedFlag == true)
+                            {
+                                //MessageBox.Show("Service Still Running");
+                                break;
+                            }
                             if (subservice.Sub_service_active)
                             {
                                 //if(subservice.Sub_service_name == "web_session_protection")
@@ -2034,19 +2050,22 @@ namespace FDS
 
                     LogServicesData(Sub_service_authorization_code, Sub_service_name, TotalCount, SubServiceId, ExecuteNow);
                 }
-                else if(response.StatusCode == HttpStatusCode.BadRequest)
-                { }
-                else if(response.StatusCode == HttpStatusCode.Unauthorized)
-                {
+                //else if (response.StatusCode == HttpStatusCode.BadRequest)
+                //{ }
+                //else if (response.StatusCode == HttpStatusCode.Unauthorized)
+                //{
 
-                }
-                else
-                    MessageBox.Show("An error occurred while fatching whitelist domains: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                //}
+                //else
+                //{
+
+                //}
+                //MessageBox.Show("An error occurred while fatching whitelist domains: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
 
             }
             catch
             {
-                MessageBox.Show("An error occurred while fatching whitelist domains: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                //MessageBox.Show("An error occurred while fatching whitelist domains: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
         private int ClearChromeCookie()
