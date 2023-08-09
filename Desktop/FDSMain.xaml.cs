@@ -949,7 +949,7 @@ namespace FDS
         {
             try
             {
-                
+
                 var formContent = new List<KeyValuePair<string, string>>
                 {
                     new KeyValuePair<string, string>("serial_number", AppConstants.SerialNumber),
@@ -960,7 +960,7 @@ namespace FDS
                     new KeyValuePair<string, string>("os_version", AppConstants.OSVersion),
                     new KeyValuePair<string, string>("device_uuid", AppConstants.UUId),
                 };
- 
+
                 //Code for Loader
                 ClearChildrenNode();
 
@@ -973,30 +973,30 @@ namespace FDS
                     ImageContainerQR.Children.Add(imgLoader);
                 }
 
-                
+
                 var response = await client.PostAsync(AppConstants.EndPoints.Start, new FormUrlEncodedContent(formContent));
 
- 
+
                 ClearChildrenNode();
- 
+
                 if (response.IsSuccessStatusCode)
                 {
                     TotalSeconds = Common.AppConstants.TotalKeyActivationSeconds;
                     timerQRCode.IsEnabled = true;
-                    
+
                     var responseString = await response.Content.ReadAsStringAsync();
                     DeviceResponse = JsonConvert.DeserializeObject<DeviceResponse>(responseString);
-               
+
                     IsQRGenerated = DeviceResponse != null ? true : false;
                     //timerDeviceLogin.IsEnabled = true;
                     imgQR.Source = GetQRCode(DeviceResponse.qr_code_token);
-                  
+
                     IsAuthenticationFromQR = string.IsNullOrEmpty(txtEmailToken.Text) ? true : false;
-                  
+
                     QRGeneratortimer.Start();
-              
+
                     timerDeviceLogin.Start();
-                  
+
                 }
                 else
                     MessageBox.Show("API response fails while generating QR code: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -1471,9 +1471,11 @@ namespace FDS
                     lblUserName.Text = lblDeviceName.Text = deviceDetail.device_name;
                     lblLocation.Text = deviceDetail.device_location != null ? deviceDetail.device_location.ToString() : "";
                     txtOrganization.Text = deviceDetail.org_name != null ? deviceDetail.org_name.ToString() : txtOrganization.Text;
-                    DateTime convertedDate = DateTime.Parse(Convert.ToString(deviceDetail.updated_on));
-                    DateTime localDate = convertedDate.ToLocalTime();
-                    txtUpdatedOn.Text = deviceDetail.updated_on != null ? localDate.ToString() : "";
+                    //DateTime convertedDate = DateTime.Parse(Convert.ToString(deviceDetail.updated_on));
+                    //DateTime localDate = convertedDate.ToLocalTime();
+                    //txtUpdatedOn.Text = deviceDetail.updated_on != null ? localDate.ToString() : "";
+                    DateTime localDate = DateTime.Now.ToLocalTime();
+                    txtUpdatedOn.Text = localDate.ToString();
 
                     //timerLastUpdate.IsEnabled = false;
                     if (deviceDetail.is_active)
@@ -1536,7 +1538,7 @@ namespace FDS
                 var plainText = RetriveDecrypt(responseData.Data);
                 int idx = plainText.LastIndexOf('}');
                 var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
-                var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);//.Replace("false", "true"));// replace used to test services
+                var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result.Replace("false", "true"));// replace used to test services
                                                                                                //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
 
                 DateTime localDate = DateTime.Now.ToLocalTime();
@@ -1703,6 +1705,10 @@ namespace FDS
                 {
 
                 }
+            }
+            else if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                //When schedule service and in between deveice delete
             }
             else
             {
@@ -2027,6 +2033,12 @@ namespace FDS
                     int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
 
                     LogServicesData(Sub_service_authorization_code, Sub_service_name, TotalCount, SubServiceId, ExecuteNow);
+                }
+                else if(response.StatusCode == HttpStatusCode.BadRequest)
+                { }
+                else if(response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+
                 }
                 else
                     MessageBox.Show("An error occurred while fatching whitelist domains: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
