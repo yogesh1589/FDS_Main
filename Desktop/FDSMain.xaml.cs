@@ -41,6 +41,7 @@ using Windows.Storage;
 using Windows.System;
 using System.Data;
 using System.Windows.Controls;
+using Org.BouncyCastle.Asn1.Ocsp;
 
 namespace FDS
 {
@@ -120,6 +121,7 @@ namespace FDS
         string encryptOutPutFile = @"\Main";
         System.Windows.Controls.Image imgLoader;
         bool deviceDeletedFlag = false;
+        bool showMessageBoxes = false;//true for staging and false for production
         #endregion
 
         #region Application initialization / Load
@@ -186,7 +188,10 @@ namespace FDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show(ex.Message);
+                }
             }
             //whitelistedDomain.Add("'%.google.com%'");
             //whitelistedDomain.Add("'%.clickup.com%'");
@@ -272,6 +277,7 @@ namespace FDS
             //CredDelete("FDS_Key_Key1", 1, 0);
             try
             {
+               
                 // -------Actual Code --------------------------------
                 encryptOutPutFile = basePathEncryption + @"\Main";
 
@@ -326,7 +332,10 @@ namespace FDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
@@ -503,7 +512,10 @@ namespace FDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
@@ -554,7 +566,10 @@ namespace FDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
@@ -613,7 +628,10 @@ namespace FDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
                 return false;
             }
 
@@ -787,7 +805,10 @@ namespace FDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred while receiving OTP: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred while receiving OTP: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
         private bool IsValidMobileNumber(string mobileNumber)
@@ -1009,11 +1030,20 @@ namespace FDS
 
                 }
                 else
-                    MessageBox.Show("API response fails while generating QR code: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                {
+                    if (showMessageBoxes == true)
+                    {
+                        MessageBox.Show("API response fails while generating QR code: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred while generating QR code: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred while generating QR code: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
         private ImageSource GetQRCode(string Code)
@@ -1066,7 +1096,10 @@ namespace FDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred while creating img for QR: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred while creating img for QR: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
 
             return imageSource;
@@ -1179,7 +1212,10 @@ namespace FDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred while devicelogin: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred while devicelogin: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
         private async Task KeyExchange()
@@ -1235,7 +1271,10 @@ namespace FDS
             {
                 timerLastUpdate.IsEnabled = false;
                 btnGetStarted_Click(btnGetStarted, null);
-                MessageBox.Show("An error occurred in KeyExchange: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred in KeyExchange: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
         #endregion
@@ -1414,7 +1453,10 @@ namespace FDS
             {
                 timerLastUpdate.IsEnabled = false;
                 btnGetStarted_Click(btnGetStarted, null);
-                MessageBox.Show("An error occurred in DeviceConfigurationCheck: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred in DeviceConfigurationCheck: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
         private async Task DeviceReauth()
@@ -1518,7 +1560,10 @@ namespace FDS
             {
                 //timerLastUpdate.IsEnabled = false;
                 //btnGetStarted_Click(btnGetStarted, null);
-                //MessageBox.Show("An error occurred in GetDeviceDetails: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred in GetDeviceDetails: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
@@ -1561,7 +1606,10 @@ namespace FDS
             {
                 //timerLastUpdate.IsEnabled = false;
                 //btnGetStarted_Click(btnGetStarted, null);
-                //MessageBox.Show("An error occurred in RetrieveServices: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred in RetrieveServices: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
@@ -1600,7 +1648,10 @@ namespace FDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred while doing encryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred while doing encryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
                 return "";
             }
         }
@@ -1634,7 +1685,10 @@ namespace FDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred while doing decryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred while doing decryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
                 return "";
             }
 
@@ -1670,7 +1724,10 @@ namespace FDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred while doing decryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred while doing decryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
                 return "";
             }
 
@@ -1725,7 +1782,10 @@ namespace FDS
             {
                 //timerLastUpdate.IsEnabled = false;
                 //btnGetStarted_Click(btnGetStarted, null);
-                //MessageBox.Show("An error occurred in LogServicesData: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred in LogServicesData: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
         private void ExecuteServices(ServicesResponse servicesResponse)
@@ -1773,7 +1833,10 @@ namespace FDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred while executing services: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred while executing services: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
         private async void CronLastUpdate_Tick(object sender, EventArgs e)
@@ -1781,6 +1844,8 @@ namespace FDS
             try
             {
                 Dictionary<SubservicesData, DateTime> serviceToRemove = new Dictionary<SubservicesData, DateTime>();
+
+                Dictionary<SubservicesData, DateTime> clonedDictionary = new Dictionary<SubservicesData, DateTime>();
                 if (lstCron.Count > 0)
                 {
                     foreach (var key in lstCron)
@@ -1807,7 +1872,22 @@ namespace FDS
                             DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
                             serviceToRemove.Add(SubservicesData, nextRunTime);
                         }
+
+                        DateTime currentDate = DateTime.Now;
+                        if (currentDate.Date >= key.Value.Date &&
+            currentDate.Hour >= key.Value.Hour &&
+            currentDate.Minute > key.Value.Minute)
+                        {
+                            var schedule = CrontabSchedule.Parse(SubservicesData.Execution_period);
+                            DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
+                            serviceToRemove.Add(SubservicesData, nextRunTime);
+                        }
+
                     }
+
+
+
+
                     foreach (var key in serviceToRemove)
                     {
                         lstCron[key.Key] = key.Value;
@@ -1853,7 +1933,10 @@ namespace FDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred while executing subservices: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred while executing subservices: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
         #endregion
@@ -2065,7 +2148,10 @@ namespace FDS
             }
             catch
             {
-                //MessageBox.Show("An error occurred while fatching whitelist domains: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred while fatching whitelist domains: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
         private int ClearChromeCookie()
@@ -2100,7 +2186,9 @@ namespace FDS
                     if (Directory.Exists(profile))
                     {
                         string CookiesPath = Path.Combine(profile, "Network\\Cookies");
-                        if (File.Exists(CookiesPath))
+
+
+                        if (CheckFileExistBrowser(CookiesPath) > 0)
                         {
                             using (SQLiteConnection connection = new SQLiteConnection("Data Source=" + CookiesPath))
                             {
@@ -2149,7 +2237,7 @@ namespace FDS
                     foreach (string profileDir in profileDirectories)
                     {
                         string cookiesFilePath = Path.Combine(profileDir, "cookies.sqlite");
-                        if (File.Exists(cookiesFilePath))
+                        if (CheckFileExistBrowser(cookiesFilePath) > 0)
                         {
                             using (SQLiteConnection connection = new SQLiteConnection(string.Format("Data Source={0};", cookiesFilePath)))
                             {
@@ -2228,7 +2316,7 @@ namespace FDS
                     if (Directory.Exists(profile))
                     {
                         string cookiePath = Path.Combine(profile, "Network\\Cookies");
-                        if (File.Exists(cookiePath))
+                        if (CheckFileExistBrowser(cookiePath) > 0)
                         {
                             using (SQLiteConnection connection = new SQLiteConnection(string.Format("Data Source={0};", cookiePath)))
                             {
@@ -2263,13 +2351,14 @@ namespace FDS
         public int ClearOperaCookies()
         {
             int TotalCount = 0;
+
             int bCount = IsBrowserOpen("opera");
             //Process[] msedgeInstances = Process.GetProcessesByName("opera");
             if (bCount == 0)
             {
                 var str = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 var cookiePath = str + "\\Opera Software\\Opera Stable\\Network\\Cookies";
-                if (File.Exists(cookiePath))
+                if (CheckFileExistBrowser(cookiePath) > 0)
                 {
                     using (SQLiteConnection connection = new SQLiteConnection(string.Format("Data Source={0};", cookiePath)))
                     {
@@ -2307,8 +2396,8 @@ namespace FDS
 
             //int TotalCount = EdgeCount + ChromeCount;
             int TotalCount = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
-
             LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalCount, Convert.ToString(subservices.Id), subservices.Execute_now);
+
         }
 
 
@@ -2352,53 +2441,66 @@ namespace FDS
         public int ClearChromeHistory()
         {
             int TotalCount = 0;
-
-
-            int bCount = IsBrowserOpen("chrome");
-            //MessageBox.Show(bCount.ToString());
-            //Process[] chromeInstances = Process.GetProcesses("chrome");
-            if (bCount == 0)
+            try
             {
-                //MessageBox.Show("Chrome History Deletion Started");
-                List<string> profiles = new List<string>();
-                string chromeProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\";
-                string defaultProfilePath = Path.Combine(chromeProfilePath, "Default");
-                if (Directory.Exists(defaultProfilePath))
+                int bCount = IsBrowserOpen("chrome");
+                //MessageBox.Show(bCount.ToString());
+                //Process[] chromeInstances = Process.GetProcesses("chrome");
+                if (bCount == 0)
                 {
-                    profiles.Add(defaultProfilePath);
-                }
-                if (Directory.Exists(chromeProfilePath))
-                {
-                    string[] profileDirectories = Directory.GetDirectories(chromeProfilePath, "Profile *");
-
-                    foreach (string profileDir in profileDirectories)
+                    //MessageBox.Show("Chrome History Deletion Started");
+                    List<string> profiles = new List<string>();
+                    string chromeProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\";
+                    string defaultProfilePath = Path.Combine(chromeProfilePath, "Default");
+                    if (Directory.Exists(defaultProfilePath))
                     {
-                        string profilePath = Path.Combine(chromeProfilePath, profileDir);
-                        profiles.Add(profilePath);
+                        profiles.Add(defaultProfilePath);
                     }
-                }
-                foreach (var profile in profiles)
-                {
-                    if (Directory.Exists(profile))
+                    if (Directory.Exists(chromeProfilePath))
                     {
-                        string historyPath = Path.Combine(profile, "History");
-                        if (File.Exists(historyPath))
+                        string[] profileDirectories = Directory.GetDirectories(chromeProfilePath, "Profile *");
+
+                        foreach (string profileDir in profileDirectories)
                         {
-                            using (SQLiteConnection connection = new SQLiteConnection("Data Source=" + historyPath + ";Version=3;New=False;Compress=True;"))
-                            {
-                                connection.Open();
-                                using (SQLiteCommand command = new SQLiteCommand("DELETE FROM urls", connection))
-                                {
-                                    TotalCount += command.ExecuteNonQuery();
-                                }
-                                connection.Close();
-                                //MessageBox.Show("Chrome History Deleted Sucessfully");
-                            }
+                            string profilePath = Path.Combine(chromeProfilePath, profileDir);
+                            profiles.Add(profilePath);
                         }
                     }
-                }
+                    foreach (var profile in profiles)
+                    {
+                        if (Directory.Exists(profile))
+                        {
+                            string historyPath = Path.Combine(profile, "History");
 
-                Console.WriteLine("Total number of history deleted: " + TotalCount);
+                            if (CheckFileExistBrowser(historyPath) > 0)
+                            {
+                                {
+                                    using (SQLiteConnection connection = new SQLiteConnection("Data Source=" + historyPath + ";Version=3;New=False;Compress=True;"))
+                                    {
+                                        connection.Open();
+
+                                        using (SQLiteCommand command = new SQLiteCommand("DELETE FROM urls", connection))
+                                        {
+                                            TotalCount += command.ExecuteNonQuery();
+                                        }
+
+                                        connection.Close();
+
+                                    }
+                                }
+                            }
+                        }
+
+                        Console.WriteLine("Total number of history deleted: " + TotalCount);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("Error in Chrome History Part: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
             return TotalCount;
         }
@@ -2423,7 +2525,7 @@ namespace FDS
                         foreach (string profileDir in profileDirectories)
                         {
                             string placesFilePath = Path.Combine(profileDir, "places.sqlite");
-                            if (File.Exists(placesFilePath))
+                            if (CheckFileExistBrowser(placesFilePath) > 0)
                             {
                                 using (SQLiteConnection connection = new SQLiteConnection($"Data Source={placesFilePath};Version=3;"))
                                 {
@@ -2518,7 +2620,7 @@ namespace FDS
                     {
                         string historyPath = Path.Combine(profile, "History");
 
-                        if (File.Exists(historyPath))
+                        if (CheckFileExistBrowser(historyPath) > 0)
                         {
                             string connectionString = "Data Source=" + historyPath + ";Version=3;New=False;Compress=True;";
                             using (SQLiteConnection connection = new SQLiteConnection(connectionString))
@@ -2560,10 +2662,7 @@ namespace FDS
         public int ClearOperaHistory()
         {
             int TotalCount = 0;
-
-
             int bCount = IsBrowserOpen("opera");
-
             //Process[] OperaInstances = Process.GetProcessesByName("opera");
             if (bCount == 0)
             {
@@ -2571,19 +2670,24 @@ namespace FDS
                 string historyPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\Opera Software\Opera Stable\";
                 if (Directory.Exists(historyPath))
                 {
-                    // Connect to the history database file
-                    using (SQLiteConnection connection = new SQLiteConnection("Data Source=" + historyPath + "History"))
-                    {
-                        connection.Open();
 
-                        // Execute the SQL command to delete the browsing history
-                        using (SQLiteCommand command = new SQLiteCommand("DELETE FROM urls", connection))
+                    if (CheckFileExistBrowser(historyPath + "History") > 0)
+                    {
                         {
-                            TotalCount = command.ExecuteNonQuery();
+                            // Connect to the history database file
+                            using (SQLiteConnection connection = new SQLiteConnection("Data Source=" + historyPath + "History"))
+                            {
+                                connection.Open();
+
+                                // Execute the SQL command to delete the browsing history
+                                using (SQLiteCommand command = new SQLiteCommand("DELETE FROM urls", connection))
+                                {
+                                    TotalCount = command.ExecuteNonQuery();
+                                }
+                            }
                         }
                     }
                 }
-
                 Console.WriteLine("Deleted {0} history records.", TotalCount);
             }
             return TotalCount;
@@ -2598,6 +2702,24 @@ namespace FDS
             long TotalSize = ChromeCount + FireFoxCount + EdgeCount + OperaCount;
             LogServicesData(subservices.Sub_service_authorization_code, subservices.Sub_service_name, TotalSize, Convert.ToString(subservices.Id), subservices.Execute_now);
         }
+
+
+
+        public double CheckFileExistBrowser(string fullPath)
+        {
+            FileInfo fileInfo = new FileInfo(fullPath);
+            double fileSizeInKb = 0;
+            if (fileInfo.Exists)
+            {
+                long fileSizeInBytes = fileInfo.Length;
+                fileSizeInKb = fileSizeInBytes / 1024.0; // Convert to kilobytes                
+
+
+            }
+            return fileSizeInKb;
+        }
+
+
         private long ClearChromeCache()
         {
             int TotalCount = 0;
@@ -2906,7 +3028,10 @@ namespace FDS
             }
             else
             {
-                MessageBox.Show(responseData.error, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show(responseData.error, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
         private void UninstallResponseTimer_Tick(object sender, EventArgs e)
@@ -3008,13 +3133,19 @@ namespace FDS
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Message);
-                    MessageBox.Show("An error while uninstalling application: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    if (showMessageBoxes == true)
+                    {
+                        Console.WriteLine(ex.Message);
+                        MessageBox.Show("An error while uninstalling application: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
                 }
             }
             else
             {
-                MessageBox.Show(responseData.error, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show(responseData.error, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
         private void cleanSystem()
@@ -3192,8 +3323,11 @@ namespace FDS
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
-                MessageBox.Show("An error occurred in updateTrayIcon: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (showMessageBoxes == true)
+                {
+                    Console.WriteLine(ex.Message);
+                    MessageBox.Show("An error occurred in updateTrayIcon: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
         #endregion
