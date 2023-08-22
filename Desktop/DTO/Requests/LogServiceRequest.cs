@@ -19,5 +19,7 @@ namespace FDS.DTO.Requests
 
         public bool IsManualExecution { get; set; }
         public string device_uuid { get; set; }
+
+        public bool IsEventExecution { get; set; }
     }
 }

@@ -377,7 +377,7 @@
                         </Grid>
                         <Grid x:Name="cntLanding" Visibility="Hidden" Margin="30,0,30,0">
                             <Image x:Name="imgCompliant" Source="Assets/checkcircle.png" Height="160" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,40,0,0" Width="162" />
-                            <TextBlock x:Name="txtOrganization" HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="#007AFF" FontWeight="Bold" FontFamily="Radian"  FontSize="18" Margin="0,200,0,0" >Fusion Tech Partners</TextBlock>
+                            <TextBlock x:Name="txtOrganization" HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="#007AFF" FontWeight="Bold" FontFamily="Radian"  FontSize="18" Margin="0,200,0,0" ></TextBlock>
                             <TextBlock x:Name="lblCompliant" Text="Your system is Compliant" HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="#0C1828" FontSize="24" FontStyle="Normal" FontWeight="Black" FontFamily="Radian" Margin="0,241,0,0" ></TextBlock>
                             <Grid  HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="0,0,0,60">
                                 <Border CornerRadius="25">
@@ -515,7 +515,7 @@
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Center" Text="Organisation:" Margin="0,0,100,0" FontWeight="Bold" FontSize="10" />
-                        <TextBlock Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Center" Text="Fusion Tech Partners" Margin="100,0,0,0"  FontSize="10" />
+                        <TextBlock Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Center" Text="" Margin="100,0,0,0"  FontSize="10" />
 
                         <TextBlock Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Text="Device Name:" Margin="0,0,100,0" FontWeight="Bold" FontSize="10" />
                         <TextBlock Grid.Row="1" x:Name="lblDeviceName" VerticalAlignment="Center" HorizontalAlignment="Center" Text="Desktop- XYZ" Margin="100,0,0,0"  FontSize="10" />

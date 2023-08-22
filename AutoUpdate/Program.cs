@@ -6,6 +6,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
@@ -16,10 +17,25 @@ namespace AutoUpdate
 {
     public class Program
     {
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr GetConsoleWindow();
+
+        [DllImport("user32.dll")]
+        public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        const int SW_HIDE = 0;  // Hides the window
+        const int SW_SHOW = 5;  // Shows the window
+
         const string baseTempFileDir = "Tempfolder";
         public static void Main(string[] args)
         {
-            
+            // Hide the console window
+            IntPtr hWnd = GetConsoleWindow();
+            if (hWnd != IntPtr.Zero)
+            {
+                ShowWindow(hWnd, SW_HIDE);
+            }
+
             string TempFDSPath = "C:\\web\\Temp\\FDS\\";
             Console.WriteLine("Hi! you are about to update your FDS application");
             string installationPath = string.Empty;
