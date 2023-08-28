@@ -174,9 +174,11 @@
                                             <ColumnDefinition ></ColumnDefinition>
                                             <ColumnDefinition ></ColumnDefinition>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock HorizontalAlignment="Left" Grid.Row="0" Text="Company Email" Margin="0,10,0,0" Grid.ColumnSpan="2"/>
-                                        <TextBox x:Name="txtEmail"  HorizontalAlignment="Left" Grid.Row="1" Text="" Margin="0,10,0,0" Width="270" Grid.ColumnSpan="2" />
-                                        <TextBlock x:Name="txtEmailValidation" Grid.Row="2" HorizontalAlignment="Left" Text="" Margin="0,0,0,0"  Foreground="Red" Visibility="Hidden"/>
+                                        <TextBlock HorizontalAlignment="Left" Grid.Row="0" Text="Enter Email Token" Margin="0,10,0,0" Grid.ColumnSpan="2"/>
+                                        <TextBox x:Name="txtEmailToken" HorizontalAlignment="Left" Grid.Row="1" Text="" Margin="0,10,0,0" Width="270" Grid.ColumnSpan="2"  />
+                                        <TextBlock x:Name="txtEmailTokenValidation" Grid.Row="2" HorizontalAlignment="Left" Text="" Margin="0,0,0,0"  Foreground="Red" Visibility="Hidden"/>
+                                        <!--<TextBox x:Name="txtEmail"  HorizontalAlignment="Left" Grid.Row="1" Text="" Margin="0,10,0,0" Width="270" Grid.ColumnSpan="2" />
+                                        <TextBlock x:Name="txtEmailValidation" Grid.Row="2" HorizontalAlignment="Left" Text="" Margin="0,0,0,0"  Foreground="Red" Visibility="Hidden"/>-->
                                         <TextBlock HorizontalAlignment="Left" Grid.Row="3" Text="Country Code" Margin="0,10,0,0" Grid.ColumnSpan="2"/>
                                         <ComboBox x:Name="cmbCountryCode" HorizontalAlignment="Left" Grid.Row="4" Margin="0,10,0,0" Width="270" Grid.ColumnSpan="2"
                                             DisplayMemberPath="DisplayText"
@@ -257,8 +259,8 @@
                                         </StackPanel>
                                         <!--<TextBox x:Name="txtToken" HorizontalAlignment="Left" Grid.Row="1" Margin="0,10,0,0" Width="270" />-->
                                         <TextBlock x:Name="txtTokenValidation" Grid.Row="2" HorizontalAlignment="Left" Text="" Margin="0,0,0,0"  Foreground="Red" Visibility="Hidden"/>
-                                        <Button x:Name="btnStep2Next" Grid.Row="3" Click="btnStep2Next_Click" Style="{StaticResource sendOTPStyle}" Content="Next" FontFamily="Radian" FontStyle="Normal"  FontSize="14" Foreground="White" Margin="0,20,0,0"></Button>
-                                       
+                                        <!--<Button x:Name="btnStep2Next" Grid.Row="3" Click="btnStep2Next_Click" Style="{StaticResource sendOTPStyle}" Content="Next" FontFamily="Radian" FontStyle="Normal"  FontSize="14" Foreground="White" Margin="0,20,0,0"></Button>-->
+                                        <Button x:Name="btnStep3Submit" Grid.Row="3" Click="btnStep3Submit_Click" Style="{StaticResource sendOTPStyle}" Content="Submit" FontFamily="Radian" FontStyle="Normal"  FontSize="14" Foreground="White" Margin="0,20,0,0"></Button>
                                         <TextBlock HorizontalAlignment="Center" Grid.Row="4" x:Name="txtstep2Back" Foreground="Blue" Margin="0,20,0,0" FontSize="12" FontWeight="Bold" FontFamily="Radian" PreviewMouseDown="txtstep2Back_PreviewMouseDown" Cursor="Hand">
                                             <TextBlock.TextDecorations>
                                                 <TextDecoration/>
@@ -267,12 +269,13 @@
                                 </StackPanel>
                             </Border>
                         </Grid>
-                        <Grid x:Name="AuthenticationStep3" Margin="200,50,200,50" Visibility="Hidden">
+                       
+                        <!--<Grid x:Name="AuthenticationStep3" Margin="200,50,200,50" Visibility="Hidden">
                             <Border Background="White"  BorderThickness="1,1,1,1"  CornerRadius="30">
                                 <StackPanel HorizontalAlignment="Stretch">
                                     <Image Source="/Assets/AuthenticationStep3.png" Margin="0,10,0,0"/>
                                     <TextBlock HorizontalAlignment="Center"  FontFamily="Radian" FontWeight="Bold" FontSize="24" Foreground="Black"  Text="Enter token number" Margin="0,20,0,0" />
-                                    <Grid  HorizontalAlignment="Center" >
+                                    --><!--<Grid  HorizontalAlignment="Center" >
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="auto"></RowDefinition>
                                             <RowDefinition Height="auto"></RowDefinition>
@@ -289,10 +292,10 @@
                                             <TextBlock.TextDecorations>
                                                 <TextDecoration/>
                                             </TextBlock.TextDecorations> Back</TextBlock>
-                                    </Grid>
+                                    </Grid>--><!--
                                 </StackPanel>
                             </Border>
-                        </Grid>
+                        </Grid>-->
                         <Grid x:Name="AuthenticationProcessing" Margin="200,0,200,50" Visibility="Hidden" Height="200" Width="300">
                             <TextBlock x:Name="txtAuthProcesing" HorizontalAlignment="Center" VerticalAlignment="Bottom"
                                     Margin="0,0,0,-30" Foreground="Black" FontSize="18" FontWeight="Bold"> Authentication Processing
@@ -347,7 +350,7 @@
                                         <TextBlock Grid.Row="3" Grid.Column="0" FontFamily="Radian" FontWeight="Bold" FontSize="16" Foreground="black"   TextWrapping="WrapWithOverflow" Text="3. Select device location"  HorizontalAlignment="Left" Margin="20,0,0,0"  />
                                         <TextBlock Grid.Row="4" Grid.Column="0" FontFamily="Radian" FontWeight="Bold" FontSize="16" Foreground="black"   TextWrapping="WrapWithOverflow" Text="4. Point your phone to this screen to capture the code   " HorizontalAlignment="Left" Margin="20,0,0,10" />
                                         <TextBlock Grid.Row="5" Grid.Column="0" FontFamily="Radian" FontWeight="Bold" FontSize="24" Foreground="#3D4653" TextWrapping="WrapWithOverflow" Text="Scan QR code to login" HorizontalAlignment="Left" Margin="20,0,0,0"  />
-                                                                           
+
                                         <Border Margin="10,0,10,0" Grid.Column="1" Grid.RowSpan="5" Background="White"  BorderThickness="4,4,4,4"  CornerRadius="28">
                                             <Border.BorderBrush>
                                                 <RadialGradientBrush RadiusX="0.6" RadiusY="0.6">
@@ -367,13 +370,13 @@
 
                                     </Grid>
                                 </StackPanel>
-                            </Border>                           
+                            </Border>
                             <TextBlock HorizontalAlignment="Center" VerticalAlignment="Bottom" x:Name="txtQRBack" Foreground="Blue" Margin="0,0,0,10" FontSize="12" FontWeight="Bold" FontFamily="Radian" PreviewMouseDown="txtBack_PreviewMouseDown" Cursor="Hand">
                                 <TextBlock.TextDecorations>
                                     <TextDecoration/>
                                 </TextBlock.TextDecorations> Back</TextBlock>
                             <StackPanel x:Name="ImageContainerQR" HorizontalAlignment="Right" Margin="0,0,120,99" VerticalAlignment="Center" Width="35" Height="40"/>
-                            
+
                         </Grid>
                         <Grid x:Name="cntLanding" Visibility="Hidden" Margin="30,0,30,0">
                             <Image x:Name="imgCompliant" Source="Assets/checkcircle.png" Height="160" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,40,0,0" Width="162" />

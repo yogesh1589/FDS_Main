@@ -29,7 +29,7 @@ namespace AutoUpdate
         const string baseTempFileDir = "Tempfolder";
         public static void Main(string[] args)
         {
-            // Hide the console window
+            //Hide the console window
             IntPtr hWnd = GetConsoleWindow();
             if (hWnd != IntPtr.Zero)
             {
@@ -74,6 +74,12 @@ namespace AutoUpdate
                     }
                     
                 }
+                //Hide the console window
+                IntPtr hWnd = GetConsoleWindow();
+                if (hWnd != IntPtr.Zero)
+                {
+                    ShowWindow(hWnd, SW_HIDE);
+                }
                 Console.WriteLine("Files Deleted from installation path");
                 Thread.Sleep(2000);
                 Console.WriteLine("Start Files Extracted to installation path");
@@ -91,6 +97,12 @@ namespace AutoUpdate
         }
         public static void ExtractMSIContent(string msiFilePath, string outputDirectory)
         {
+            //Hide the console window
+            IntPtr hWnd = GetConsoleWindow();
+            if (hWnd != IntPtr.Zero)
+            {
+                ShowWindow(hWnd, SW_HIDE);
+            }
             Process process = new Process();
             process.StartInfo.FileName = "msiexec";
             process.StartInfo.Arguments = $"/a \"{msiFilePath}\" /qn TARGETDIR=\"{outputDirectory}\"";

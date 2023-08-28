@@ -46,12 +46,6 @@
               "target": "Package",
               "version": "[1.0.2, )"
             },
-            "Gapotchenko.Eazfuscator.NET": {
-              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[2023.2.784, )"
-            },
             "MaterialDesignThemes": {
               "target": "Package",
               "version": "[3.2.0, )"
@@ -127,6 +121,10 @@
             "System.Security.Cryptography.OpenSsl": {
               "target": "Package",
               "version": "[5.0.0, )"
+            },
+            "System.Text.Json": {
+              "target": "Package",
+              "version": "[7.0.3, )"
             },
             "WpfAnimatedGif": {
               "target": "Package",
