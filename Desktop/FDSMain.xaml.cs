@@ -47,6 +47,9 @@ using System.ServiceProcess;
 using System.Xml.Linq;
 using System.Text.Json;
 using System.ComponentModel.Design;
+using FDS.Factories;
+using FDS.Logging;
+using FDS.Services.AbstractClass;
 
 namespace FDS
 {
@@ -1955,141 +1958,29 @@ namespace FDS
             try
             {
 
-                if (deviceDeletedFlag == true)
-                {
-                    lstCron.Clear();
-                }
-
                 Dictionary<SubservicesData, DateTime> serviceToRemove = new Dictionary<SubservicesData, DateTime>();
 
                 Dictionary<SubservicesData, DateTime> clonedDictionary = new Dictionary<SubservicesData, DateTime>();
                 if (lstCron.Count > 0)
                 {
 
-
-                    Task task1 = null;
-                    Task task2 = null;
-                    Task task3 = null;
-                    Task task4 = null;
-                    Task task5 = null;
-                    Task task6 = null;
-                    Task task7 = null;
-
                     foreach (var key in lstCron)
                     {
                         SubservicesData SubservicesData = key.Key;
                         if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute)
                         {
-                            try
-                            {
-                                switch (SubservicesData.Sub_service_name)
-                                {
-                                    case "dns_cache_protection":
-                                        task1 = Task.Run(async () => await FlushDNS(SubservicesData, "S"));
-                                        var schedule = CrontabSchedule.Parse(SubservicesData.Execution_period);
-                                        DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
-                                        serviceToRemove.Add(SubservicesData, nextRunTime);
-                                        break;
-                                    case "trash_data_protection":
-                                        task2 = Task.Run(async () => await ClearRecycleBin(SubservicesData, "S"));
-                                        var schedule2 = CrontabSchedule.Parse(SubservicesData.Execution_period);
-                                        DateTime nextRunTime2 = schedule2.GetNextOccurrence(DateTime.Now);
-                                        serviceToRemove.Add(SubservicesData, nextRunTime2);
-                                        break;
-                                    case "windows_registry_protection":
-                                        if (IsAdmin)
-                                        {
-                                            task3 = Task.Run(async () => await ClearWindowsRegistry(SubservicesData, "S"));
-                                            var schedule3 = CrontabSchedule.Parse(SubservicesData.Execution_period);
-                                            DateTime nextRunTime3 = schedule3.GetNextOccurrence(DateTime.Now);
-                                            serviceToRemove.Add(SubservicesData, nextRunTime3);
-                                        }
-                                        break;
-                                    case "free_storage_protection":
-                                        task4 = Task.Run(async () => await DiskCleaning(SubservicesData, "S"));
-                                        var schedule4 = CrontabSchedule.Parse(SubservicesData.Execution_period);
-                                        DateTime nextRunTime4 = schedule4.GetNextOccurrence(DateTime.Now);
-                                        serviceToRemove.Add(SubservicesData, nextRunTime4);
-                                        break;
-                                    case "web_session_protection":
-                                        task5 = Task.Run(async () => await WebCookieCleaning(SubservicesData, "S"));
-                                        var schedule5 = CrontabSchedule.Parse(SubservicesData.Execution_period);
-                                        DateTime nextRunTime5 = schedule5.GetNextOccurrence(DateTime.Now);
-                                        serviceToRemove.Add(SubservicesData, nextRunTime5);
-                                        break;
-                                    case "web_cache_protection":
-                                        task6 = Task.Run(async () => await WebCacheCleaning(SubservicesData, "S"));
-                                        var schedule6 = CrontabSchedule.Parse(SubservicesData.Execution_period);
-                                        DateTime nextRunTime6 = schedule6.GetNextOccurrence(DateTime.Now);
-                                        serviceToRemove.Add(SubservicesData, nextRunTime6);
-                                        break;
-                                    case "web_tracking_protecting":
-                                        task7 = Task.Run(async () => await WebHistoryCleaning(SubservicesData, "S"));
-                                        var schedule7 = CrontabSchedule.Parse(SubservicesData.Execution_period);
-                                        DateTime nextRunTime7 = schedule7.GetNextOccurrence(DateTime.Now);
-                                        serviceToRemove.Add(SubservicesData, nextRunTime7);
-                                        break;
-                                    default:
-                                        break;
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                if (showMessageBoxes == true)
-                                {
-                                    MessageBox.Show("An error occurred while executing subservices: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                                }
-                            }
+
+                            ExecuteSubService(SubservicesData, "S");
+                            DateTime localDate = DateTime.Now.ToLocalTime();
+                            txtUpdatedOn.Text = localDate.ToString();
+
+                            var schedule = CrontabSchedule.Parse(SubservicesData.Execution_period);
+                            DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
+                            serviceToRemove.Add(SubservicesData, nextRunTime);
+
 
                         }
                     }
-
-                    // Create a list of non-null tasks
-                    var tasks = new List<Task> { task1, task2, task3, task4, task5, task6, task7 };
-
-                    // Filter out null tasks before passing them to Task.WhenAll
-                    var nonNullTasks = tasks.Where(task => task != null);
-
-                    await Task.WhenAll(nonNullTasks);  // asynchronously wait for non-null tasks to complete
-
-                    //Task.WaitAll(task1, task2, task3, task4, task5, task6, task7);
-                    if (flgServiceExecuted)
-                    {
-                        DateTime localDate = DateTime.Now.ToLocalTime();
-                        txtUpdatedOn.Text = localDate.ToString();
-                        flgServiceExecuted = false;
-                    }
-
-                    //foreach (var key in lstCron)
-                    //{
-                    //    flgChromeCount = 0;
-                    //    flgEdgeCount = 0;
-                    //    flgFirefoxCount = 0;
-                    //    flgOperaCount = 0;
-
-                    //    SubservicesData SubservicesData = key.Key;
-                    //    //MessageBox.Show(SubservicesData.Name.ToString() + " = " + key.Value.ToString());
-                    //    //bool testCheck = false;
-                    //    //if (SubservicesData.Name.ToString() == "Web Session Protection")
-                    //    ////if (SubservicesData.Name.ToString() == "Web Tracking Protecting")
-                    //    //{
-                    //    //    testCheck = true;
-                    //    //}
-                    //    //if ((DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute) || (testCheck == true))
-                    //    if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute)
-                    //    {
-                    //        serviceTypeDetails = "S";
-                    //        ExecuteSubService(SubservicesData);
-                    //        DateTime localDate = DateTime.Now.ToLocalTime();
-                    //        txtUpdatedOn.Text = localDate.ToString();
-
-                    //        var schedule = CrontabSchedule.Parse(SubservicesData.Execution_period);
-                    //        DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
-                    //        serviceToRemove.Add(SubservicesData, nextRunTime);
-                    //    }
-
-                    //}
-
                     foreach (var key in serviceToRemove)
                     {
                         lstCron[key.Key] = key.Value;
@@ -2098,13 +1989,152 @@ namespace FDS
                 }
             }
             catch (Exception ex) { }
+
+
+            //    if (deviceDeletedFlag == true)
+            //{
+            //    lstCron.Clear();
+            //}
+
+            //Dictionary<SubservicesData, DateTime> serviceToRemove = new Dictionary<SubservicesData, DateTime>();
+
+            //Dictionary<SubservicesData, DateTime> clonedDictionary = new Dictionary<SubservicesData, DateTime>();
+            //if (lstCron.Count > 0)
+            //{
+
+
+            //    Task task1 = null;
+            //    Task task2 = null;
+            //    Task task3 = null;
+            //    Task task4 = null;
+            //    Task task5 = null;
+            //    Task task6 = null;
+            //    Task task7 = null;
+
+            //    foreach (var key in lstCron)
+            //    {
+            //        SubservicesData SubservicesData = key.Key;
+            //        if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute)
+            //        {
+            //            try
+            //            {
+            //                switch (SubservicesData.Sub_service_name)
+            //                {
+            //                    case "dns_cache_protection":
+            //                        task1 = Task.Run(async () => await FlushDNS(SubservicesData, "S"));
+            //                        var schedule = CrontabSchedule.Parse(SubservicesData.Execution_period);
+            //                        DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
+            //                        serviceToRemove.Add(SubservicesData, nextRunTime);
+            //                        break;
+            //                    case "trash_data_protection":
+            //                        task2 = Task.Run(async () => await ClearRecycleBin(SubservicesData, "S"));
+            //                        var schedule2 = CrontabSchedule.Parse(SubservicesData.Execution_period);
+            //                        DateTime nextRunTime2 = schedule2.GetNextOccurrence(DateTime.Now);
+            //                        serviceToRemove.Add(SubservicesData, nextRunTime2);
+            //                        break;
+            //                    case "windows_registry_protection":
+            //                        if (IsAdmin)
+            //                        {
+            //                            task3 = Task.Run(async () => await ClearWindowsRegistry(SubservicesData, "S"));
+            //                            var schedule3 = CrontabSchedule.Parse(SubservicesData.Execution_period);
+            //                            DateTime nextRunTime3 = schedule3.GetNextOccurrence(DateTime.Now);
+            //                            serviceToRemove.Add(SubservicesData, nextRunTime3);
+            //                        }
+            //                        break;
+            //                    case "free_storage_protection":
+            //                        task4 = Task.Run(async () => await DiskCleaning(SubservicesData, "S"));
+            //                        var schedule4 = CrontabSchedule.Parse(SubservicesData.Execution_period);
+            //                        DateTime nextRunTime4 = schedule4.GetNextOccurrence(DateTime.Now);
+            //                        serviceToRemove.Add(SubservicesData, nextRunTime4);
+            //                        break;
+            //                    case "web_session_protection":
+            //                        task5 = Task.Run(async () => await WebCookieCleaning(SubservicesData, "S"));
+            //                        var schedule5 = CrontabSchedule.Parse(SubservicesData.Execution_period);
+            //                        DateTime nextRunTime5 = schedule5.GetNextOccurrence(DateTime.Now);
+            //                        serviceToRemove.Add(SubservicesData, nextRunTime5);
+            //                        break;
+            //                    case "web_cache_protection":
+            //                        task6 = Task.Run(async () => await WebCacheCleaning(SubservicesData, "S"));
+            //                        var schedule6 = CrontabSchedule.Parse(SubservicesData.Execution_period);
+            //                        DateTime nextRunTime6 = schedule6.GetNextOccurrence(DateTime.Now);
+            //                        serviceToRemove.Add(SubservicesData, nextRunTime6);
+            //                        break;
+            //                    case "web_tracking_protecting":
+            //                        task7 = Task.Run(async () => await WebHistoryCleaning(SubservicesData, "S"));
+            //                        var schedule7 = CrontabSchedule.Parse(SubservicesData.Execution_period);
+            //                        DateTime nextRunTime7 = schedule7.GetNextOccurrence(DateTime.Now);
+            //                        serviceToRemove.Add(SubservicesData, nextRunTime7);
+            //                        break;
+            //                    default:
+            //                        break;
+            //                }
+            //            }
+            //            catch (Exception ex)
+            //            {
+            //                if (showMessageBoxes == true)
+            //                {
+            //                    MessageBox.Show("An error occurred while executing subservices: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            //                }
+            //            }
+
+            //        }
+            //    }
+
+            //    // Create a list of non-null tasks
+            //    var tasks = new List<Task> { task1, task2, task3, task4, task5, task6, task7 };
+
+            //    // Filter out null tasks before passing them to Task.WhenAll
+            //    var nonNullTasks = tasks.Where(task => task != null);
+
+            //    await Task.WhenAll(nonNullTasks);  // asynchronously wait for non-null tasks to complete
+
+            //Task.WaitAll(task1, task2, task3, task4, task5, task6, task7);
+
+            //if (flgServiceExecuted)
+            //{
+            //    DateTime localDate = DateTime.Now.ToLocalTime();
+            //    txtUpdatedOn.Text = localDate.ToString();
+            //    flgServiceExecuted = false;
+            //}
+
+            //foreach (var key in lstCron)
+            //{
+            //    flgChromeCount = 0;
+            //    flgEdgeCount = 0;
+            //    flgFirefoxCount = 0;
+            //    flgOperaCount = 0;
+
+            //    SubservicesData SubservicesData = key.Key;
+            //    //MessageBox.Show(SubservicesData.Name.ToString() + " = " + key.Value.ToString());
+            //    //bool testCheck = false;
+            //    //if (SubservicesData.Name.ToString() == "Web Session Protection")
+            //    ////if (SubservicesData.Name.ToString() == "Web Tracking Protecting")
+            //    //{
+            //    //    testCheck = true;
+            //    //}
+            //    //if ((DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute) || (testCheck == true))
+            //    if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute)
+            //    {
+            //        serviceTypeDetails = "S";
+            //        ExecuteSubService(SubservicesData);
+            //        DateTime localDate = DateTime.Now.ToLocalTime();
+            //        txtUpdatedOn.Text = localDate.ToString();
+
+            //        var schedule = CrontabSchedule.Parse(SubservicesData.Execution_period);
+            //        DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
+            //        serviceToRemove.Add(SubservicesData, nextRunTime);
+            //    }
+
+            //}
+
+
         }
 
 
         private async void TimerEventBasedService_Tick(object sender, EventArgs e)
         {
 
-            await CallMethodServices();
+            //await CallMethodServices();
         }
 
         public async Task CallMethodServices()
@@ -2164,34 +2194,60 @@ namespace FDS
             }
         }
 
+
+
+
         private async void ExecuteSubService(SubservicesData subservices, string serviceTypeDetails)
         {
             try
             {
+                // Create instances of your service classes
+                var logger = new DatabaseLogger();
+                var serviceFactory = new ServiceFactory(logger);
+
+                var tasks = new List<Task>();
+                BaseService service = null;              
 
                 switch (subservices.Sub_service_name)
                 {
                     case "dns_cache_protection":
-                        await FlushDNS(subservices, serviceTypeDetails);
+                        service = serviceFactory.CreateService(ServiceTypeName.DNSCacheProtection);
+                        tasks.Add(Task.Run(() => service.RunService(subservices)));
+
+                        //await FlushDNS(subservices, serviceTypeDetails);
                         break;
                     case "trash_data_protection":
-                        await ClearRecycleBin(subservices, serviceTypeDetails);
+                        service = serviceFactory.CreateService(ServiceTypeName.TrashDataProtection);
+                        tasks.Add(Task.Run(() => service.RunService(subservices)));
+                        //await ClearRecycleBin(subservices, serviceTypeDetails);
                         break;
                     case "windows_registry_protection":
                         if (IsAdmin)
-                        { await ClearWindowsRegistry(subservices, serviceTypeDetails); }
+                        {
+                            service = serviceFactory.CreateService(ServiceTypeName.WindowsRegistryProtection);
+                            tasks.Add(Task.Run(() => service.RunService(subservices)));
+                            //await ClearWindowsRegistry(subservices, serviceTypeDetails); 
+                        }
                         break;
                     case "free_storage_protection":
-                        await DiskCleaning(subservices, serviceTypeDetails);
+                        service = serviceFactory.CreateService(ServiceTypeName.FreeStorageProtection);
+                        tasks.Add(Task.Run(() => service.RunService(subservices)));
+                       // await DiskCleaning(subservices, serviceTypeDetails);
                         break;
                     case "web_session_protection":
-                        await WebCookieCleaning(subservices, serviceTypeDetails);
+                        service = serviceFactory.CreateService(ServiceTypeName.WebSessionProtection);
+                        tasks.Add(Task.Run(() => service.RunService(subservices)));
+                        //await WebCookieCleaning(subservices, serviceTypeDetails);
                         break;
                     case "web_cache_protection":
-                        await WebCacheCleaning(subservices, serviceTypeDetails);
+                        service = serviceFactory.CreateService(ServiceTypeName.WebCacheProtection);
+                        tasks.Add(Task.Run(() => service.RunService(subservices)));
+                        //await WebCacheCleaning(subservices, serviceTypeDetails);
                         break;
-                    case "web_tracking_protection":
-                        await WebHistoryCleaning(subservices, serviceTypeDetails);
+                    case "web_tracking_protecting":
+                        service = serviceFactory.CreateService(ServiceTypeName.WebTrackingProtection);
+                        tasks.Add(Task.Run(() => service.RunService(subservices)));
+                        //await WebHistoryCleaning(subservices, serviceTypeDetails);
                         break;
                     default:
                         break;
