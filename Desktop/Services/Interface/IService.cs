@@ -5,10 +5,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FDS.Services.AbstractClass
+namespace FDS.Services.Interface
 {
     public interface IService
     {
-        void RunService(SubservicesData subservices);
+        //int RunService();
+
+        bool RunService(SubservicesData subservices, string serviceTypeDetails);
     }
 }

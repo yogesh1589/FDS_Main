@@ -12,8 +12,8 @@ namespace FDS.Factories
         FreeStorageProtection,
         TrashDataProtection,
         WebCacheProtection,
-        WebSessionProtection,
-        WebTrackingProtection,
-        WindowsRegistryProtection
+        WebSessionProtection, 
+        WindowsRegistryProtection,
+        WebTrackingProtecting
     }
 }

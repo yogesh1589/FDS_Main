@@ -163,9 +163,13 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="API Service\ApiService.cs" />
+    <Compile Include="Common\BrowsersGeneric.cs" />
     <Compile Include="Common\Cipher.cs" />
+    <Compile Include="Common\EncryptDecryptData.cs" />
     <Compile Include="Common\EncryptionDecryption.cs" />
     <Compile Include="Common\Enums\SubServicesEnum.cs" />
+    <Compile Include="Common\Generic.cs" />
     <Compile Include="Common\ReadWriteFile.cs" />
     <Compile Include="Common\RSAParametersSerializable.cs" />
     <Compile Include="DTO\Requests\LogServiceRequest.cs" />
@@ -180,19 +184,28 @@
     <Compile Include="DTO\Responses\WhiteListDomainResponse.cs" />
     <Compile Include="Factories\ServiceFactory.cs" />
     <Compile Include="Factories\ServiceType.cs" />
+    <Compile Include="Logging\BrowsersDB.cs" />
     <Compile Include="Logging\DatabaseLogger.cs" />
     <Compile Include="Logging\ILogger.cs" />
+    <Compile Include="Runners\Abstract\BaseBrowser.cs" />
+    <Compile Include="Runners\EventRunner.cs" />
+    <Compile Include="Runners\ScheduleRunner.cs" />
     <Compile Include="Services\AbstractClass\BaseService.cs" />
-    <Compile Include="Services\AbstractClass\IService.cs" />
-    <Compile Include="Services\CheckBrowsers.cs" />
+    <!-- <Compile Include="Services\AbstractClass\IBrowsers.cs" /> -->
+    <!-- <Compile Include="Services\CheckBrowsers.cs" /> -->
     <Compile Include="Services\DNSCacheProtection.cs" />
     <Compile Include="Services\FreeStorageProtection.cs" />
+    <Compile Include="Services\Interface\IService.cs" />
     <Compile Include="Services\TrashDataProtection.cs" />
     <Compile Include="Services\WebCacheProtection.cs" />
     <Compile Include="Services\WebSessionProtection.cs" />
-    <Compile Include="Services\WebTrackingProtection.cs" />
+    <Compile Include="Services\WebTrackingProtecting.cs" />
     <Compile Include="Services\WindowsRegistryProtection.cs" />
     <Compile Include="SingleInstance.cs" />
+    <Compile Include="SingleTon\CheckKeysSingleTon.cs" />
+    <Compile Include="SingleTon\GlobalDictionaryService.cs" />
+    <Compile Include="SingleTon\GlobalVariables.cs" />
+    <Compile Include="SingleTon\RSASingleTon.cs" />
     <Compile Include="User32API.cs" />
     <Page Include="css\sendOTPStyle.xaml">
       <Generator>MSBuild:Compile</Generator>

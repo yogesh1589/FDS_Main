@@ -8,6 +8,6 @@ namespace FDS.Logging
 {
     public interface ILogger
     {
-        void LogInformation(string authorizationCode, string subServiceName, long FileProcessed, string ServiceId, bool IsManualExecution);
+        void LogInformation(string authorizationCode, string subServiceName, long FileProcessed, string ServiceId, bool IsManualExecution, string serviceTypeDetails);
     }
 }

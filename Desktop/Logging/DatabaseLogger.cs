@@ -1,6 +1,7 @@
 ﻿using FDS.Common;
 using FDS.DTO.Requests;
 using FDS.DTO.Responses;
+using FDS.SingleTon;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using Windows.Media.Protection.PlayReady;
+using Windows.UI.Xaml;
 
 namespace FDS.Logging
 {
@@ -22,8 +24,18 @@ namespace FDS.Logging
 
         RSACryptoServiceProvider RSAServer { get; set; }
 
-        public async void LogInformation(string authorizationCode, string subServiceName, long FileProcessed, string ServiceId, bool IsManualExecution)
+        public DatabaseLogger() { client = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI }; }
+
+        public async void LogInformation(string authorizationCode, string subServiceName, long FileProcessed, string ServiceId, bool IsManualExecution,string serviceTypeDetails)
         {
+
+            bool IsEventExecution = false;
+            if (serviceTypeDetails == "E")
+            {
+                IsManualExecution = false;
+                IsEventExecution = true;
+            }
+
             LogServiceRequest logServiceRequest = new LogServiceRequest
             {
                 authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
@@ -35,7 +47,8 @@ namespace FDS.Logging
                 current_user = Environment.UserName,
                 executed = true,
                 file_deleted = Convert.ToString(FileProcessed),
-                IsManualExecution = IsManualExecution
+                IsManualExecution = IsManualExecution,
+                IsEventExecution = IsEventExecution
             };
 
             var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(logServiceRequest))));
@@ -60,6 +73,45 @@ namespace FDS.Logging
                 }
             }
         }
+
+
+        public async Task<List<string>> GetWhiteListDomains(string SubServiceId)
+        {
+            List<string> whitelistedDomain = new List<string>();
+
+            var response = await client.GetAsync(AppConstants.EndPoints.WhiteListDomains + SubServiceId + "/");
+            if (response.IsSuccessStatusCode)
+            {
+                var responseString = await response.Content.ReadAsStringAsync();
+                var responseData = JsonConvert.DeserializeObject<WhiteListDomainResponse>(responseString);
+                if (responseData.device_domains.Count > 0)
+                {
+                    foreach (var domain in responseData.device_domains)
+                    {
+                        whitelistedDomain.Add("'%" + domain.domain_name + "%'");
+                    }
+
+                }
+                if (responseData.org_domains.Count > 0)
+                {
+                    foreach (var domain in responseData.org_domains)
+                    {
+                        whitelistedDomain.Add("'%" + domain.domain_name + "%'");
+                    }
+                }
+            }
+            return whitelistedDomain;
+        }
+
+
+
+
+
+
+
+
+
+
 
         public string Encrypt(string plainText)
         {
@@ -88,6 +140,7 @@ namespace FDS.Logging
                         }
                     }
                 }
+                RSAServer = CheckKeysSingleTon.Instance.RSAServer;
                 var RsaEncrypted = RSAServer.Encrypt(EncKey, true);
                 return Convert.ToBase64String(RsaEncrypted.Concat(AesEncrypted).ToArray());
             }
@@ -97,6 +150,10 @@ namespace FDS.Logging
                 return "";
             }
         }
+
+
+
+
 
     }
 }

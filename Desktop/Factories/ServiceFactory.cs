@@ -1,6 +1,8 @@
-﻿using FDS.Logging;
+﻿
+using FDS.Logging;
+using FDS.Runners.Abstract;
 using FDS.Services;
-using FDS.Services.AbstractClass;
+using FDS.Services.Interface;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,31 +14,25 @@ namespace FDS.Factories
 {
     public class ServiceFactory
     {
-        private readonly ILogger _logger;
-
-        public ServiceFactory(ILogger logger)
-        {
-            _logger = logger;
-        }
-
-        public BaseService CreateService(ServiceTypeName type)
+        
+        public IService CreateService(ServiceTypeName type)
         {
             switch (type)
             {
                 case ServiceTypeName.DNSCacheProtection:
-                    return new DNSCacheProtection(_logger);
+                    return new DNSCacheProtection();
                 case ServiceTypeName.FreeStorageProtection:
-                    return new FreeStorageProtection(_logger);
+                    return new FreeStorageProtection();
                 case ServiceTypeName.TrashDataProtection:
-                    return new TrashDataProtection(_logger);
+                    return new TrashDataProtection();
                 case ServiceTypeName.WebCacheProtection:
-                    return new WebCacheProtection(_logger);
+                    return new WebCacheProtection();
                 case ServiceTypeName.WebSessionProtection:
-                    return new WebSessionProtection(_logger);
-                case ServiceTypeName.WebTrackingProtection:
-                    return new WebTrackingProtection(_logger);
+                    return new WebSessionProtection();
+                case ServiceTypeName.WebTrackingProtecting:
+                    return new WebTrackingProtecting();
                 case ServiceTypeName.WindowsRegistryProtection:
-                    return new WindowsRegistryProtection(_logger);
+                    return new WindowsRegistryProtection();
                 // Create other service instances similarly
                 default:
                     throw new ArgumentException("Invalid service type.");
