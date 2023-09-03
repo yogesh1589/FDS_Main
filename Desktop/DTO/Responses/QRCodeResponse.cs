@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,5 +12,7 @@ namespace FDS.DTO.Responses
         public string Authorization_token { get; set; }
         public string Authentication_token { get; set; }
         public string Public_key { get; set; }
+
+        public HttpStatusCode StatusCode { get; set; }
     }
 }

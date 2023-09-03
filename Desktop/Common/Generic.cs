@@ -17,10 +17,10 @@ namespace FDS.Common
 {
     static class Generic
     {
-        
+
         static bool showMessageBoxes = true;
         private const string GoogleHost = "www.google.com";
-      
+
 
         public static bool CheckInternetConnection()
         {

@@ -79,8 +79,10 @@ namespace FDS
         public Window thisWindow { get; }
         public HttpClient client { get; }
         public QRCodeResponse QRCodeResponse { get; private set; }
-        RSACryptoServiceProvider RSADevice { get; set; }
-        RSACryptoServiceProvider RSAServer { get; set; }
+
+        public static RSACryptoServiceProvider RSADevice { get; set; }
+        public static RSACryptoServiceProvider RSAServer { get; set; }
+
         private bool isLoggedIn { get; set; }
 
         bool IsAdmin => new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
@@ -255,7 +257,7 @@ namespace FDS
                 }
                 else
                 {
-
+                    
                     if (File.Exists(TempPath + "AutoUpdate.exe"))
                     {
                         Directory.Delete(TempPath, true);
@@ -328,12 +330,7 @@ namespace FDS
                     Authorization_token = Authorization_token
                 };
                 RSAServer = new RSACryptoServiceProvider(2048);
-                RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));
-
-                RSASingleTon singleton = RSASingleTon.GetInstance();
-
-                singleton.RSAServer = RSAServer;
-                singleton.RSADevice = RSADevice;
+                RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));                 
 
                 return true;
             }
@@ -1085,7 +1082,7 @@ namespace FDS
 
                 var QRCodeResponse = await apiService.CheckAuthAsync(DeviceResponse.qr_code_token, AppConstants.CodeVersion);
 
-                if (QRCodeResponse != null)
+                if ((QRCodeResponse.StatusCode == HttpStatusCode.OK) || (QRCodeResponse.Public_key != null))
                 {
                     isLoggedIn = true;
 
@@ -1094,9 +1091,10 @@ namespace FDS
                     RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));
                     timerQRCode.IsEnabled = false;
 
-                    RSASingleTon singleton = RSASingleTon.GetInstance();
+                    RSADevice = new RSACryptoServiceProvider(2048);
+                    RSAParam = RSADevice.ExportParameters(true);
 
-                    RSAParam = singleton.RSADevice.ExportParameters(true);
+                    
 
                     //New Code--
                     string filePath = Path.Combine(basePathEncryption, "TempFile");
@@ -1145,27 +1143,22 @@ namespace FDS
                     }
                 }
                 else
-                {
-
-                    timerDeviceLogin.IsEnabled = false;
-                    timerQRCode.IsEnabled = false;
-                    LoadMenu(Screens.GetStart);
-
-                    //switch (apiResponse.StatusCode)
-                    //{
-                    //    //case System.Net.HttpStatusCode.Unauthorized:
-                    //    //    break;
-                    //    case System.Net.HttpStatusCode.NotFound:
-                    //        timerDeviceLogin.IsEnabled = false;
-                    //        timerQRCode.IsEnabled = false;
-                    //        LoadMenu(Screens.GetStart);
-                    //        break;
-                    //    case System.Net.HttpStatusCode.NotAcceptable:
-                    //        timerDeviceLogin.IsEnabled = false;
-                    //        timerQRCode.IsEnabled = false;
-                    //        btnGetStarted_Click(btnGetStarted, null);
-                    //        break;
-                    //}
+                {                     
+                    switch (QRCodeResponse.StatusCode)
+                    {
+                        //case System.Net.HttpStatusCode.Unauthorized:
+                        //    break;
+                        case System.Net.HttpStatusCode.NotFound:
+                            timerDeviceLogin.IsEnabled = false;
+                            timerQRCode.IsEnabled = false;
+                            LoadMenu(Screens.GetStart);
+                            break;
+                        case System.Net.HttpStatusCode.NotAcceptable:
+                            timerDeviceLogin.IsEnabled = false;
+                            timerQRCode.IsEnabled = false;
+                            btnGetStarted_Click(btnGetStarted, null);
+                            break;
+                    }
                 }
             }
             catch (Exception ex)
@@ -1194,24 +1187,29 @@ namespace FDS
                 }
             }
 
-
-            bool success = await apiService.PerformKeyExchangeAsync();
-
-
-            if (success)
+            if(CheckAllKeys())
             {
-                timerLastUpdate.IsEnabled = true;
-                await GetDeviceDetails();
-            }
-            else
-            {
-                timerLastUpdate.IsEnabled = false;
-                btnGetStarted_Click(btnGetStarted, null);
-                if (showMessageBoxes == true)
+                 
+                bool success = await apiService.PerformKeyExchangeAsync();
+
+
+                if (success)
                 {
-                    MessageBox.Show("An error occurred in KeyExchange: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    timerLastUpdate.IsEnabled = true;
+                    await GetDeviceDetails();
+                }
+                else
+                {
+                    timerLastUpdate.IsEnabled = false;
+                    btnGetStarted_Click(btnGetStarted, null);
+                    if (showMessageBoxes == true)
+                    {
+                        MessageBox.Show("An error occurred in KeyExchange: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
                 }
             }
+
+            
         }
         #endregion
 
@@ -1243,8 +1241,6 @@ namespace FDS
                         }
                     }
                 }
-
-
                 var RsaEncrypted = RSAServer.Encrypt(EncKey, true);
                 return Convert.ToBase64String(RsaEncrypted.Concat(AesEncrypted).ToArray());
             }
@@ -1383,46 +1379,7 @@ namespace FDS
             }
         }
 
-        public string RetriveDecrypt(string Cipher)
-        {
-            try
-            {
-                var bArray = Convert.FromBase64String(Cipher);
-                var encKey = bArray.Take(256).ToArray();
-
-                var byteKey = RSADevice.Decrypt(encKey, true);
-                string plaintext = null;
-                // Create AesManaged    
-                using (AesManaged aes = new AesManaged())
-                {
-                    // Create a decryptor    
-                    aes.Mode = CipherMode.ECB;
-                    aes.Padding = PaddingMode.None;
-                    ICryptoTransform decryptor = aes.CreateDecryptor(byteKey, aes.IV);
-                    // Create the streams used for decryption.    
-                    using (MemoryStream ms = new MemoryStream(bArray.Skip(256).ToArray()))
-                    {
-                        // Create crypto stream    
-                        using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
-                        {
-                            // Read crypto stream    
-                            using (StreamReader reader = new StreamReader(cs))
-                                plaintext = reader.ReadToEnd();
-                        }
-                    }
-                }
-                return plaintext;
-            }
-            catch (Exception ex)
-            {
-                if (showMessageBoxes == true)
-                {
-                    MessageBox.Show("An error occurred while doing decryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                return "";
-            }
-
-        }
+      
         private async Task DeviceConfigurationCheck()
         {
             var servicesObject = new RetriveServices
@@ -1502,6 +1459,52 @@ namespace FDS
                 }
             }
         }
+
+
+
+
+
+        public string RetriveDecrypt(string Cipher)
+        {
+            try
+            {
+                var bArray = Convert.FromBase64String(Cipher);
+                var encKey = bArray.Take(256).ToArray();
+
+                var byteKey = RSADevice.Decrypt(encKey, true);
+                string plaintext = null;
+                // Create AesManaged    
+                using (AesManaged aes = new AesManaged())
+                {
+                    // Create a decryptor    
+                    aes.Mode = CipherMode.ECB;
+                    aes.Padding = PaddingMode.None;
+                    ICryptoTransform decryptor = aes.CreateDecryptor(byteKey, aes.IV);
+                    // Create the streams used for decryption.    
+                    using (MemoryStream ms = new MemoryStream(bArray.Skip(256).ToArray()))
+                    {
+                        // Create crypto stream    
+                        using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
+                        {
+                            // Read crypto stream    
+                            using (StreamReader reader = new StreamReader(cs))
+                                plaintext = reader.ReadToEnd();
+                        }
+                    }
+                }
+                return plaintext;
+            }
+            catch (Exception ex)
+            {
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred while doing decryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                return "";
+            }
+
+        }
+
         private async Task DeviceReauth()
         {
             var servicesObject = new RetriveServices
@@ -1610,6 +1613,45 @@ namespace FDS
             }
         }
 
+        public string Decrypt(string Cipher)
+        {
+            try
+            {
+                var bArray = Convert.FromBase64String(Cipher);
+                var encKey = bArray.Take(256).ToArray();
+
+                var byteKey = RSADevice.Decrypt(encKey, true);
+                string plaintext = null;
+                // Create AesManaged    
+                using (AesManaged aes = new AesManaged())
+                {
+                    // Create a decryptor    
+                    aes.Mode = CipherMode.ECB;
+                    ICryptoTransform decryptor = aes.CreateDecryptor(byteKey, aes.IV);
+                    // Create the streams used for decryption.    
+                    using (MemoryStream ms = new MemoryStream(bArray.Skip(256).ToArray()))
+                    {
+                        // Create crypto stream    
+                        using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
+                        {
+                            // Read crypto stream    
+                            using (StreamReader reader = new StreamReader(cs))
+                                plaintext = reader.ReadToEnd();
+                        }
+                    }
+                }
+                return plaintext;
+            }
+            catch (Exception ex)
+            {
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred while doing decryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                return "";
+            }
+
+        }
         public async Task RetrieveServices()
         {
             var servicesObject = new RetriveServices

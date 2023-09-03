@@ -2,10 +2,12 @@
 using FDS.DTO.Requests;
 using FDS.DTO.Responses;
 using Newtonsoft.Json;
+using OpenQA.Selenium.DevTools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -43,9 +45,12 @@ namespace FDS.API_Service
                 }
                 else
                 {
-                    // Handle different HTTP error codes here.
-                    return null;
-                }
+                    QRCodeResponse qRCodeResponse = new QRCodeResponse
+                    {
+                        StatusCode = response.StatusCode
+                    };
+                    return qRCodeResponse;
+                }                 
             }
             catch (Exception ex)
             {
@@ -58,18 +63,21 @@ namespace FDS.API_Service
         public async Task<bool> PerformKeyExchangeAsync()
         {
             try
-            {               
-
+            {
+                RSACryptoServiceProvider RSADevice = new RSACryptoServiceProvider();
                 var exchangeObject = new KeyExchange
                 {
                     authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
                     mac_address = AppConstants.MACAddress,
-                    public_key = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(RSAKeys.ExportPublicKey(EncryptDecryptData.RSADevice))),
+                    public_key = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(RSAKeys.ExportPublicKey(RSADevice))),
                     serial_number = AppConstants.SerialNumber,
                     device_uuid = AppConstants.UUId,
                 };
 
-                var payload = EncryptDecryptData.Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(exchangeObject))));
+                FDSMain fDSMain= new FDSMain();
+             
+
+                var payload = fDSMain.Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(exchangeObject))));
 
                 var formContent = new List<KeyValuePair<string, string>> {
                 new KeyValuePair<string, string>("authentication_token", String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token) ,
@@ -83,12 +91,14 @@ namespace FDS.API_Service
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
                     var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-                    var plainText = EncryptDecryptData.Decrypt(responseData.Data);
-                    var finalData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(plainText);                    
+
+
+                    var plainText = fDSMain.Decrypt(responseData.Data);
+                    var finalData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(plainText);
                     return true;
                 }
                 else
-                {                    
+                {
                     return false;
                 }
             }
