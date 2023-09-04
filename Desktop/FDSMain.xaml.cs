@@ -643,7 +643,7 @@ namespace FDS
 
                     ClearChildrenNode();                    
 
-                    if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success == true))
+                    if ((apiResponse.HttpStatusCode == 0) || (apiResponse.Success == true))
                     {
                         LoadMenu(Screens.AuthenticationStep2);
                         txtCodeVerification.TextAlignment = TextAlignment.Center;
@@ -816,21 +816,21 @@ namespace FDS
                     ImageContainerQR.Children.Add(imgLoader);
                 }
 
-                var apiResponse = await apiService.GenerateQRCodeAsync();
+                DeviceResponse = await apiService.GenerateQRCodeAsync();
 
                 ClearChildrenNode();
 
                
-                if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
+                if ((DeviceResponse.httpStatusCode == HttpStatusCode.OK) || (DeviceResponse.Success = true))
                 {
 
                     TotalSeconds = Common.AppConstants.TotalKeyActivationSeconds;
                     timerQRCode.IsEnabled = true;
 
 
-                    IsQRGenerated = apiResponse != null ? true : false;
+                    IsQRGenerated = DeviceResponse != null ? true : false;
                     //timerDeviceLogin.IsEnabled = true;
-                    imgQR.Source = GetQRCode(DeviceResponse.qr_code_token);
+                    imgQR.Source =Generic.GetQRCode(DeviceResponse.qr_code_token);
 
                     IsAuthenticationFromQR = string.IsNullOrEmpty(txtEmailToken.Text) ? true : false;
 
@@ -856,66 +856,7 @@ namespace FDS
                 }
             }
         }
-        private ImageSource GetQRCode(string Code)
-        {
-            // Generate the QR Code
-            ImageSource imageSource = null;
-            try
-            {
-
-                QRCodeGenerator qrGenerator = new QRCodeGenerator();
-                QRCodeData qrCodeData = qrGenerator.CreateQrCode(Code, QRCodeGenerator.ECCLevel.Q);
-                QRCode qrCode = new QRCode(qrCodeData);
-
-                // Convert QR Code to Bitmap
-                Bitmap qrBitmap;
-                using (var qrCodeImage = qrCode.GetGraphic(20))
-                {
-                    qrBitmap = new Bitmap(qrCodeImage);
-                }
-
-                // Create new Bitmap with transparent background
-                System.Drawing.Bitmap newBitmap = new Bitmap(qrBitmap.Width, qrBitmap.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                using (System.Drawing.Graphics graphics = Graphics.FromImage(newBitmap))
-                {
-                    graphics.Clear(System.Drawing.Color.Transparent);
-
-                    // Draw QR Code onto new Bitmap
-                    graphics.DrawImage(qrBitmap, 0, 0);
-
-                    // Calculate position for logo in center of new Bitmap
-                    int logoSize = 300;
-                    int logoX = (newBitmap.Width - logoSize) / 2;
-                    int logoY = (newBitmap.Height - logoSize) / 2;
-
-                    // Load logo image from file
-                    Image logoImage = Image.FromFile(Path.Combine(BaseDir, "Assets/FDSIcon.png"));
-
-                    // Draw logo onto new Bitmap
-                    graphics.DrawImage(logoImage, logoX, logoY, logoSize, logoSize);
-                }
-
-                // Convert new Bitmap to ImageSource for use in WPF
-                imageSource = Imaging.CreateBitmapSourceFromHBitmap(
-                    newBitmap.GetHbitmap(),
-                    IntPtr.Zero,
-                    Int32Rect.Empty,
-                    BitmapSizeOptions.FromEmptyOptions());
-
-
-            }
-            catch (Exception ex)
-            {
-                if (showMessageBoxes == true)
-                {
-                    MessageBox.Show("An error occurred while creating img for QR: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-
-            return imageSource;
-
-
-        }
+       
         BitmapImage BitmapToImageSource(System.Drawing.Bitmap bitmap)
         {
             using (MemoryStream memory = new MemoryStream())
@@ -1088,7 +1029,7 @@ namespace FDS
             {
                 var apiResponse = await apiService.CheckDeviceHealthAsync();
 
-                if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
+                if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true) && (apiResponse.HttpStatusCode != HttpStatusCode.Unauthorized))
                 {
                     var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
                     int idx = plainText.LastIndexOf('}');
@@ -1375,16 +1316,16 @@ namespace FDS
                         SubservicesData SubservicesData = key.Key;
 
 
-                        bool testCheck = false;
-                        //if ((SubservicesData.Name.ToString() == "Web Session Protection") || (SubservicesData.Name.ToString() == "Web Cache Protection") || (SubservicesData.Name.ToString() == "Trash Data Protection") || (SubservicesData.Name.ToString() == "Web Tracking Protecting"))
-                        if (SubservicesData.Name.ToString() == "DNS Cache Protection")
-                        {
-                            testCheck = true;
-                        }
-                        if ((DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute) || (testCheck == true))
+                        //bool testCheck = false;
+                        ////if ((SubservicesData.Name.ToString() == "Web Session Protection") || (SubservicesData.Name.ToString() == "Web Cache Protection") || (SubservicesData.Name.ToString() == "Trash Data Protection") || (SubservicesData.Name.ToString() == "Web Tracking Protecting"))
+                        //if (SubservicesData.Name.ToString() == "DNS Cache Protection")
+                        //{
+                        //    testCheck = true;
+                        //}
+                        //if ((DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute) || (testCheck == true))
 
 
-                        //if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && (DateTime.Now.Minute == key.Value.Minute || DateTime.Now.Minute - 1 == key.Value.Minute))
+                        if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && (DateTime.Now.Minute == key.Value.Minute || DateTime.Now.Minute - 1 == key.Value.Minute))
                         {
 
                             var result = RunServices("S", SubservicesData);

@@ -41,6 +41,7 @@ namespace FDS.API_Service
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
                     var apiResponse = JsonConvert.DeserializeObject<QRCodeResponse>(responseString);
+                     
                     return apiResponse;
                 }
                 else
@@ -89,6 +90,7 @@ namespace FDS.API_Service
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
                     var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
+                    apiResponse.Success = true;
                     return apiResponse;
                 }
                 else
@@ -136,6 +138,7 @@ namespace FDS.API_Service
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
                     var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
+                    apiResponse.Success = true;
                     return apiResponse;
                 }
                 else
@@ -179,6 +182,7 @@ namespace FDS.API_Service
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
                     var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
+                    apiResponse.Success = true;
                     return apiResponse;
                 }
                 else
@@ -222,6 +226,7 @@ namespace FDS.API_Service
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
                     var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
+                    apiResponse.Success = true;
                     return apiResponse;
                 }
                 else
@@ -241,7 +246,7 @@ namespace FDS.API_Service
         }
 
 
-        public async Task<ResponseData> GenerateQRCodeAsync()
+        public async Task<DeviceResponse> GenerateQRCodeAsync()
         {
             try
             {
@@ -262,14 +267,15 @@ namespace FDS.API_Service
                 if (response.IsSuccessStatusCode)
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
+                    var apiResponse = JsonConvert.DeserializeObject<DeviceResponse>(responseString);
+                    apiResponse.Success = true;
                     return apiResponse;
                 }
                 else
                 {
-                    ResponseData qRCodeResponse = new ResponseData
+                    DeviceResponse qRCodeResponse = new DeviceResponse
                     {
-                        HttpStatusCode = response.StatusCode
+                        httpStatusCode = response.StatusCode
                     };
                     return qRCodeResponse;
                 }
@@ -310,6 +316,7 @@ namespace FDS.API_Service
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
                     var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
+                    apiResponse.Success = true;
                     return apiResponse;
                 }
                 else
@@ -354,7 +361,7 @@ namespace FDS.API_Service
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
                     var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-
+                    responseData.Success = true;
                     return responseData;
                 }
                 else
@@ -391,7 +398,7 @@ namespace FDS.API_Service
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
                     var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-
+                    responseData.Success = true;
                     return responseData;
                 }
                 else
@@ -429,7 +436,7 @@ namespace FDS.API_Service
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
                     var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-
+                    responseData.Success = true;
                     return responseData;
                 }
                 else
@@ -467,7 +474,7 @@ namespace FDS.API_Service
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
                     var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-
+                    responseData.Success = true;
                     return responseData;
                 }
                 else
@@ -504,7 +511,7 @@ namespace FDS.API_Service
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
                     var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-
+                    responseData.Success = true;
                     return responseData;
                 }
                 else
@@ -545,7 +552,7 @@ namespace FDS.API_Service
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
                     var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-
+                    responseData.Success = true;
                     return responseData;
                 }
                 else

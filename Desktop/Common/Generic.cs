@@ -1,7 +1,9 @@
 ﻿using FDS.DTO.Responses;
+using QRCoder;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Management;
@@ -10,6 +12,9 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Interop;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using Windows.Devices.Usb;
 using Windows.Security.Cryptography.Certificates;
 
@@ -17,7 +22,7 @@ namespace FDS.Common
 {
     static class Generic
     {
-
+        public static string BaseDir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
         static bool showMessageBoxes = true;
         private const string GoogleHost = "www.google.com";
         public static RSACryptoServiceProvider RSADevice { get; set; }
@@ -107,6 +112,67 @@ namespace FDS.Common
             {
                 return false;
             }
+        }
+
+        public static ImageSource GetQRCode(string Code)
+        {
+            // Generate the QR Code
+            ImageSource imageSource = null;
+            try
+            {
+
+                QRCodeGenerator qrGenerator = new QRCodeGenerator();
+                QRCodeData qrCodeData = qrGenerator.CreateQrCode(Code, QRCodeGenerator.ECCLevel.Q);
+                QRCode qrCode = new QRCode(qrCodeData);
+
+                // Convert QR Code to Bitmap
+                Bitmap qrBitmap;
+                using (var qrCodeImage = qrCode.GetGraphic(20))
+                {
+                    qrBitmap = new Bitmap(qrCodeImage);
+                }
+
+                // Create new Bitmap with transparent background
+                System.Drawing.Bitmap newBitmap = new Bitmap(qrBitmap.Width, qrBitmap.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                using (System.Drawing.Graphics graphics = Graphics.FromImage(newBitmap))
+                {
+                    graphics.Clear(System.Drawing.Color.Transparent);
+
+                    // Draw QR Code onto new Bitmap
+                    graphics.DrawImage(qrBitmap, 0, 0);
+
+                    // Calculate position for logo in center of new Bitmap
+                    int logoSize = 300;
+                    int logoX = (newBitmap.Width - logoSize) / 2;
+                    int logoY = (newBitmap.Height - logoSize) / 2;
+
+                    // Load logo image from file
+                    Image logoImage = Image.FromFile(Path.Combine(BaseDir, "Assets/FDSIcon.png"));
+
+                    // Draw logo onto new Bitmap
+                    graphics.DrawImage(logoImage, logoX, logoY, logoSize, logoSize);
+                }
+
+                // Convert new Bitmap to ImageSource for use in WPF
+                imageSource = Imaging.CreateBitmapSourceFromHBitmap(
+                    newBitmap.GetHbitmap(),
+                    IntPtr.Zero,
+                    Int32Rect.Empty,
+                    BitmapSizeOptions.FromEmptyOptions());
+
+
+            }
+            catch (Exception ex)
+            {
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred while creating img for QR: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+
+            return imageSource;
+
+
         }
 
     }
