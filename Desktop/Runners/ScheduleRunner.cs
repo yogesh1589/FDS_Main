@@ -46,8 +46,8 @@ namespace FDS.Runners
                                 tasks.Add(Task.Run(() => service.RunService(subservices, serviceTypeDetails)));
                             }
                             break;
-                        case ServiceTypeName.DNSCacheProtection:
-                            service = serviceFactory.CreateService(ServiceTypeName.DNSCacheProtection);
+                        case ServiceTypeName.DnsCacheProtection:
+                            service = serviceFactory.CreateService(ServiceTypeName.DnsCacheProtection);
                             tasks.Add(Task.Run(() => service.RunService(subservices, serviceTypeDetails)));
                             break;
                         case ServiceTypeName.TrashDataProtection:

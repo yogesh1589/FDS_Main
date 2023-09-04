@@ -19,8 +19,8 @@ namespace FDS.Factories
         {
             switch (type)
             {
-                case ServiceTypeName.DNSCacheProtection:
-                    return new DNSCacheProtection();
+                case ServiceTypeName.DnsCacheProtection:
+                    return new DnsCacheProtection();
                 case ServiceTypeName.FreeStorageProtection:
                     return new FreeStorageProtection();
                 case ServiceTypeName.TrashDataProtection:

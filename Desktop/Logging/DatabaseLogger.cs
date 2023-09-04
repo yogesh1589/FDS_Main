@@ -51,7 +51,7 @@ namespace FDS.Logging
                 IsEventExecution = IsEventExecution
             };
 
-            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(logServiceRequest))));
+            var payload = EncryptDecryptData.Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(logServiceRequest))));
 
             var formContent = new List<KeyValuePair<string, string>> {
                         new KeyValuePair<string, string>("authentication_token", String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token) ,
@@ -102,58 +102,5 @@ namespace FDS.Logging
             }
             return whitelistedDomain;
         }
-
-
-
-
-
-
-
-
-
-
-
-        public string Encrypt(string plainText)
-        {
-            try
-            {
-                //byte[] Key;
-                byte[] AesEncrypted;
-                using (var aesAlg = new AesCryptoServiceProvider())
-                {
-                    // Create an encryptor to perform the stream transform.
-                    EncKey = aesAlg.Key;
-                    aesAlg.Mode = CipherMode.ECB;
-                    aesAlg.Padding = PaddingMode.PKCS7;
-                    ICryptoTransform encryptor = aesAlg.CreateEncryptor();
-                    // Create the streams used for encryption.
-                    using (MemoryStream msEncrypt = new MemoryStream())
-                    {
-                        using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
-                        {
-                            using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
-                            {
-                                //Write all data to the stream.
-                                swEncrypt.Write(plainText);
-                            }
-                            AesEncrypted = msEncrypt.ToArray();
-                        }
-                    }
-                }
-                RSAServer = CheckKeysSingleTon.Instance.RSAServer;
-                var RsaEncrypted = RSAServer.Encrypt(EncKey, true);
-                return Convert.ToBase64String(RsaEncrypted.Concat(AesEncrypted).ToArray());
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("An error occurred while doing encryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return "";
-            }
-        }
-
-
-
-
-
     }
 }

@@ -193,7 +193,7 @@
     <Compile Include="Services\AbstractClass\BaseService.cs" />
     <!-- <Compile Include="Services\AbstractClass\IBrowsers.cs" /> -->
     <!-- <Compile Include="Services\CheckBrowsers.cs" /> -->
-    <Compile Include="Services\DNSCacheProtection.cs" />
+    <Compile Include="Services\DnsCacheProtection.cs" />
     <Compile Include="Services\FreeStorageProtection.cs" />
     <Compile Include="Services\Interface\IService.cs" />
     <Compile Include="Services\TrashDataProtection.cs" />

@@ -20,7 +20,8 @@ namespace FDS.Common
 
         static bool showMessageBoxes = true;
         private const string GoogleHost = "www.google.com";
-
+        public static RSACryptoServiceProvider RSADevice { get; set; }
+        public static RSACryptoServiceProvider RSAServer { get; set; }
 
         public static bool CheckInternetConnection()
         {
@@ -82,7 +83,31 @@ namespace FDS.Common
             return username;
         }
 
+        public static bool IsValidTokenNumber(string Token)
+        {
+            return System.Text.RegularExpressions.Regex.IsMatch(Token, @"^[0-9]$");
+        }
+        public static bool IsValidEmailTokenNumber(string EmailToken)
+        {
+            return System.Text.RegularExpressions.Regex.IsMatch(EmailToken, @"^[ A-Za-z0-9_-]*$");
+        }
 
+        public static bool IsValidMobileNumber(string mobileNumber)
+        {
+            return System.Text.RegularExpressions.Regex.IsMatch(mobileNumber, @"^[0-9]{10}$");
+        }
+        public static bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
     }
 }

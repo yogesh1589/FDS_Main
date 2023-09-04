@@ -8,7 +8,7 @@ namespace FDS.Factories
 {
     public enum ServiceTypeName
     {
-        DNSCacheProtection,
+        DnsCacheProtection,
         FreeStorageProtection,
         TrashDataProtection,
         WebCacheProtection,

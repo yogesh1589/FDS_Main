@@ -32,11 +32,12 @@ namespace FDS.Runners
 
             bool LogicResult = RunLogic(servicesToRun, whitelistedDomain);
 
+            bool LogResult = false;
             if (LogicResult)
             {
-                bool LogResult = LogData(servicesToRun, dicEventServices, serviceRunType);
+                LogResult = LogData(servicesToRun, dicEventServices, serviceRunType);
             }
-            return true;
+            return LogResult;
         }
 
 
@@ -46,6 +47,7 @@ namespace FDS.Runners
             GlobalVariables globals = GlobalVariables.Instance;
             GlobalDictionaryService globalDict = GlobalDictionaryService.Instance;
             bool result = false;
+            bool logFlg = false;
             try
             {
                 //if (globals.HasTrueProperty())
@@ -60,17 +62,21 @@ namespace FDS.Runners
                         {
                             service.LogService(subservices.Sub_service_authorization_code, subservices.Sub_service_name, totalLogicResult, subservices.Id.ToString(), subservices.Execute_now, serviceRunType);
                             globalDict.DictionaryService[service.GetType().Name] = true;
+                            logFlg = true;
                         }
                         else if (serviceRunType != "E")
                         {
                             service.LogService(subservices.Sub_service_authorization_code, subservices.Sub_service_name, totalLogicResult, subservices.Id.ToString(), subservices.Execute_now, serviceRunType);
-
+                            logFlg = true;
                         }
                     }
 
                 }
-                //}
-                result = true;
+                if (logFlg)
+                {
+                    result = true;
+                }
+                 
             }
             catch (Exception ex)
             {

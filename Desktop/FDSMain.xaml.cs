@@ -45,7 +45,7 @@ namespace FDS
     /// </summary>
     public partial class FDSMain : Window
     {
-        #region Variable declaration
+
         [DllImport("shell32.dll", CharSet = CharSet.Auto)]
         static extern int SHEmptyRecycleBin(IntPtr hwnd, string pszRootPath, RecycleFlag dwFlags);
         [DllImport("shell32.dll")]
@@ -80,8 +80,7 @@ namespace FDS
         public HttpClient client { get; }
         public QRCodeResponse QRCodeResponse { get; private set; }
 
-        public static RSACryptoServiceProvider RSADevice { get; set; }
-        public static RSACryptoServiceProvider RSAServer { get; set; }
+
 
         private bool isLoggedIn { get; set; }
 
@@ -122,9 +121,9 @@ namespace FDS
         bool showMessageBoxes = true;//true for staging and false for production
         ApiService apiService = new ApiService();
         public static byte[] EncKey { get; set; }
-        #endregion
 
-        #region Application initialization / Load
+
+
         public FDSMain()
         {
             try
@@ -231,7 +230,7 @@ namespace FDS
 
 
 
-                if (!CheckAllKeys())
+                if (!EncryptDecryptData.CheckAllKeys())
                 {
                     #region Auto start on startup done by Installer
 
@@ -257,7 +256,7 @@ namespace FDS
                 }
                 else
                 {
-                    
+
                     if (File.Exists(TempPath + "AutoUpdate.exe"))
                     {
                         Directory.Delete(TempPath, true);
@@ -278,73 +277,6 @@ namespace FDS
                 }
             }
         }
-
-
-        public bool CheckAllKeys()
-        {
-            try
-            {
-                RSAParameters RSAParam;
-
-                RSADevice = new RSACryptoServiceProvider(2048);
-                RSAParam = RSADevice.ExportParameters(true);
-
-
-                string filePath = Path.Combine(basePathEncryption, "Main");
-
-                if (!File.Exists(filePath))
-                {
-                    return false;
-                }
-
-                RSAParam = new RSAParameters
-                {
-                    InverseQ = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.InverseQ) ? string.Empty : ConfigDetails.InverseQ),
-                    DQ = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.DQ) ? string.Empty : ConfigDetails.DQ),
-                    DP = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.DP) ? string.Empty : ConfigDetails.DP),
-                    Q = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.Q) ? string.Empty : ConfigDetails.Q),
-                    P = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.P) ? string.Empty : ConfigDetails.P),
-                    D = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.D) ? string.Empty : ConfigDetails.D),
-                    Exponent = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.Exponent) ? string.Empty : ConfigDetails.Exponent),
-                    Modulus = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.Modulus) ? string.Empty : ConfigDetails.Modulus),
-                };
-
-                RSADevice = new RSACryptoServiceProvider(2048);
-                RSADevice.ImportParameters(RSAParam);
-
-                var key1 = String.IsNullOrEmpty(ConfigDetails.Key1) ? string.Empty : ConfigDetails.Key1;
-                var key2 = String.IsNullOrEmpty(ConfigDetails.Key2) ? string.Empty : ConfigDetails.Key2;
-                var Authentication_token = String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token;
-                var Authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token;
-
-
-                bool ValidServerKey = !string.IsNullOrEmpty(key1) && !string.IsNullOrEmpty(key2) && !string.IsNullOrEmpty(Authentication_token) && !string.IsNullOrEmpty(Authorization_token);
-                if (!ValidServerKey)
-                {
-                    return false;
-                }
-                QRCodeResponse = new QRCodeResponse
-                {
-                    Public_key = key1 + key2,
-                    Authentication_token = Authentication_token,
-                    Authorization_token = Authorization_token
-                };
-                RSAServer = new RSACryptoServiceProvider(2048);
-                RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));                 
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                if (showMessageBoxes == true)
-                {
-                    MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                return false;
-            }
-
-        }
-
 
         public void FDSMain_Loaded(object sender, RoutedEventArgs e)
         {
@@ -595,9 +527,8 @@ namespace FDS
 
 
 
-        #endregion
 
-        #region Authentication methods
+
         private void btnGetStarted_Click(object sender, RoutedEventArgs e)
         {
             ConfigDataClear();
@@ -696,17 +627,9 @@ namespace FDS
         {
             try
             {
-                if (!string.IsNullOrWhiteSpace(txtEmailToken.Text) && !string.IsNullOrWhiteSpace(txtPhoneNubmer.Text) && IsValidEmailTokenNumber(txtEmailToken.Text) && IsValidMobileNumber(txtPhoneNubmer.Text))
+                if (!string.IsNullOrWhiteSpace(txtEmailToken.Text) && !string.IsNullOrWhiteSpace(txtPhoneNubmer.Text) && Generic.IsValidEmailTokenNumber(txtEmailToken.Text) && Generic.IsValidMobileNumber(txtPhoneNubmer.Text))
                 {
                     txtPhoneValidation.Visibility = Visibility.Collapsed;
-                    //txtEmailToken.Visibility = Visibility.Collapsed;
-
-                    var formContent = new List<KeyValuePair<string, string>> {
-                        new KeyValuePair<string, string>("token", txtEmailToken.Text),
-                        new KeyValuePair<string, string>("phone_no", txtPhoneNubmer.Text),
-                        new KeyValuePair<string, string>("phone_code", txtCountryCode.Text)
-                    };
-
 
                     // Show the spinner
                     ClearChildrenNode();
@@ -715,19 +638,16 @@ namespace FDS
                     {
                         ImageContainerOTP.Children.Add(imgLoader);
                     }
-                    var response = await client.PostAsync(AppConstants.EndPoints.Otp, new FormUrlEncodedContent(formContent));
 
-                    ClearChildrenNode();
-                    //End
+                    var apiResponse = await apiService.SendOTPAsync(txtEmailToken.Text, txtPhoneNubmer.Text, txtCountryCode.Text);
 
+                    ClearChildrenNode();                    
 
-                    if (response.IsSuccessStatusCode)
+                    if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success == true))
                     {
                         LoadMenu(Screens.AuthenticationStep2);
-                        //txtEmailVerification.TextAlignment = TextAlignment.Center;
                         txtCodeVerification.TextAlignment = TextAlignment.Center;
                         txtCodeVerification.Text = "A verification code has been sent to \n" + txtPhoneNubmer.Text;
-                        //txtEmailVerification.Text = "A 32 digit token has been sent to  \n" + txtEmail.Text;
                     }
                 }
                 else
@@ -737,7 +657,7 @@ namespace FDS
                         txtEmailTokenValidation.Text = "Please enter Email Token";
                         txtEmailTokenValidation.Visibility = Visibility.Visible;
                     }
-                    else if (!IsValidEmailTokenNumber(txtEmailToken.Text))
+                    else if (!Generic.IsValidEmailTokenNumber(txtEmailToken.Text))
                     {
                         txtEmailTokenValidation.Text = "Invalid email token address!";
                         txtEmailTokenValidation.Visibility = Visibility.Visible;
@@ -747,7 +667,7 @@ namespace FDS
                         txtPhoneValidation.Text = "Please enter phone number";
                         txtPhoneValidation.Visibility = Visibility.Visible;
                     }
-                    else if (!IsValidMobileNumber(txtPhoneNubmer.Text))
+                    else if (!Generic.IsValidMobileNumber(txtPhoneNubmer.Text))
                     {
                         txtPhoneValidation.Text = "Invalid phone number! Phone number should have 10 digit";
                         txtPhoneValidation.Visibility = Visibility.Visible;
@@ -762,36 +682,14 @@ namespace FDS
                 }
             }
         }
-        private bool IsValidMobileNumber(string mobileNumber)
-        {
-            return System.Text.RegularExpressions.Regex.IsMatch(mobileNumber, @"^[0-9]{10}$");
-        }
-        private bool IsValidEmail(string email)
-        {
-            try
-            {
-                var addr = new System.Net.Mail.MailAddress(email);
-                return addr.Address == email;
-            }
-            catch
-            {
-                return false;
-            }
-        }
+
         private void txtBack_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             LoadMenu(Screens.AuthenticationMethods);
             txtEmailToken.Text = "";
             txtPhoneNubmer.Text = "";
         }
-        private bool IsValidTokenNumber(string Token)
-        {
-            return System.Text.RegularExpressions.Regex.IsMatch(Token, @"^[0-9]$");
-        }
-        private bool IsValidEmailTokenNumber(string EmailToken)
-        {
-            return System.Text.RegularExpressions.Regex.IsMatch(EmailToken, @"^[ A-Za-z0-9_-]*$");
-        }
+
         private void btnStep2Next_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtDigit1.Text) || string.IsNullOrWhiteSpace(txtDigit2.Text) || string.IsNullOrWhiteSpace(txtDigit3.Text)
@@ -799,8 +697,8 @@ namespace FDS
             {
                 txtTokenValidation.Text = "Please enter Verification code";
             }
-            else if (!IsValidTokenNumber(txtDigit1.Text) && !IsValidTokenNumber(txtDigit2.Text) && !IsValidTokenNumber(txtDigit3.Text)
-                && !IsValidTokenNumber(txtDigit5.Text) && !IsValidTokenNumber(txtDigit5.Text) && !IsValidTokenNumber(txtDigit6.Text))
+            else if (!Generic.IsValidTokenNumber(txtDigit1.Text) && !Generic.IsValidTokenNumber(txtDigit2.Text) && !Generic.IsValidTokenNumber(txtDigit3.Text)
+                && !Generic.IsValidTokenNumber(txtDigit5.Text) && !Generic.IsValidTokenNumber(txtDigit5.Text) && !Generic.IsValidTokenNumber(txtDigit6.Text))
             {
                 txtTokenValidation.Text = "Invalid Verification code";
                 txtTokenValidation.Visibility = Visibility.Visible;
@@ -857,22 +755,14 @@ namespace FDS
                 {
                     QRGeneratortimer.Stop();
                     string VerificationCode = txtDigit1.Text + txtDigit2.Text + txtDigit3.Text + txtDigit4.Text + txtDigit5.Text + txtDigit6.Text;
-                    var formContent = new List<KeyValuePair<string, string>> {
-                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
-                        //new KeyValuePair<string, string>("assing_to_user", txtEmail.Text),
-                        new KeyValuePair<string, string>("phone_no", txtPhoneNubmer.Text),
-                        new KeyValuePair<string, string>("phone_code", txtCountryCode.Text),
-                        new KeyValuePair<string, string>("otp", VerificationCode),
-                        new KeyValuePair<string, string>("token", txtEmailToken.Text),
-                        new KeyValuePair<string, string>("qr_code_token", DeviceResponse.qr_code_token)
-                    };
+
                     Dispatcher.Invoke(() =>
                     {
                         LoadMenu(Screens.AuthenticationProcessing);
                     });
 
-                    var response = await client.PostAsync(AppConstants.EndPoints.DeviceToken, new FormUrlEncodedContent(formContent));
-                    if (response.IsSuccessStatusCode)
+                    var apiResponse = await apiService.QRGeneratortimerAsync(txtEmailToken.Text, txtPhoneNubmer.Text, txtCountryCode.Text, VerificationCode, DeviceResponse.qr_code_token);
+                    if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
                     {
                         Dispatcher.Invoke(() =>
                         {
@@ -881,7 +771,6 @@ namespace FDS
                             {
                                 LoadMenu(Screens.Landing);
                                 devicelogin(true);
-                                //timerDeviceLogin.IsEnabled = true;
                             });
 
                         });
@@ -901,20 +790,8 @@ namespace FDS
 
         private async void btnStep3Submit_Click(object sender, RoutedEventArgs e)
         {
-            //if (string.IsNullOrWhiteSpace(txtEmailToken.Text))
-            //{
-            //    txtEmailTokenValidation.Text = "Please enter token";
-            //}
-            //else if (!IsValidEmailTokenNumber(txtEmailToken.Text))
-            //{
-            //    txtEmailTokenValidation.Text = "Invalid Token number";
-            //    txtEmailTokenValidation.Visibility = Visibility.Visible;
-            //}
-            //else
-            //{
-            //QRGeneratortimer.Start();
             GenerateQRCode("Token");
-            //}
+
         }
         private void txtstep2Back_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -924,52 +801,34 @@ namespace FDS
         {
             LoadMenu(Screens.AuthenticationStep2);
         }
-        #endregion
 
-        #region generate QR
+
+
         public async void GenerateQRCode(string vals)
         {
             try
             {
 
-                var formContent = new List<KeyValuePair<string, string>>
-                {
-                    new KeyValuePair<string, string>("serial_number", AppConstants.SerialNumber),
-                    new KeyValuePair<string, string>("device_name", AppConstants.MachineName),
-                    new KeyValuePair<string, string>("mac_address", AppConstants.MACAddress),
-                    new KeyValuePair<string, string>("device_type", AppConstants.DeviceType),
-                    new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
-                    new KeyValuePair<string, string>("os_version", AppConstants.OSVersion),
-                    new KeyValuePair<string, string>("device_uuid", AppConstants.UUId),
-                };
-
                 //Code for Loader
                 ClearChildrenNode();
-
-                //if ((vals == "Token") && (ImageContainerToken.Children.Count == 0))
-                //{
-                //    ImageContainerToken.Children.Add(imgLoader);
-                //}
                 if ((vals == "QR") && (ImageContainerQR.Children.Count == 0))
                 {
                     ImageContainerQR.Children.Add(imgLoader);
                 }
 
-
-                var response = await client.PostAsync(AppConstants.EndPoints.Start, new FormUrlEncodedContent(formContent));
-
+                var apiResponse = await apiService.GenerateQRCodeAsync();
 
                 ClearChildrenNode();
 
-                if (response.IsSuccessStatusCode)
+               
+                if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
                 {
+
                     TotalSeconds = Common.AppConstants.TotalKeyActivationSeconds;
                     timerQRCode.IsEnabled = true;
 
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    DeviceResponse = JsonConvert.DeserializeObject<DeviceResponse>(responseString);
 
-                    IsQRGenerated = DeviceResponse != null ? true : false;
+                    IsQRGenerated = apiResponse != null ? true : false;
                     //timerDeviceLogin.IsEnabled = true;
                     imgQR.Source = GetQRCode(DeviceResponse.qr_code_token);
 
@@ -1071,9 +930,9 @@ namespace FDS
                 return bitmapimage;
             }
         }
-        #endregion
 
-        #region device login/Key Exchage
+
+
         private async Task devicelogin(bool MenuChange)
         {
             RSAParameters RSAParam;
@@ -1088,13 +947,11 @@ namespace FDS
 
                     int LengthAllowed = 512;
 
-                    RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));
+                    Generic.RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));
                     timerQRCode.IsEnabled = false;
 
-                    RSADevice = new RSACryptoServiceProvider(2048);
-                    RSAParam = RSADevice.ExportParameters(true);
-
-                    
+                    Generic.RSADevice = new RSACryptoServiceProvider(2048);
+                    RSAParam = Generic.RSADevice.ExportParameters(true);
 
                     //New Code--
                     string filePath = Path.Combine(basePathEncryption, "TempFile");
@@ -1143,7 +1000,7 @@ namespace FDS
                     }
                 }
                 else
-                {                     
+                {
                     switch (QRCodeResponse.StatusCode)
                     {
                         //case System.Net.HttpStatusCode.Unauthorized:
@@ -1168,11 +1025,8 @@ namespace FDS
                     MessageBox.Show("An error occurred while devicelogin: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
-
-
-
-
         }
+
         private async Task KeyExchange()
         {
 
@@ -1187,14 +1041,17 @@ namespace FDS
                 }
             }
 
-            if(CheckAllKeys())
+            if (EncryptDecryptData.CheckAllKeys())
             {
-                 
-                bool success = await apiService.PerformKeyExchangeAsync();
 
+                var apiResponse = await apiService.PerformKeyExchangeAsync();
 
-                if (success)
+                if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success == true))
                 {
+
+                    var plainText = EncryptDecryptData.Decrypt(apiResponse.Data);
+                    var finalData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(plainText);
+
                     timerLastUpdate.IsEnabled = true;
                     await GetDeviceDetails();
                 }
@@ -1208,53 +1065,19 @@ namespace FDS
                     }
                 }
             }
-
-            
         }
-        #endregion
 
-
-        public string Encrypt(string plainText)
+        public void loadMenuItems(string ImageTxt, string txtValue)
         {
-            try
-            {
-                //byte[] Key;
-                byte[] AesEncrypted;
-                using (var aesAlg = new AesCryptoServiceProvider())
-                {
-                    // Create an encryptor to perform the stream transform.
-                    EncKey = aesAlg.Key;
-                    aesAlg.Mode = CipherMode.ECB;
-                    aesAlg.Padding = PaddingMode.PKCS7;
-                    ICryptoTransform encryptor = aesAlg.CreateEncryptor();
-                    // Create the streams used for encryption.
-                    using (MemoryStream msEncrypt = new MemoryStream())
-                    {
-                        using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
-                        {
-                            using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
-                            {
-                                //Write all data to the stream.
-                                swEncrypt.Write(plainText);
-                            }
-                            AesEncrypted = msEncrypt.ToArray();
-                        }
-                    }
-                }
-                var RsaEncrypted = RSAServer.Encrypt(EncKey, true);
-                return Convert.ToBase64String(RsaEncrypted.Concat(AesEncrypted).ToArray());
-            }
-            catch (Exception ex)
-            {
-                if (showMessageBoxes == true)
-                {
-                    MessageBox.Show("An error occurred while doing encryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                return "";
-            }
+            lblCompliant.Text = txtValue;
+            string ImagePath = Path.Combine(BaseDir, ImageTxt);
+            BitmapImage DeviceDeactive = new BitmapImage();
+            DeviceDeactive.BeginInit();
+            DeviceDeactive.UriSource = new Uri(ImagePath);
+            DeviceDeactive.EndInit();
+            imgCompliant.Source = DeviceDeactive;
+            LoadMenu(Screens.Landing);
         }
-
-        #region device health
 
         public async Task CheckDeviceHealth()
         {
@@ -1263,34 +1086,11 @@ namespace FDS
             isInternetConnected = Generic.CheckInternetConnection();
             if (isInternetConnected)
             {
-                var servicesObject = new RetriveServices
+                var apiResponse = await apiService.CheckDeviceHealthAsync();
+
+                if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
                 {
-                    authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
-                    //authorization_token = KeyManager.GetValue("authorization_token"),
-                    mac_address = AppConstants.MACAddress,
-                    serial_number = AppConstants.SerialNumber,
-                    current_user = Environment.UserName,
-                    device_uuid = AppConstants.UUId,
-                    //app_version
-                    //os_version
-                };
-                var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
-                //var payload = JsonConvert.SerializeObject(servicesObject).ToString();
-
-                var formContent = new List<KeyValuePair<string, string>> {
-                new KeyValuePair<string, string>("authentication_token", String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token) ,
-                new KeyValuePair<string, string>("payload", payload),
-                new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
-            };
-
-                var response = await client.PostAsync(AppConstants.EndPoints.DeviceHealth, new FormUrlEncodedContent(formContent));
-
-                if (response.IsSuccessStatusCode)
-                {
-
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-                    var plainText = RetriveDecrypt(responseData.Data);
+                    var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
                     int idx = plainText.LastIndexOf('}');
                     var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
                     var HealthData = JsonConvert.DeserializeObject<HealthCheckResponse>(result);
@@ -1298,44 +1098,25 @@ namespace FDS
                     {
                         await DeviceConfigurationCheck();
                     }
-                    //else
-                    //    await RetrieveCronServices();
+
                     if (IsServiceActive)
                     {
-                        lblCompliant.Text = "Your system is Compliant";
-                        string ImagePath = Path.Combine(BaseDir, "Assets/DeviceActive.png");
-                        BitmapImage DeviceDeactive = new BitmapImage();
-                        DeviceDeactive.BeginInit();
-                        DeviceDeactive.UriSource = new Uri(ImagePath);
-                        DeviceDeactive.EndInit();
-                        imgCompliant.Source = DeviceDeactive;
-                        LoadMenu(Screens.Landing);
+
+                        loadMenuItems("Assets/DeviceActive.png", "Your system is Compliant");
                     }
                     else
                     {
-                        lblCompliant.Text = "Check With Administrator";
-                        string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
-                        BitmapImage DeviceDeactive = new BitmapImage();
-                        DeviceDeactive.BeginInit();
-                        DeviceDeactive.UriSource = new Uri(ImagePath);
-                        DeviceDeactive.EndInit();
-                        imgCompliant.Source = DeviceDeactive;
-                        LoadMenu(Screens.Landing);
+                        loadMenuItems("Assets/DeviceDisable.png", "Check With Administrator");
+
                     }
                 }
-                else if (response.StatusCode == HttpStatusCode.BadGateway)
+                else if (apiResponse.HttpStatusCode == HttpStatusCode.BadGateway)
                 {
                     timerLastUpdate.IsEnabled = true;
-                    lblCompliant.Text = "Ooops! Will be back soon.";
-                    string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
-                    BitmapImage DeviceDeactive = new BitmapImage();
-                    DeviceDeactive.BeginInit();
-                    DeviceDeactive.UriSource = new Uri(ImagePath);
-                    DeviceDeactive.EndInit();
-                    imgCompliant.Source = DeviceDeactive;
-                    LoadMenu(Screens.Landing);
+
+                    loadMenuItems("Assets/DeviceDisable.png", "Ooops! Will be back soon.");
                 }
-                else if (response.StatusCode == HttpStatusCode.Unauthorized)
+                else if (apiResponse.HttpStatusCode == HttpStatusCode.Unauthorized)
                 {
                     timerLastUpdate.IsEnabled = false;
                     if (isUninstallRequestRaised)
@@ -1379,32 +1160,14 @@ namespace FDS
             }
         }
 
-      
         private async Task DeviceConfigurationCheck()
         {
-            var servicesObject = new RetriveServices
+            var apiResponse = await apiService.DeviceConfigurationCheckAsync();
+
+            if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
             {
-                authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
-                //authorization_token = KeyManager.GetValue("authorization_token"),
-                mac_address = AppConstants.MACAddress,
-                serial_number = AppConstants.SerialNumber,
-                device_uuid = AppConstants.UUId,
-            };
-            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
 
-            var formContent = new List<KeyValuePair<string, string>> {
-                new KeyValuePair<string, string>("authentication_token", String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token) ,
-                new KeyValuePair<string, string>("payload", payload),
-                new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
-            };
-
-            var response = await client.PostAsync(AppConstants.EndPoints.DeviceConfigCheck, new FormUrlEncodedContent(formContent));
-
-            if (response.IsSuccessStatusCode)
-            {
-                var responseString = await response.Content.ReadAsStringAsync();
-                var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-                var plainText = RetriveDecrypt(responseData.Data);
+                var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
                 int idx = plainText.LastIndexOf('}');
                 var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
                 var DeviceConfigData = JsonConvert.DeserializeObject<DeviceConfigCheckResponse>(result);
@@ -1413,13 +1176,11 @@ namespace FDS
                 {
                     if (DeviceConfigData.call_api.Count() > 0)
                     {
-                        //DeviceConfigData.call_api.Sort();
+
                         foreach (var api in DeviceConfigData.call_api)
                         {
                             if (api.Equals("1") || api.Equals("4"))
                             {
-                                //await GetDeviceDetails();
-                                //MessageBox.Show("Start");
                                 await RetrieveServices();
                             }
                             else if (api.Equals("2"))
@@ -1460,70 +1221,10 @@ namespace FDS
             }
         }
 
-
-
-
-
-        public string RetriveDecrypt(string Cipher)
-        {
-            try
-            {
-                var bArray = Convert.FromBase64String(Cipher);
-                var encKey = bArray.Take(256).ToArray();
-
-                var byteKey = RSADevice.Decrypt(encKey, true);
-                string plaintext = null;
-                // Create AesManaged    
-                using (AesManaged aes = new AesManaged())
-                {
-                    // Create a decryptor    
-                    aes.Mode = CipherMode.ECB;
-                    aes.Padding = PaddingMode.None;
-                    ICryptoTransform decryptor = aes.CreateDecryptor(byteKey, aes.IV);
-                    // Create the streams used for decryption.    
-                    using (MemoryStream ms = new MemoryStream(bArray.Skip(256).ToArray()))
-                    {
-                        // Create crypto stream    
-                        using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
-                        {
-                            // Read crypto stream    
-                            using (StreamReader reader = new StreamReader(cs))
-                                plaintext = reader.ReadToEnd();
-                        }
-                    }
-                }
-                return plaintext;
-            }
-            catch (Exception ex)
-            {
-                if (showMessageBoxes == true)
-                {
-                    MessageBox.Show("An error occurred while doing decryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                return "";
-            }
-
-        }
-
         private async Task DeviceReauth()
         {
-            var servicesObject = new RetriveServices
-            {
-                authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
-                mac_address = AppConstants.MACAddress,
-                serial_number = AppConstants.SerialNumber,
-                device_uuid = AppConstants.UUId
-            };
-            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
-
-            var formContent = new List<KeyValuePair<string, string>> {
-                new KeyValuePair<string, string>("authentication_token", String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token) ,
-                new KeyValuePair<string, string>("payload", payload),
-                new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
-            };
-
-            var response = await client.PostAsync(AppConstants.EndPoints.DeviceReauth, new FormUrlEncodedContent(formContent));
-            if (response.IsSuccessStatusCode)
+            var apiResponse = await apiService.DeviceReauthAsync();
+            if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
             {
                 timerLastUpdate.IsEnabled = false;
                 btnGetStarted_Click(btnGetStarted, null);
@@ -1531,35 +1232,15 @@ namespace FDS
                 /// need delete api for flushing 
             }
         }
-        #endregion
 
-        #region Device detail / Retrive Services
+
         private async Task GetDeviceDetails()
         {
-            var exchangeObject = new DeviceDetails
+            var apiResponse = await apiService.GetDeviceDetailsAsync();
+
+            if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
             {
-                serial_number = AppConstants.SerialNumber,
-                mac_address = AppConstants.MACAddress,
-                authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
-                device_uuid = AppConstants.UUId
-
-            };
-            var message = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(exchangeObject)));
-
-            var payload = Encrypt(message);
-
-            var formContent = new List<KeyValuePair<string, string>> {
-                        new KeyValuePair<string, string>("authentication_token", String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token) ,
-                        new KeyValuePair<string, string>("payload", payload),
-                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion)
-                        //new KeyValuePair<string, string>("os_version", AppConstants.OSVersion)
-                    };
-            var response = await client.PostAsync(AppConstants.EndPoints.DeviceDetails, new FormUrlEncodedContent(formContent));
-            if (response.IsSuccessStatusCode)
-            {
-                var responseString = await response.Content.ReadAsStringAsync();
-                var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-                var plainText = RetriveDecrypt(responseData.Data);
+                var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
                 int idx = plainText.LastIndexOf('}');
                 var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
                 var deviceDetail = JsonConvert.DeserializeObject<DeviceDetail>(result);  //
@@ -1570,9 +1251,7 @@ namespace FDS
                     lblUserName.Text = lblDeviceName.Text = deviceDetail.device_name;
                     lblLocation.Text = deviceDetail.device_location != null ? deviceDetail.device_location.ToString() : "";
                     txtOrganization.Text = deviceDetail.org_name != null ? deviceDetail.org_name.ToString() : txtOrganization.Text;
-                    //DateTime convertedDate = DateTime.Parse(Convert.ToString(deviceDetail.updated_on));
-                    //DateTime localDate = convertedDate.ToLocalTime();
-                    //txtUpdatedOn.Text = deviceDetail.updated_on != null ? localDate.ToString() : "";
+
                     DateTime localDate = DateTime.Now.ToLocalTime();
                     txtUpdatedOn.Text = localDate.ToString();
 
@@ -1580,32 +1259,16 @@ namespace FDS
                     if (deviceDetail.is_active)
                     {
                         await RetrieveServices();
-                        lblCompliant.Text = "Your system is Compliant";
-                        string ImagePath = Path.Combine(BaseDir, "Assets/DeviceActive.png");
-                        BitmapImage DeviceActive = new BitmapImage();
-                        DeviceActive.BeginInit();
-                        DeviceActive.UriSource = new Uri(ImagePath);
-                        DeviceActive.EndInit();
-                        imgCompliant.Source = DeviceActive;
-                        LoadMenu(Screens.Landing);
+                        loadMenuItems("Assets/DeviceActive.png", "Your system is Compliant");
                     }
                     else
                     {
-                        lblCompliant.Text = "Check With Administrator";
-                        string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
-                        BitmapImage DeviceDeactive = new BitmapImage();
-                        DeviceDeactive.BeginInit();
-                        DeviceDeactive.UriSource = new Uri(ImagePath);
-                        DeviceDeactive.EndInit();
-                        imgCompliant.Source = DeviceDeactive;
-                        LoadMenu(Screens.Landing);
+                        loadMenuItems("Assets/DeviceDisable.png", "Check With Administrator");
                     }
                 }
             }
             else
             {
-                //timerLastUpdate.IsEnabled = false;
-                //btnGetStarted_Click(btnGetStarted, null);
                 if (showMessageBoxes == true)
                 {
                     MessageBox.Show("An error occurred in GetDeviceDetails: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -1613,70 +1276,16 @@ namespace FDS
             }
         }
 
-        public string Decrypt(string Cipher)
-        {
-            try
-            {
-                var bArray = Convert.FromBase64String(Cipher);
-                var encKey = bArray.Take(256).ToArray();
 
-                var byteKey = RSADevice.Decrypt(encKey, true);
-                string plaintext = null;
-                // Create AesManaged    
-                using (AesManaged aes = new AesManaged())
-                {
-                    // Create a decryptor    
-                    aes.Mode = CipherMode.ECB;
-                    ICryptoTransform decryptor = aes.CreateDecryptor(byteKey, aes.IV);
-                    // Create the streams used for decryption.    
-                    using (MemoryStream ms = new MemoryStream(bArray.Skip(256).ToArray()))
-                    {
-                        // Create crypto stream    
-                        using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
-                        {
-                            // Read crypto stream    
-                            using (StreamReader reader = new StreamReader(cs))
-                                plaintext = reader.ReadToEnd();
-                        }
-                    }
-                }
-                return plaintext;
-            }
-            catch (Exception ex)
-            {
-                if (showMessageBoxes == true)
-                {
-                    MessageBox.Show("An error occurred while doing decryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                return "";
-            }
-
-        }
         public async Task RetrieveServices()
         {
-            var servicesObject = new RetriveServices
+
+            var apiResponse = await apiService.RetrieveServicesAsync();
+
+            if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
             {
-                authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
-                mac_address = AppConstants.MACAddress,
-                serial_number = AppConstants.SerialNumber,
-                device_uuid = AppConstants.UUId
-            };
-            var payload = Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
+                var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
 
-            var formContent = new List<KeyValuePair<string, string>> {
-                        new KeyValuePair<string, string>("authentication_token", String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token) ,
-                        new KeyValuePair<string, string>("payload", payload),
-                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
-                    };
-
-            var response = await client.PostAsync(AppConstants.EndPoints.DeviceServices, new FormUrlEncodedContent(formContent));
-
-            if (response.IsSuccessStatusCode)
-            {
-                //MessageBox.Show("Current User: " + WindowsIdentity.GetCurrent().Name, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                var responseString = await response.Content.ReadAsStringAsync();
-                var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-                var plainText = RetriveDecrypt(responseData.Data);
                 int idx = plainText.LastIndexOf('}');
                 var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
                 var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);//.Replace("false", "true"));// replace used to test services
@@ -1698,14 +1307,6 @@ namespace FDS
             }
         }
 
-        #endregion
-
-        #region Encryption / Decryption
-
-
-
-        #endregion
-
 
         private void ExecuteServices(ServicesResponse servicesResponse)
         {
@@ -1721,14 +1322,13 @@ namespace FDS
                         {
                             if (deviceDeletedFlag == true)
                             {
-                                //MessageBox.Show("Service Still Running");
                                 break;
                             }
                             if (subservice.Sub_service_active)
-                            {                                 
+                            {
                                 if (subservice.Execute_now)
                                 {
-                                    ExecuteSubService(subservice);                                     
+                                    ExecuteSubService(subservice);
                                 }
                                 else
                                 {
@@ -1764,20 +1364,30 @@ namespace FDS
             try
             {
                 Dictionary<SubservicesData, DateTime> serviceToRemove = new Dictionary<SubservicesData, DateTime>();
-
                 Dictionary<SubservicesData, DateTime> clonedDictionary = new Dictionary<SubservicesData, DateTime>();
 
                 if (lstCron.Count > 0)
                 {
 
-                    Dictionary<string, SubservicesData> dicEventServices = new Dictionary<string, SubservicesData>();
+
                     foreach (var key in lstCron)
                     {
                         SubservicesData SubservicesData = key.Key;
-                        if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute)
+
+
+                        bool testCheck = false;
+                        //if ((SubservicesData.Name.ToString() == "Web Session Protection") || (SubservicesData.Name.ToString() == "Web Cache Protection") || (SubservicesData.Name.ToString() == "Trash Data Protection") || (SubservicesData.Name.ToString() == "Web Tracking Protecting"))
+                        if (SubservicesData.Name.ToString() == "DNS Cache Protection")
+                        {
+                            testCheck = true;
+                        }
+                        if ((DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute) || (testCheck == true))
+
+
+                        //if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && (DateTime.Now.Minute == key.Value.Minute || DateTime.Now.Minute - 1 == key.Value.Minute))
                         {
 
-                            var result = RunServices("S", dicEventServices, SubservicesData);
+                            var result = RunServices("S", SubservicesData);
 
                             DateTime localDate = DateTime.Now.ToLocalTime();
                             txtUpdatedOn.Text = localDate.ToString();
@@ -1798,13 +1408,14 @@ namespace FDS
 
         }
 
-        public async Task<bool> RunServices(string serviceTypeFlag, Dictionary<string, SubservicesData> dicEventServices, SubservicesData SubservicesData)
+        public async Task<bool> RunServices(string serviceTypeFlag, SubservicesData SubservicesData)
         {
             try
             {
 
                 ScheduleRunner scheduleRunner = new ScheduleRunner();
                 string transformed = TransformString(SubservicesData.Sub_service_name);
+                Dictionary<string, SubservicesData> dicEventServices = new Dictionary<string, SubservicesData>();
                 dicEventServices.Add(transformed, SubservicesData);
 
                 List<string> whitelistedDomain = new List<string>();
@@ -1815,6 +1426,7 @@ namespace FDS
                 if (dicEventServices.Count > 0)
                 {
                     await scheduleRunner.RunAll(dicEventServices, serviceTypeFlag, whitelistedDomain);
+                    dicEventServices.Clear();
                 }
             }
             catch (Exception ex)
@@ -1862,6 +1474,11 @@ namespace FDS
                 if (dicEventServices.Count > 1)
                 {
                     bool result = eventRunner.RunAll(dicEventServices, "E", whitelistedDomain);
+                    if (result)
+                    {
+                        DateTime localDate = DateTime.Now.ToLocalTime();
+                        txtUpdatedOn.Text = localDate.ToString();
+                    }
                 }
             }
 
@@ -1885,8 +1502,8 @@ namespace FDS
         {
             try
             {
-                Dictionary<string, SubservicesData> dicEventServices = new Dictionary<string, SubservicesData>();
-                var result = await RunServices("M", dicEventServices, subservices);
+
+                var result = await RunServices("M", subservices);
 
                 DateTime localDate = DateTime.Now.ToLocalTime();
                 txtUpdatedOn.Text = localDate.ToString();
@@ -1902,13 +1519,8 @@ namespace FDS
         }
 
 
-
-
-
-        #region Application close / minimize
         private void btnClose_Click(object sender, RoutedEventArgs e)
         {
-            //Application.Current.Shutdown();
             thisWindow.WindowState = WindowState.Minimized;
             thisWindow.ShowInTaskbar = false;
             thisWindow.Visibility = Visibility.Hidden;
@@ -1929,9 +1541,9 @@ namespace FDS
             LoadFDS();
             //await GetDeviceDetails();
         }
-        #endregion
 
-        #region uninstall
+
+
         public void IsUninstallFlagUpdated()
         {
             if (!IsUnInstallFlag)
@@ -1983,16 +1595,10 @@ namespace FDS
                 MessageBox.Show("You Can't Uninstall, Please Contact Admin to Uninstall.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
-            var formContent = new List<KeyValuePair<string, string>> {
-                new KeyValuePair<string, string>("mac_address", AppConstants.MACAddress),
-                new KeyValuePair<string, string>("serial_number", AppConstants.SerialNumber),
-                new KeyValuePair<string, string>("current_user", Environment.UserName),
-                new KeyValuePair<string, string>("device_uuid", AppConstants.UUId)
-            };
-            var response = await client.PostAsync(AppConstants.EndPoints.UninstallDevice, new FormUrlEncodedContent(formContent));
-            var responseString = await response.Content.ReadAsStringAsync();
-            var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-            if (response.IsSuccessStatusCode)
+
+            var apiResponse = await apiService.UninstallAsync();
+
+            if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
             {
                 MessageBox.Show("Uninstall request has been raised successfully!", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 isUninstallRequestRaised = true;
@@ -2004,7 +1610,7 @@ namespace FDS
             {
                 if (showMessageBoxes == true)
                 {
-                    MessageBox.Show(responseData.error, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show(apiResponse.error, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -2023,27 +1629,21 @@ namespace FDS
         const int SW_SHOW = 5;  // Shows the window
         private async Task UninstallProgram()
         {
-            var formContent = new List<KeyValuePair<string, string>> {
-                new KeyValuePair<string, string>("mac_address", AppConstants.MACAddress),
-                new KeyValuePair<string, string>("serial_number", AppConstants.SerialNumber),
-                new KeyValuePair<string, string>("current_user", Environment.UserName),
-                new KeyValuePair<string, string>("device_uuid", AppConstants.UUId)
-            };
-            var response = await client.PostAsync(AppConstants.EndPoints.UninstallCheck, new FormUrlEncodedContent(formContent));
-            var responseString = await response.Content.ReadAsStringAsync();
-            var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-            if (response.IsSuccessStatusCode)
+
+            var apiResponse = await apiService.UninstallProgramAsync();
+
+            if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
             {
                 /// 1- Pending, 2 - Approved, 3 - Rejected
                 try
                 {
-                    if (responseData.Data == "1")
+                    if (apiResponse.Data == "1")
                     {
                         btnUninstall.ToolTip = "Your uninstall request is pending.";
                         btnUninstall.Foreground = System.Windows.Media.Brushes.Gold;
 
                     }
-                    else if (responseData.Data == "3")
+                    else if (apiResponse.Data == "3")
                     {
                         UninstallResponseTimer.Stop();
                         btnUninstall.ToolTip = "Your uninstall request has been declined!";
@@ -2112,18 +1712,6 @@ namespace FDS
 
                                             MessageBox.Show(ex.ToString());
                                         }
-
-
-
-
-
-
-                                        //MessageBox.Show(productCode.Replace("/I", "/x ") + " /qn");
-                                        //Process.Start("cmd.exe", productCode.Replace("/I", "/x ") + " /qn");
-                                        //Process.Start("cmd.exe", productCode.Replace("/I", "/x ") + " /qn");
-
-
-
                                         Process[] processes = Process.GetProcessesByName(applicationName);
 
                                         foreach (Process process in processes)
@@ -2170,7 +1758,7 @@ namespace FDS
             {
                 if (showMessageBoxes == true)
                 {
-                    MessageBox.Show(responseData.error, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show(apiResponse.error, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -2203,28 +1791,16 @@ namespace FDS
             }
 
         }
-        //public static void DeleteRegistryKey(string keyPath)
-        //{
-        //    Registry.LocalMachine.DeleteSubKeyTree(keyPath);
-        //}
-        #endregion
 
-        #region AutoUpdate
+
+
         private async void AutoUpdate()
         {
-            var formContent = new List<KeyValuePair<string, string>> {
-                        new KeyValuePair<string, string>("serial_number", AppConstants.SerialNumber),
-                        new KeyValuePair<string, string>("mac_address",AppConstants.MACAddress),
-                        new KeyValuePair<string, string>("device_uuid", AppConstants.UUId),
-                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion)
-                    };
-            var response = await client.PostAsync(AppConstants.EndPoints.AutoUpdate, new FormUrlEncodedContent(formContent));
-            if (response.IsSuccessStatusCode)
-            {
-                var responseString = await response.Content.ReadAsStringAsync();
-                AutoUpdateResponse UpdateResponse = JsonConvert.DeserializeObject<AutoUpdateResponse>(responseString);
+            var apiResponse = await apiService.AutoUpdateAsync();
 
-                var getresponse = await client.GetAsync(AppConstants.EndPoints.AutoUpdate + "?token=" + UpdateResponse.msg);
+            if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
+            {
+                var getresponse = await client.GetAsync(AppConstants.EndPoints.AutoUpdate + "?token=" + apiResponse.msg);
                 if (getresponse.IsSuccessStatusCode)
                 {
                     var getresponseString = await getresponse.Content.ReadAsStringAsync();
@@ -2271,10 +1847,6 @@ namespace FDS
         }
 
 
-
-        #endregion
-
-        #region unwanted code for now
         private void btnSettings_Click(object sender, RoutedEventArgs e)
         {
             //imgServiceClearUnCheck.Visibility = true ? Visibility.Hidden : Visibility.Visible;
@@ -2361,6 +1933,6 @@ namespace FDS
                 }
             }
         }
-        #endregion
+
     }
 }
