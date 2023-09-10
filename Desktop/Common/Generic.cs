@@ -1,4 +1,5 @@
 ﻿using FDS.DTO.Responses;
+using Microsoft.Win32;
 using QRCoder;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ using System.Management;
 using System.Net.NetworkInformation;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
@@ -171,9 +173,52 @@ namespace FDS.Common
             }
 
             return imageSource;
+        }
 
+
+        public static bool DeleteDirecUninstall()
+        {
+             
+            string installationPath = string.Empty;
+            RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
+            if (registryKey != null)
+            {
+                object obj = registryKey.GetValue("FDS");
+                if (obj != null)
+                    installationPath = Path.GetDirectoryName(obj.ToString());
+            }
+            DeleteDirectoryContents(installationPath + "\\");
+            return true;
 
         }
+
+        public static void DeleteDirectoryContents(string directoryPath)
+        {            
+            if (Directory.Exists(directoryPath))
+            {
+                DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
+                foreach (FileInfo file in directoryInfo.GetFiles())
+                {
+                    Thread.Sleep(10);
+                    if(!file.ToString().Contains("FDS.exe"))
+                    {
+                        file.Delete();
+                    }
+                    //Console.WriteLine(file+ " Files Deleted from installation path");
+                   
+                }
+                foreach (DirectoryInfo dir in directoryInfo.GetDirectories())
+                {
+                    
+                        dir.Delete(true);          
+
+                }
+                //MessageBox.Show(directoryPath);
+                //// Delete the directory and its contents recursively.
+                //Directory.Delete(directoryPath, true);               
+            }            
+        }
+
 
     }
 }

@@ -167,8 +167,6 @@ namespace FDS.Services
                             {
                                 command.CommandText = "DELETE FROM moz_places";
                                 totalCount += command.ExecuteNonQuery();
-
-
                                 globals.IsLogicExecuted_FirefoxHistory = true;
                                 globalDict.DictionaryService["WebTrackingProtecting"] = false;
 
@@ -186,17 +184,19 @@ namespace FDS.Services
             string historyPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\Opera Software\Opera Stable\";
             if (Directory.Exists(historyPath))
             {
+
                 if (BrowsersGeneric.CheckFileExistBrowser(historyPath + "History") > 0)
                 {
-                    globals.IsLogicExecuted_OperaHistory = true;
                     {
+                        // Connect to the history database file
                         using (SQLiteConnection connection = new SQLiteConnection("Data Source=" + historyPath + "History"))
                         {
                             connection.Open();
+
+                            // Execute the SQL command to delete the browsing history
                             using (SQLiteCommand command = new SQLiteCommand("DELETE FROM urls", connection))
                             {
                                 totalCount = command.ExecuteNonQuery();
-
                                 globals.IsLogicExecuted_OperaHistory = true;
                                 globalDict.DictionaryService["WebTrackingProtecting"] = false;
                             }

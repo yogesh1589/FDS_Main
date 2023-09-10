@@ -19,21 +19,18 @@ namespace FDS.Common
         private const int KeySize = 2048;
 
         public static QRCodeResponse QRCodeResponse { get; private set; }
-      
+
         static bool showMessageBoxes = true;
-        //public static RSACryptoServiceProvider RSADevice { get; set; }
-        //public static RSACryptoServiceProvider RSAServer { get; set; }
+    
         public static byte[] EncKey { get; set; }
         public static bool CheckAllKeys()
         {
             try
             {
-
-
                 RSAParameters RSAParam;
 
                 Generic.RSADevice = new RSACryptoServiceProvider(2048);
-                RSAParam = Generic.RSADevice.ExportParameters(true);                 
+                RSAParam = Generic.RSADevice.ExportParameters(true);
 
                 string filePath = Path.Combine(basePathEncryption, "Main");
 
@@ -75,7 +72,9 @@ namespace FDS.Common
                     Authorization_token = Authorization_token
                 };
                 Generic.RSAServer = new RSACryptoServiceProvider(2048);
-                Generic.RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));
+                Generic.RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));            
+
+
                 return true;
             }
             catch (Exception ex)
@@ -87,6 +86,48 @@ namespace FDS.Common
                 return false;
             }
 
+        }
+
+        public static string Encrypt(string plainText, RSACryptoServiceProvider RSAServer)
+        {
+            try
+            {
+                //byte[] Key;
+                byte[] AesEncrypted;
+                using (var aesAlg = new AesCryptoServiceProvider())
+                {
+                    // Create an encryptor to perform the stream transform.
+                    EncKey = aesAlg.Key;
+                    aesAlg.Mode = CipherMode.ECB;
+                    aesAlg.Padding = PaddingMode.PKCS7;
+                    ICryptoTransform encryptor = aesAlg.CreateEncryptor();
+                    // Create the streams used for encryption.
+                    using (MemoryStream msEncrypt = new MemoryStream())
+                    {
+                        using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                        {
+                            using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
+                            {
+                                //Write all data to the stream.
+                                swEncrypt.Write(plainText);
+                            }
+                            AesEncrypted = msEncrypt.ToArray();
+                        }
+                    }
+                }
+
+
+                var RsaEncrypted = RSAServer.Encrypt(EncKey, true);
+                return Convert.ToBase64String(RsaEncrypted.Concat(AesEncrypted).ToArray());
+            }
+            catch (Exception ex)
+            {
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred while doing encryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                return "";
+            }
         }
 
         public static string Encrypt(string plainText)
@@ -130,14 +171,14 @@ namespace FDS.Common
                 return "";
             }
         }
-        public static string Decrypt(string Cipher)
+        public static string Decrypt(string Cipher, RSACryptoServiceProvider RSADevice)
         {
             try
             {
                 var bArray = Convert.FromBase64String(Cipher);
                 var encKey = bArray.Take(256).ToArray();
 
-                var byteKey = Generic.RSADevice.Decrypt(encKey, true);
+                var byteKey = RSADevice.Decrypt(encKey, true);
                 string plaintext = null;
                 // Create AesManaged    
                 using (AesManaged aes = new AesManaged())
@@ -163,7 +204,7 @@ namespace FDS.Common
             {
                 if (showMessageBoxes == true)
                 {
-                    MessageBox.Show("An error occurred while doing decryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("An error occurred while doing decryption in Decrypt: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
                 return "";
             }
@@ -174,27 +215,31 @@ namespace FDS.Common
         {
             try
             {
-                var bArray = Convert.FromBase64String(Cipher);
-                var encKey = bArray.Take(256).ToArray();
-
-                var byteKey = Generic.RSADevice.Decrypt(encKey, true);
                 string plaintext = null;
-                // Create AesManaged    
-                using (AesManaged aes = new AesManaged())
+                if (!string.IsNullOrEmpty(Cipher))
                 {
-                    // Create a decryptor    
-                    aes.Mode = CipherMode.ECB;
-                    aes.Padding = PaddingMode.None;
-                    ICryptoTransform decryptor = aes.CreateDecryptor(byteKey, aes.IV);
-                    // Create the streams used for decryption.    
-                    using (MemoryStream ms = new MemoryStream(bArray.Skip(256).ToArray()))
+                    var bArray = Convert.FromBase64String(Cipher);
+                    var encKey = bArray.Take(256).ToArray();
+
+                    var byteKey = Generic.RSADevice.Decrypt(encKey, true);
+                   
+                    // Create AesManaged    
+                    using (AesManaged aes = new AesManaged())
                     {
-                        // Create crypto stream    
-                        using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
+                        // Create a decryptor    
+                        aes.Mode = CipherMode.ECB;
+                        aes.Padding = PaddingMode.None;
+                        ICryptoTransform decryptor = aes.CreateDecryptor(byteKey, aes.IV);
+                        // Create the streams used for decryption.    
+                        using (MemoryStream ms = new MemoryStream(bArray.Skip(256).ToArray()))
                         {
-                            // Read crypto stream    
-                            using (StreamReader reader = new StreamReader(cs))
-                                plaintext = reader.ReadToEnd();
+                            // Create crypto stream    
+                            using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
+                            {
+                                // Read crypto stream    
+                                using (StreamReader reader = new StreamReader(cs))
+                                    plaintext = reader.ReadToEnd();
+                            }
                         }
                     }
                 }
@@ -204,7 +249,7 @@ namespace FDS.Common
             {
                 if (showMessageBoxes == true)
                 {
-                    MessageBox.Show("An error occurred while doing decryption: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("An error occurred while doing decryption in RetriveDecrypt: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
                 return "";
             }

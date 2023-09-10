@@ -154,9 +154,9 @@
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
-    <Reference Include="WindowsBase" />
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
+    <!--<reference include="windowsbase" />
+    <reference include="presentationcore" />
+    <reference include="presentationframework" />-->
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -370,12 +370,6 @@
     <Resource Include="Assets\Credential.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Assets\AuthenticationStep1.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Assets\AuthenticationStep2.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Assets\AuthenticationStep3.png" />
   </ItemGroup>
   <ItemGroup>
@@ -510,6 +504,8 @@
     <Resource Include="Assets\failed.gif" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Assets\AuthenticationStep1.png" />
+    <Resource Include="Assets\AuthenticationStep2.png" />
     <Content Include="Assets\spinner.gif">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

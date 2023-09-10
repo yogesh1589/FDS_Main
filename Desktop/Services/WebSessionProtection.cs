@@ -156,42 +156,84 @@ namespace FDS.Services
         protected int ExecuteFirefoxLogic(List<string> whitelistedDomain)
         {
 
+            int TotalCount = 0;
+
             string firefoxProfilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Mozilla", "Firefox", "Profiles");
-
-            List<string> profiles = BrowsersGeneric.BrowsersProfileLists(firefoxProfilePath);
-
-            string cookiePath = "cookies.sqlite";            
-
-            var result = BrowsersDB.ClearCookies(profiles, whitelistedDomain, cookiePath);
-
-            if (result.Item2)
+            if (Directory.Exists(firefoxProfilePath))
             {
-                globals.IsLogicExecuted_FirefoxCookies = true;
-                globalDict.DictionaryService["WebSessionProtection"] = false;
+                string[] profileDirectories = Directory.GetDirectories(firefoxProfilePath);
+
+                foreach (string profileDir in profileDirectories)
+                {
+                    string cookiesFilePath = Path.Combine(profileDir, "cookies.sqlite");
+                    if (BrowsersGeneric.CheckFileExistBrowser(cookiesFilePath) > 0)
+                    {
+                        using (SQLiteConnection connection = new SQLiteConnection(string.Format("Data Source={0};", cookiesFilePath)))
+                        {
+                            connection.Open();
+                            using (SQLiteCommand command = connection.CreateCommand())
+                            {
+                                string query = "DELETE FROM moz_cookies";
+                                if (whitelistedDomain.Count > 0)
+                                {
+                                    query += " WHERE ";
+                                    foreach (string domain in whitelistedDomain)
+                                    {
+                                        query += "  host not like " + domain + " And";
+                                    }
+                                    query = query.Remove(query.Length - 4);
+                                }
+                                command.CommandText = query;
+                                TotalCount += command.ExecuteNonQuery();
+                                globals.IsLogicExecuted_FirefoxCookies = true;
+                                globalDict.DictionaryService["WebSessionProtection"] = false;
+                            }
+                        }
+                    }
+                }
             }
-
-            return result.Item1;           
-
+            return TotalCount;            
         }
+
+        
 
         protected int ExecuteOperaLogic(List<string> whitelistedDomain)
         {
 
-            string operaProfilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "\\Opera Software\\Opera Stable\\Network\\Cookies");
+            int TotalCount = 0;
 
-            List<string> profiles = BrowsersGeneric.BrowsersProfileLists(operaProfilePath);
-
-            string cookiePath = "";
-
-            var result = BrowsersDB.ClearCookies(profiles, whitelistedDomain, cookiePath);
-
-            if (result.Item2)
+            var str = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var cookiePath = str + "\\Opera Software\\Opera Stable\\Network\\Cookies";
+            if (BrowsersGeneric.CheckFileExistBrowser(cookiePath) > 0)
             {
-                globals.IsLogicExecuted_OperaCookies = true;
-                globalDict.DictionaryService["WebSessionProtection"] = false;
+                using (SQLiteConnection connection = new SQLiteConnection(string.Format("Data Source={0};", cookiePath)))
+                {
+                    // Clear the cookies by deleting all records from the cookies table
+                    connection.Open();
+                    using (SQLiteCommand cmd = connection.CreateCommand())
+                    {
+                        string query = "DELETE FROM Cookies";
+                        if (whitelistedDomain.Count > 0)
+                        {
+                            query += " WHERE ";
+                            foreach (string domain in whitelistedDomain)
+                            {
+                                query += " host_key not like " + domain + " And";
+                            }
+                            query = query.Remove(query.Length - 4);
+                        }
+                        cmd.CommandText = query;
+                        cmd.Prepare();
+                        TotalCount = cmd.ExecuteNonQuery();
+                        globals.IsLogicExecuted_OperaCookies = true;
+                        globalDict.DictionaryService["WebSessionProtection"] = false;
+                        Console.WriteLine($"Deleted {TotalCount} cookies.");
+                    }
+                    connection.Close();
+                }
             }
-
-            return result.Item1;
+            return TotalCount;
+           
         }
 
         public override void LogService(string authorizationCode, string subServiceName, long FileProcessed, string ServiceId, bool IsManualExecution, string serviceTypeDetails)

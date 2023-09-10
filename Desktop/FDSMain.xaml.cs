@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
+using System.Data.Entity.Infrastructure;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
@@ -23,6 +24,7 @@ using System.Management;
 using System.Net;
 using System.Net.Http;
 using System.Net.NetworkInformation;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Principal;
@@ -35,6 +37,8 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using Windows.Devices.Usb;
+using Windows.Media.Core;
 using WpfAnimatedGif;
 using Image = System.Drawing.Image;
 
@@ -94,6 +98,7 @@ namespace FDS
         private static extern bool CredDelete(string target, int type, int reserved);
 
         public Dictionary<SubservicesData, DateTime> lstCron = new Dictionary<SubservicesData, DateTime>();
+        public Dictionary<SubservicesData, DateTime> lstCronEvent = new Dictionary<SubservicesData, DateTime>();
         public DateTime RecycleBinCronTime;
         public DateTime FlushDNSCronTime;
         public DateTime DiskCleaningCronTime;
@@ -122,6 +127,10 @@ namespace FDS
         ApiService apiService = new ApiService();
         public static byte[] EncKey { get; set; }
 
+
+
+        public RSACryptoServiceProvider RSADevice { get; set; }
+        public RSACryptoServiceProvider RSAServer { get; set; }
 
 
         public FDSMain()
@@ -216,6 +225,8 @@ namespace FDS
             try
             {
 
+                //Generic.DeleteDirecUninstall();
+
                 //// -------Actual Code --------------------------------
                 encryptOutPutFile = basePathEncryption + @"\Main";
 
@@ -230,7 +241,7 @@ namespace FDS
 
 
 
-                if (!EncryptDecryptData.CheckAllKeys())
+                if (!CheckAllKeys())
                 {
                     #region Auto start on startup done by Installer
 
@@ -256,11 +267,20 @@ namespace FDS
                 }
                 else
                 {
-
-                    if (File.Exists(TempPath + "AutoUpdate.exe"))
+                    try
                     {
-                        Directory.Delete(TempPath, true);
+                        if (File.Exists(TempPath + "AutoUpdate.exe"))
+                        {
+                            if (TryCloseRunningProcess("AutoUpdate"))
+                            {
+                                Directory.Delete(TempPath, true);
+                            }
+                        }
                     }
+                    catch
+                    {
+                        MessageBox.Show("error");
+                    }                  
 
                     LoadMenu(Screens.Landing);
                     TimerLastUpdate_Tick(timerLastUpdate, null);
@@ -641,13 +661,22 @@ namespace FDS
 
                     var apiResponse = await apiService.SendOTPAsync(txtEmailToken.Text, txtPhoneNubmer.Text, txtCountryCode.Text);
 
-                    ClearChildrenNode();                    
+                    ClearChildrenNode();
 
                     if ((apiResponse.HttpStatusCode == 0) || (apiResponse.Success == true))
                     {
                         LoadMenu(Screens.AuthenticationStep2);
                         txtCodeVerification.TextAlignment = TextAlignment.Center;
                         txtCodeVerification.Text = "A verification code has been sent to \n" + txtPhoneNubmer.Text;
+                        txtEmailTokenValidation.Visibility = Visibility.Hidden;
+                        txtPhoneValidation.Visibility = Visibility.Hidden;
+                    }
+                    else if (apiResponse.HttpStatusCode == HttpStatusCode.BadRequest)
+                    {
+                        txtEmailTokenValidation.Text = "Check email token !";
+                        txtEmailTokenValidation.Visibility = Visibility.Visible;
+                        txtPhoneValidation.Text = "Check phone number!";
+                        txtPhoneValidation.Visibility = Visibility.Visible;
                     }
                 }
                 else
@@ -659,7 +688,7 @@ namespace FDS
                     }
                     else if (!Generic.IsValidEmailTokenNumber(txtEmailToken.Text))
                     {
-                        txtEmailTokenValidation.Text = "Invalid email token address!";
+                        txtEmailTokenValidation.Text = "Invalid email token!";
                         txtEmailTokenValidation.Visibility = Visibility.Visible;
                     }
                     else if (string.IsNullOrWhiteSpace(txtPhoneNubmer.Text))
@@ -820,7 +849,7 @@ namespace FDS
 
                 ClearChildrenNode();
 
-               
+
                 if ((DeviceResponse.httpStatusCode == HttpStatusCode.OK) || (DeviceResponse.Success = true))
                 {
 
@@ -830,7 +859,7 @@ namespace FDS
 
                     IsQRGenerated = DeviceResponse != null ? true : false;
                     //timerDeviceLogin.IsEnabled = true;
-                    imgQR.Source =Generic.GetQRCode(DeviceResponse.qr_code_token);
+                    imgQR.Source = Generic.GetQRCode(DeviceResponse.qr_code_token);
 
                     IsAuthenticationFromQR = string.IsNullOrEmpty(txtEmailToken.Text) ? true : false;
 
@@ -856,7 +885,7 @@ namespace FDS
                 }
             }
         }
-       
+
         BitmapImage BitmapToImageSource(System.Drawing.Bitmap bitmap)
         {
             using (MemoryStream memory = new MemoryStream())
@@ -982,16 +1011,16 @@ namespace FDS
                 }
             }
 
-            if (EncryptDecryptData.CheckAllKeys())
-            {
+            //if (CheckAllKeys())
+            //{
 
                 var apiResponse = await apiService.PerformKeyExchangeAsync();
 
                 if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success == true))
                 {
 
-                    var plainText = EncryptDecryptData.Decrypt(apiResponse.Data);
-                    var finalData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(plainText);
+                    //var plainText = EncryptDecryptData.Decrypt(apiResponse.Data, RSADevice);
+                    //var finalData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(plainText);
 
                     timerLastUpdate.IsEnabled = true;
                     await GetDeviceDetails();
@@ -1004,8 +1033,76 @@ namespace FDS
                     {
                         MessageBox.Show("An error occurred in KeyExchange: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
-                }
+               // }
             }
+        }
+
+
+        public bool CheckAllKeys()
+        {
+            try
+            {
+                RSAParameters RSAParam;
+
+                RSADevice = new RSACryptoServiceProvider(2048);
+                RSAParam = RSADevice.ExportParameters(true);
+
+                string filePath = Path.Combine(basePathEncryption, "Main");
+
+                if (!File.Exists(filePath))
+                {
+                    return false;
+                }
+
+                RSAParam = new RSAParameters
+                {
+                    InverseQ = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.InverseQ) ? string.Empty : ConfigDetails.InverseQ),
+                    DQ = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.DQ) ? string.Empty : ConfigDetails.DQ),
+                    DP = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.DP) ? string.Empty : ConfigDetails.DP),
+                    Q = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.Q) ? string.Empty : ConfigDetails.Q),
+                    P = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.P) ? string.Empty : ConfigDetails.P),
+                    D = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.D) ? string.Empty : ConfigDetails.D),
+                    Exponent = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.Exponent) ? string.Empty : ConfigDetails.Exponent),
+                    Modulus = Convert.FromBase64String(String.IsNullOrEmpty(ConfigDetails.Modulus) ? string.Empty : ConfigDetails.Modulus),
+                };
+
+                RSADevice = new RSACryptoServiceProvider(2048);
+                RSADevice.ImportParameters(RSAParam);
+
+                var key1 = String.IsNullOrEmpty(ConfigDetails.Key1) ? string.Empty : ConfigDetails.Key1;
+                var key2 = String.IsNullOrEmpty(ConfigDetails.Key2) ? string.Empty : ConfigDetails.Key2;
+                var Authentication_token = String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token;
+                var Authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token;
+
+
+                bool ValidServerKey = !string.IsNullOrEmpty(key1) && !string.IsNullOrEmpty(key2) && !string.IsNullOrEmpty(Authentication_token) && !string.IsNullOrEmpty(Authorization_token);
+                if (!ValidServerKey)
+                {
+                    return false;
+                }
+                QRCodeResponse = new QRCodeResponse
+                {
+                    Public_key = key1 + key2,
+                    Authentication_token = Authentication_token,
+                    Authorization_token = Authorization_token
+                };
+                RSAServer = new RSACryptoServiceProvider(2048);
+                RSAServer = RSAKeys.ImportPublicKey(System.Text.ASCIIEncoding.ASCII.GetString(Convert.FromBase64String(QRCodeResponse.Public_key)));
+
+                Generic.RSAServer = RSAServer;
+                Generic.RSADevice = RSADevice;
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                return false;
+            }
+
         }
 
         public void loadMenuItems(string ImageTxt, string txtValue)
@@ -1078,6 +1175,7 @@ namespace FDS
                     MessageBox.Show("Your device has been deleted", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                     deviceDeletedFlag = true;
                     lstCron.Clear();
+                    lstCronEvent.Clear();
                     encryptOutPutFile = basePathEncryption + @"\Main";
                     if (File.Exists(encryptOutPutFile))
                     {
@@ -1182,9 +1280,14 @@ namespace FDS
             if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
             {
                 var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
-                int idx = plainText.LastIndexOf('}');
-                var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
-                var deviceDetail = JsonConvert.DeserializeObject<DeviceDetail>(result);  //
+                var deviceDetail = (dynamic)null;
+                if (!string.IsNullOrEmpty(plainText))
+                {
+                    int idx = plainText.LastIndexOf('}');
+                    var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
+                    deviceDetail = JsonConvert.DeserializeObject<DeviceDetail>(result);  //
+                }
+
 
                 if (deviceDetail != null)
                 {
@@ -1227,14 +1330,19 @@ namespace FDS
             {
                 var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
 
-                int idx = plainText.LastIndexOf('}');
-                var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
-                var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);//.Replace("false", "true"));// replace used to test services
-                                                                                               //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
+                if (!string.IsNullOrEmpty(plainText))
+                {
+                    int idx = plainText.LastIndexOf('}');
+                    var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
+                    var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(result);//.Replace("false", "true"));// replace used to test services
+                                                                                                   //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
 
-                DateTime localDate = DateTime.Now.ToLocalTime();
-                txtUpdatedOn.Text = localDate.ToString();
-                ExecuteServices(servicesResponse);
+                    DateTime localDate = DateTime.Now.ToLocalTime();
+                    txtUpdatedOn.Text = localDate.ToString();
+                    ExecuteServices(servicesResponse);
+                }
+
+
                 timerLastUpdate.IsEnabled = true;
             }
             else
@@ -1257,6 +1365,7 @@ namespace FDS
                 if (IsServiceActive)
                 {
                     lstCron.Clear();
+                    lstCronEvent.Clear();
                     foreach (var services in servicesResponse.Services)
                     {
                         foreach (var subservice in services.Subservices)
@@ -1273,12 +1382,13 @@ namespace FDS
                                 }
                                 else
                                 {
+                                    var schedule = CrontabSchedule.Parse(subservice.Execution_period);
+                                    DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
                                     if (!string.IsNullOrEmpty(subservice.Execution_period))
                                     {
-                                        var schedule = CrontabSchedule.Parse(subservice.Execution_period);
-                                        DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
                                         lstCron.Add(subservice, nextRunTime);
                                     }
+                                    lstCronEvent.Add(subservice, nextRunTime);
                                 }
                             }
                         }
@@ -1393,12 +1503,14 @@ namespace FDS
 
         private async void TimerEventBasedService_Tick(object sender, EventArgs e)
         {
-            if (lstCron.Count > 1)
+            if (lstCronEvent.Count > 1)
             {
                 EventRunner eventRunner = new EventRunner();
                 Dictionary<string, SubservicesData> dicEventServices = new Dictionary<string, SubservicesData>();
 
-                foreach (var key in lstCron)
+
+
+                foreach (var key in lstCronEvent)
                 {
                     SubservicesData SubservicesData = key.Key;
                     string transformed = TransformString(SubservicesData.Sub_service_name);
@@ -1600,6 +1712,7 @@ namespace FDS
                             File.Delete(encryptOutPutFile);
                             ConfigDataClear();
                         }
+                        Generic.DeleteDirecUninstall();
                         btnUninstall.ToolTip = "Your uninstall request has been approved! ";
                         btnUninstall.Foreground = System.Windows.Media.Brushes.DarkGreen;
                         //MessageBox.Show("Uninstall request has been approved! Will process your request soon", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -1670,7 +1783,9 @@ namespace FDS
                                         // Delete the registry key for the application
                                         key.DeleteSubKeyTree(applicationName);
 
+
                                         MessageBox.Show("Application uninstalled successfully", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+
 
                                     }
                                 }
@@ -1755,36 +1870,108 @@ namespace FDS
                 }
             }
         }
-        private void DownloadFile(string url, string temporaryMSIPath)
+        private async void DownloadFile(string url, string temporaryMSIPath)
         {
-            using (var client = new WebClient())
+            try
+            {
+                await DownloadEXEAsync(url, temporaryMSIPath);
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error downloading file: " + ex.Message);
+            }
+        }
+
+
+        private async Task<bool> DownloadEXEAsync(string downloadUrl, string temporaryMSIPath)
+        {
+            using (HttpClient client = new HttpClient())
             {
                 try
                 {
-                    client.DownloadFile(url, temporaryMSIPath);
+                    var response = await client.GetAsync(downloadUrl);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        using (var fileStream = System.IO.File.Create(temporaryMSIPath))
+                        {
+                            await response.Content.CopyToAsync(fileStream);
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine("Error downloading file: " + ex.Message);
                 }
+
+                try
+                {
+
+                    if (File.Exists(TempPath + "FDS.msi"))
+                    {
+                        //string sourcePath = Directory.GetCurrentDirectory() + "\\AutoUpdate.exe";
+                        string tempPath1 = "C:\\Fusion Data Secure\\FDS\\AutoUpdate.exe";
+
+                        try
+                        {
+                             
+                            if (File.Exists(tempPath1))
+                            {
+                                if (TryCloseRunningProcess("AutoUpdate"))
+                                {
+                                    File.Copy(tempPath1, TempPath + "AutoUpdate.exe", true);
+                                }
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            MessageBox.Show("Path not found for updated exe " + e.Message);
+                        }
+                        string AutoUpdateExePath = TempPath + "AutoUpdate.exe";
+                        Process.Start(AutoUpdateExePath);
+                    }
+
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show("Error is to open updated exe " + e.Message);
+                }
+
             }
+            return true;
+        }
+
+
+        private bool TryCloseRunningProcess(string processName)
+        {
             try
             {
-                if (File.Exists(TempPath + "FDS.msi"))
-                {
-                    File.Copy(Directory.GetCurrentDirectory() + "\\AutoUpdate.exe", TempPath + "AutoUpdate.exe", true);
-                    string AutoUpdateExePath = TempPath + "AutoUpdate.exe";
-                    //Process.Start(AutoUpdateExePath);
-                    //C:\\web\\Temp\\FDS\\
-                    Process.Start(@"C:\web\Temp\FDS\AutoUpdate.exe");
-                }
-                //MessageBox.Show("Autoupdate start");
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show("Error is to open updated exe " + e.Message);
-            }
+                Process[] processes = Process.GetProcessesByName(processName);
 
+                foreach (Process process in processes)
+                {
+                    process.CloseMainWindow(); // Attempt to close the main window gracefully
+                    process.WaitForExit(5000); // Wait for the process to exit for up to 5 seconds
+
+                    if (!process.HasExited)
+                    {
+                        // If the process did not exit, kill it forcibly
+                        process.Kill();
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Error in TryCloseRunningProcess");
+                return false;
+            }
         }
 
 

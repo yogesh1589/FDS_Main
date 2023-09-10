@@ -10,7 +10,6 @@ F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\AutoUpdate.exe.config
 F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\AutoUpdate.exe
 F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\AutoUpdate.pdb
 F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.AssemblyReference.cache
-F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.SuggestedBindingRedirects.cache
 F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.CoreCompileInputs.cache
 F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.exe
 F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.pdb
@@ -22,3 +21,5 @@ E:\FusionDataSecure\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.Suggeste
 E:\FusionDataSecure\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.CoreCompileInputs.cache
 E:\FusionDataSecure\windowsapp\AutoUpdate\obj\Release\AutoUpdate.exe
 E:\FusionDataSecure\windowsapp\AutoUpdate\obj\Release\AutoUpdate.pdb
+F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\PresentationCore.dll
+F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.CopyComplete

@@ -69,7 +69,7 @@ namespace FDS.Runners.Abstract
 
                     bool isBrowserInstalled = BrowsersGeneric.IsBrowserInstalled(browserName);
 
-                    if (isBrowserInstalled)
+                    if ((isBrowserInstalled) || (browserName=="opera"))
                     {
                         foreach (var service in servicesToRun)
                         {
