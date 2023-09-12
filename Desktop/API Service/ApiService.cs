@@ -41,7 +41,7 @@ namespace FDS.API_Service
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
                     var apiResponse = JsonConvert.DeserializeObject<QRCodeResponse>(responseString);
-                     
+
                     return apiResponse;
                 }
                 else
@@ -199,6 +199,39 @@ namespace FDS.API_Service
                 // Handle exceptions and log errors if needed.
                 return null;
             }
+        }
+
+
+        public async Task<DeviceConfigCheckResponse> DeviceConfigurationTestCheckAsync()
+        {
+            string apiUrl = "https://localhost:7255/api/Values";
+
+            using (HttpClient httpClient = new HttpClient())
+            {
+                try
+                {
+                    HttpResponseMessage response = await httpClient.GetAsync(apiUrl);
+
+                    // Check if the response status code is successful (2xx)
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string jsonResponse = await response.Content.ReadAsStringAsync();
+
+                        // Deserialize the JSON response into an object
+                        DeviceConfigCheckResponse config = Newtonsoft.Json.JsonConvert.DeserializeObject<DeviceConfigCheckResponse>(jsonResponse);
+                       
+                        return config;
+                    }                  
+
+                }
+                catch (Exception ex)
+                {
+                    return null;
+                    Console.WriteLine($"Error: {ex.Message}");
+                }
+            }
+            return null;
         }
 
         public async Task<ResponseData> DeviceReauthAsync()
@@ -384,7 +417,7 @@ namespace FDS.API_Service
         {
             try
             {
-                 
+
                 var formContent = new List<KeyValuePair<string, string>> {
                 new KeyValuePair<string, string>("mac_address", AppConstants.MACAddress),
                 new KeyValuePair<string, string>("serial_number", AppConstants.SerialNumber),
@@ -493,7 +526,7 @@ namespace FDS.API_Service
             }
         }
 
-        public async Task<ResponseData> SendOTPAsync(string email,string phone,string countryCode)
+        public async Task<ResponseData> SendOTPAsync(string email, string phone, string countryCode)
         {
             try
             {
@@ -531,13 +564,13 @@ namespace FDS.API_Service
         }
 
 
-        public async Task<ResponseData> QRGeneratortimerAsync(string emailToken, string phone, string countryCode,string varificationCode,string qrCodeToken)
+        public async Task<ResponseData> QRGeneratortimerAsync(string emailToken, string phone, string countryCode, string varificationCode, string qrCodeToken)
         {
             try
             {
 
                 var formContent = new List<KeyValuePair<string, string>> {
-                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),                         
+                        new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
                         new KeyValuePair<string, string>("phone_no", phone),
                         new KeyValuePair<string, string>("phone_code", countryCode),
                         new KeyValuePair<string, string>("otp", varificationCode),

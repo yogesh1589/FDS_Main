@@ -35,6 +35,11 @@ namespace FDS.Logging
                 IsManualExecution = false;
                 IsEventExecution = true;
             }
+            bool isSkipFlag = false;
+            if(serviceTypeDetails == "SK")
+            {
+                isSkipFlag = true; 
+            }
 
             LogServiceRequest logServiceRequest = new LogServiceRequest
             {
@@ -48,7 +53,8 @@ namespace FDS.Logging
                 executed = true,
                 file_deleted = Convert.ToString(FileProcessed),
                 IsManualExecution = IsManualExecution,
-                IsEventExecution = IsEventExecution
+                IsEventExecution = IsEventExecution,
+                Skipped_Service_Executed = isSkipFlag
             };
 
             var payload = EncryptDecryptData.Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(logServiceRequest))));

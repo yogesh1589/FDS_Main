@@ -14,6 +14,7 @@ namespace FDS.Factories
         WebCacheProtection,
         WebSessionProtection, 
         WindowsRegistryProtection,
-        WebTrackingProtecting
+        WebTrackingProtecting,
+        SystemNetworkMonitoringProtection
     }
 }

@@ -14,7 +14,7 @@ namespace FDS.Factories
 {
     public class ServiceFactory
     {
-        
+
         public IService CreateService(ServiceTypeName type)
         {
             switch (type)
@@ -33,6 +33,8 @@ namespace FDS.Factories
                     return new WebTrackingProtecting();
                 case ServiceTypeName.WindowsRegistryProtection:
                     return new WindowsRegistryProtection();
+                case ServiceTypeName.SystemNetworkMonitoringProtection:
+                    return new SystemNetworkMonitoringProtection();
                 // Create other service instances similarly
                 default:
                     throw new ArgumentException("Invalid service type.");

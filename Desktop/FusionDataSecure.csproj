@@ -187,6 +187,7 @@
     <Compile Include="Logging\BrowsersDB.cs" />
     <Compile Include="Logging\DatabaseLogger.cs" />
     <Compile Include="Logging\ILogger.cs" />
+    <Compile Include="Models\CertificateData.cs" />
     <Compile Include="Runners\Abstract\BaseBrowser.cs" />
     <Compile Include="Runners\EventRunner.cs" />
     <Compile Include="Runners\ScheduleRunner.cs" />
@@ -196,6 +197,7 @@
     <Compile Include="Services\DnsCacheProtection.cs" />
     <Compile Include="Services\FreeStorageProtection.cs" />
     <Compile Include="Services\Interface\IService.cs" />
+    <Compile Include="Services\SystemNetworkMonitoringProtection.cs" />
     <Compile Include="Services\TrashDataProtection.cs" />
     <Compile Include="Services\WebCacheProtection.cs" />
     <Compile Include="Services\WebSessionProtection.cs" />

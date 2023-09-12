@@ -58,6 +58,10 @@ namespace FDS.Runners
                             service = serviceFactory.CreateService(ServiceTypeName.FreeStorageProtection);
                             tasks.Add(Task.Run(() => service.RunService(subservices, serviceTypeDetails)));
                             break;
+                        case ServiceTypeName.SystemNetworkMonitoringProtection:
+                            service = serviceFactory.CreateService(ServiceTypeName.SystemNetworkMonitoringProtection);
+                            tasks.Add(Task.Run(() => service.RunService(subservices, serviceTypeDetails)));
+                            break;
                         case ServiceTypeName.WebSessionProtection:
                             resultService.Add(new WebSessionProtection());
                             break;
@@ -66,7 +70,7 @@ namespace FDS.Runners
                             break;
                         case ServiceTypeName.WebCacheProtection:
                             resultService.Add(new WebCacheProtection());
-                            break;
+                            break;                       
                     }
                     await Task.WhenAll(tasks);
                 }

@@ -280,7 +280,7 @@ namespace FDS
                     catch
                     {
                         MessageBox.Show("error");
-                    }                  
+                    }
 
                     LoadMenu(Screens.Landing);
                     TimerLastUpdate_Tick(timerLastUpdate, null);
@@ -1014,26 +1014,26 @@ namespace FDS
             //if (CheckAllKeys())
             //{
 
-                var apiResponse = await apiService.PerformKeyExchangeAsync();
+            var apiResponse = await apiService.PerformKeyExchangeAsync();
 
-                if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success == true))
+            if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success == true))
+            {
+
+                //var plainText = EncryptDecryptData.Decrypt(apiResponse.Data, RSADevice);
+                //var finalData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(plainText);
+
+                timerLastUpdate.IsEnabled = true;
+                await GetDeviceDetails();
+            }
+            else
+            {
+                timerLastUpdate.IsEnabled = false;
+                btnGetStarted_Click(btnGetStarted, null);
+                if (showMessageBoxes == true)
                 {
-
-                    //var plainText = EncryptDecryptData.Decrypt(apiResponse.Data, RSADevice);
-                    //var finalData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(plainText);
-
-                    timerLastUpdate.IsEnabled = true;
-                    await GetDeviceDetails();
+                    MessageBox.Show("An error occurred in KeyExchange: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
-                else
-                {
-                    timerLastUpdate.IsEnabled = false;
-                    btnGetStarted_Click(btnGetStarted, null);
-                    if (showMessageBoxes == true)
-                    {
-                        MessageBox.Show("An error occurred in KeyExchange: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-               // }
+                // }
             }
         }
 
@@ -1201,11 +1201,13 @@ namespace FDS
 
         private async Task DeviceConfigurationCheck()
         {
-            var apiResponse = await apiService.DeviceConfigurationCheckAsync();
 
+            var apiResponse = await apiService.DeviceConfigurationCheckAsync();
+            //var DeviceConfigData = await apiService.DeviceConfigurationTestCheckAsync();
+            //if (DeviceConfigData != null)
+            //{
             if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
             {
-
                 var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
                 int idx = plainText.LastIndexOf('}');
                 var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
@@ -1308,6 +1310,7 @@ namespace FDS
                     else
                     {
                         loadMenuItems("Assets/DeviceDisable.png", "Check With Administrator");
+                        timerLastUpdate.IsEnabled = true;
                     }
                 }
             }
@@ -1378,7 +1381,11 @@ namespace FDS
                             {
                                 if (subservice.Execute_now)
                                 {
-                                    ExecuteSubService(subservice);
+                                    ExecuteSubService(subservice,"M");
+                                }
+                                else if (subservice.Execute_Skipped_Service)
+                                {
+                                    ExecuteSubService(subservice,"SK");
                                 }
                                 else
                                 {
@@ -1551,12 +1558,12 @@ namespace FDS
         }
 
 
-        private async void ExecuteSubService(SubservicesData subservices)
+        private async void ExecuteSubService(SubservicesData subservices,string serviceType)
         {
             try
             {
 
-                var result = await RunServices("M", subservices);
+                var result = await RunServices(serviceType, subservices);
 
                 DateTime localDate = DateTime.Now.ToLocalTime();
                 txtUpdatedOn.Text = localDate.ToString();
@@ -1712,7 +1719,8 @@ namespace FDS
                             File.Delete(encryptOutPutFile);
                             ConfigDataClear();
                         }
-                        Generic.DeleteDirecUninstall();
+                        //MessageBox.Show("Deleting start");
+                        //Generic.DeleteDirecUninstall();
                         btnUninstall.ToolTip = "Your uninstall request has been approved! ";
                         btnUninstall.Foreground = System.Windows.Media.Brushes.DarkGreen;
                         //MessageBox.Show("Uninstall request has been approved! Will process your request soon", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -1759,12 +1767,15 @@ namespace FDS
                                             using (Process uninstallProcess = new Process { StartInfo = uninstallStartInfo })
                                             {
                                                 uninstallProcess.Start();
+
                                             }
                                         }
                                         catch (Exception ex)
                                         {
-
-                                            MessageBox.Show(ex.ToString());
+                                            if (showMessageBoxes == true)
+                                            {
+                                                MessageBox.Show(ex.ToString());
+                                            }
                                         }
                                         Process[] processes = Process.GetProcessesByName(applicationName);
 
@@ -1773,6 +1784,8 @@ namespace FDS
                                             try
                                             {
                                                 process.Kill();
+
+
                                                 //Console.WriteLine($"Process with ID {process.Id} killed successfully.");
                                             }
                                             catch (Exception ex)
@@ -1782,8 +1795,6 @@ namespace FDS
                                         }
                                         // Delete the registry key for the application
                                         key.DeleteSubKeyTree(applicationName);
-
-
                                         MessageBox.Show("Application uninstalled successfully", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
 
 
@@ -1919,7 +1930,7 @@ namespace FDS
 
                         try
                         {
-                             
+
                             if (File.Exists(tempPath1))
                             {
                                 if (TryCloseRunningProcess("AutoUpdate"))

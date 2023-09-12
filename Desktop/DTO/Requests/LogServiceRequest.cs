@@ -21,5 +21,7 @@ namespace FDS.DTO.Requests
         public string device_uuid { get; set; }
 
         public bool IsEventExecution { get; set; }
+
+        public bool Skipped_Service_Executed { get; set; }
     }
 }

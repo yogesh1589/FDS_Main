@@ -30,11 +30,11 @@ namespace AutoUpdate
         public static void Main(string[] args)
         {
             //Hide the console window
-            //IntPtr hWnd = GetConsoleWindow();
-            //if (hWnd != IntPtr.Zero)
-            //{
-            //    ShowWindow(hWnd, SW_HIDE);
-            //}
+            IntPtr hWnd = GetConsoleWindow();
+            if (hWnd != IntPtr.Zero)
+            {
+                ShowWindow(hWnd, SW_HIDE);
+            }
 
             string TempFDSPath = "C:\\web\\Temp\\FDS\\";
             Console.WriteLine("Hi! you are about to update your FDS application");
@@ -55,8 +55,7 @@ namespace AutoUpdate
             try
             {
 
-                Console.WriteLine(directoryPath);
-                Thread.Sleep(2000);
+           
                 // Get the directory info
                 DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
 
@@ -78,19 +77,19 @@ namespace AutoUpdate
                     
                 }
                 //Hide the console window
-                //IntPtr hWnd = GetConsoleWindow();
-                //if (hWnd != IntPtr.Zero)
-                //{
-                //    ShowWindow(hWnd, SW_HIDE);
-                //}
-                Console.WriteLine("Files Deleted from installation path");
-                Thread.Sleep(2000);
-                Console.WriteLine("Start Files Extracted to installation path");
+                IntPtr hWnd = GetConsoleWindow();
+                if (hWnd != IntPtr.Zero)
+                {
+                    ShowWindow(hWnd, SW_HIDE);
+                }
+                //Console.WriteLine("Files Deleted from installation path");
+                //Thread.Sleep(2000);
+                //Console.WriteLine("Start Files Extracted to installation path");
                 ExtractMSIContent(sourcePath + "FDS.msi", directoryPath);
-                Thread.Sleep(2000);
-                Console.WriteLine("Files Extracted to installation path");
+                //Thread.Sleep(2000);
+                //Console.WriteLine("Files Extracted to installation path");
                 string AutoUpdateExePath = directoryPath + "FDS.exe";
-                Console.WriteLine("start FDS from " + AutoUpdateExePath);
+                //Console.WriteLine("start FDS from " + AutoUpdateExePath);
                 Process.Start(AutoUpdateExePath);
                
                 
@@ -103,11 +102,11 @@ namespace AutoUpdate
         public static void ExtractMSIContent(string msiFilePath, string outputDirectory)
         {
             //Hide the console window
-            //IntPtr hWnd = GetConsoleWindow();
-            //if (hWnd != IntPtr.Zero)
-            //{
-            //    ShowWindow(hWnd, SW_HIDE);
-            //}
+            IntPtr hWnd = GetConsoleWindow();
+            if (hWnd != IntPtr.Zero)
+            {
+                ShowWindow(hWnd, SW_HIDE);
+            }
             Process process = new Process();
             process.StartInfo.FileName = "msiexec";
             process.StartInfo.Arguments = $"/a \"{msiFilePath}\" /qn TARGETDIR=\"{outputDirectory}\"";

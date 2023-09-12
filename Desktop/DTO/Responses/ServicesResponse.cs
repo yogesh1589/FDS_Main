@@ -29,5 +29,7 @@ namespace FDS.DTO.Responses
         public bool Sub_service_active { get; set; }
         public string Execution_period { get; set; }
         public bool Execute_now { get; set; }
+
+        public bool Execute_Skipped_Service { get; set; }
     }
 }

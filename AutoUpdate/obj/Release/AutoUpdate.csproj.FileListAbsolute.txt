@@ -23,3 +23,13 @@ E:\FusionDataSecure\windowsapp\AutoUpdate\obj\Release\AutoUpdate.exe
 E:\FusionDataSecure\windowsapp\AutoUpdate\obj\Release\AutoUpdate.pdb
 F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\PresentationCore.dll
 F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.CopyComplete
+D:\FDS\windowsapp\AutoUpdate\bin\Release\AutoUpdate.exe.config
+D:\FDS\windowsapp\AutoUpdate\bin\Release\AutoUpdate.exe
+D:\FDS\windowsapp\AutoUpdate\bin\Release\AutoUpdate.pdb
+D:\FDS\windowsapp\AutoUpdate\bin\Release\PresentationCore.dll
+D:\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.AssemblyReference.cache
+D:\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.SuggestedBindingRedirects.cache
+D:\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.CoreCompileInputs.cache
+D:\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.CopyComplete
+D:\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.exe
+D:\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.pdb

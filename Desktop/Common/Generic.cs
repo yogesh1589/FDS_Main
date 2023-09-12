@@ -178,7 +178,7 @@ namespace FDS.Common
 
         public static bool DeleteDirecUninstall()
         {
-             
+            MessageBox.Show("Deleting 1");
             string installationPath = string.Empty;
             RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
             if (registryKey != null)
@@ -186,6 +186,7 @@ namespace FDS.Common
                 object obj = registryKey.GetValue("FDS");
                 if (obj != null)
                     installationPath = Path.GetDirectoryName(obj.ToString());
+                MessageBox.Show(installationPath);
             }
             DeleteDirectoryContents(installationPath + "\\");
             return true;
@@ -196,10 +197,12 @@ namespace FDS.Common
         {            
             if (Directory.Exists(directoryPath))
             {
+                 
                 DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
                 foreach (FileInfo file in directoryInfo.GetFiles())
                 {
                     Thread.Sleep(10);
+                    MessageBox.Show(file.ToString());
                     if(!file.ToString().Contains("FDS.exe"))
                     {
                         file.Delete();
