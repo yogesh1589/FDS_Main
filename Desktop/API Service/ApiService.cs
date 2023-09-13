@@ -49,6 +49,7 @@ namespace FDS.API_Service
                     QRCodeResponse qRCodeResponse = new QRCodeResponse
                     {
                         StatusCode = response.StatusCode
+                       
                     };
                     return qRCodeResponse;
                 }
@@ -97,7 +98,8 @@ namespace FDS.API_Service
                 {
                     ResponseData qRCodeResponse = new ResponseData
                     {
-                        HttpStatusCode = response.StatusCode
+                        HttpStatusCode = response.StatusCode,
+                        Success = false
                     };
                     return qRCodeResponse;
                 }
@@ -145,7 +147,8 @@ namespace FDS.API_Service
                 {
                     ResponseData qRCodeResponse = new ResponseData
                     {
-                        HttpStatusCode = response.StatusCode
+                        HttpStatusCode = response.StatusCode,
+                        Success = false
                     };
                     return qRCodeResponse;
                 }
@@ -189,7 +192,8 @@ namespace FDS.API_Service
                 {
                     ResponseData qRCodeResponse = new ResponseData
                     {
-                        HttpStatusCode = response.StatusCode
+                        HttpStatusCode = response.StatusCode,
+                        Success = false
                     };
                     return qRCodeResponse;
                 }
@@ -266,7 +270,8 @@ namespace FDS.API_Service
                 {
                     ResponseData qRCodeResponse = new ResponseData
                     {
-                        HttpStatusCode = response.StatusCode
+                        HttpStatusCode = response.StatusCode,
+                        Success = false
                     };
                     return qRCodeResponse;
                 }
@@ -308,7 +313,8 @@ namespace FDS.API_Service
                 {
                     DeviceResponse qRCodeResponse = new DeviceResponse
                     {
-                        httpStatusCode = response.StatusCode
+                        httpStatusCode = response.StatusCode,
+                        Success = false
                     };
                     return qRCodeResponse;
                 }
@@ -356,7 +362,8 @@ namespace FDS.API_Service
                 {
                     ResponseData qRCodeResponse = new ResponseData
                     {
-                        HttpStatusCode = response.StatusCode
+                        HttpStatusCode = response.StatusCode,
+                        Success = false
                     };
                     return qRCodeResponse;
                 }
@@ -401,7 +408,8 @@ namespace FDS.API_Service
                 {
                     ResponseData qRCodeResponse = new ResponseData
                     {
-                        HttpStatusCode = response.StatusCode
+                        HttpStatusCode = response.StatusCode,
+                        Success = false
                     };
                     return qRCodeResponse;
                 }
@@ -438,7 +446,8 @@ namespace FDS.API_Service
                 {
                     ResponseData qRCodeResponse = new ResponseData
                     {
-                        HttpStatusCode = response.StatusCode
+                        HttpStatusCode = response.StatusCode,
+                        Success = false
                     };
                     return qRCodeResponse;
                 }
@@ -476,7 +485,8 @@ namespace FDS.API_Service
                 {
                     ResponseData qRCodeResponse = new ResponseData
                     {
-                        HttpStatusCode = response.StatusCode
+                        HttpStatusCode = response.StatusCode,
+                        Success = false
                     };
                     return qRCodeResponse;
                 }
@@ -514,7 +524,8 @@ namespace FDS.API_Service
                 {
                     ResponseData qRCodeResponse = new ResponseData
                     {
-                        HttpStatusCode = response.StatusCode
+                        HttpStatusCode = response.StatusCode,
+                        Success = false
                     };
                     return qRCodeResponse;
                 }
@@ -551,7 +562,8 @@ namespace FDS.API_Service
                 {
                     ResponseData qRCodeResponse = new ResponseData
                     {
-                        HttpStatusCode = response.StatusCode
+                        HttpStatusCode = response.StatusCode,
+                        Success = false
                     };
                     return qRCodeResponse;
                 }
@@ -592,7 +604,8 @@ namespace FDS.API_Service
                 {
                     ResponseData qRCodeResponse = new ResponseData
                     {
-                        HttpStatusCode = response.StatusCode
+                        HttpStatusCode = response.StatusCode,
+                        Success = false
                     };
                     return qRCodeResponse;
                 }
@@ -604,6 +617,25 @@ namespace FDS.API_Service
             }
         }
 
+
+        public async Task<bool> DownloadURLAsync(string downloadUrl,string temporaryMSIPath)
+        {
+
+            var response = await client.GetAsync(downloadUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                using (var fileStream = System.IO.File.Create(temporaryMSIPath))
+                {
+                    await response.Content.CopyToAsync(fileStream);
+                }
+            }
+            else
+            {
+                return false;
+            }
+
+            return true;
+        }
         // Define other API methods as needed.
     }
 

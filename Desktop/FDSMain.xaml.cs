@@ -123,7 +123,7 @@ namespace FDS
         string encryptOutPutFile = @"\Main";
         System.Windows.Controls.Image imgLoader;
         bool deviceDeletedFlag = false;
-        bool showMessageBoxes = true;//true for staging and false for production
+        bool showMessageBoxes = false;//true for staging and false for production
         ApiService apiService = new ApiService();
         public static byte[] EncKey { get; set; }
 
@@ -1120,13 +1120,24 @@ namespace FDS
         public async Task CheckDeviceHealth()
         {
 
-
             isInternetConnected = Generic.CheckInternetConnection();
+
+            if(!isInternetConnected)
+            {
+                System.Threading.Thread.Sleep(2000);
+                isInternetConnected = Generic.CheckInternetConnection();
+            }
+
             if (isInternetConnected)
             {
                 var apiResponse = await apiService.CheckDeviceHealthAsync();
 
-                if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true) && (apiResponse.HttpStatusCode != HttpStatusCode.Unauthorized))
+                if (apiResponse == null)
+                {
+                    return;
+                }
+
+                if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true) && (apiResponse.HttpStatusCode != HttpStatusCode.Unauthorized) && (apiResponse.HttpStatusCode != HttpStatusCode.MethodNotAllowed))
                 {
                     var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
                     int idx = plainText.LastIndexOf('}');
@@ -1184,6 +1195,18 @@ namespace FDS
                     }
                     //this.Close();
                 }
+                else
+                {
+                    timerLastUpdate.IsEnabled = true;
+                    lblCompliant.Text = "Contact to Administrator";
+                    string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
+                    BitmapImage DeviceDeactive = new BitmapImage();
+                    DeviceDeactive.BeginInit();
+                    DeviceDeactive.UriSource = new Uri(ImagePath);
+                    DeviceDeactive.EndInit();
+                    imgCompliant.Source = DeviceDeactive;
+
+                }
             }
             else
             {
@@ -1203,6 +1226,10 @@ namespace FDS
         {
 
             var apiResponse = await apiService.DeviceConfigurationCheckAsync();
+            if (apiResponse == null)
+            {
+                return;
+            }
             //var DeviceConfigData = await apiService.DeviceConfigurationTestCheckAsync();
             //if (DeviceConfigData != null)
             //{
@@ -1265,6 +1292,10 @@ namespace FDS
         private async Task DeviceReauth()
         {
             var apiResponse = await apiService.DeviceReauthAsync();
+            if (apiResponse == null)
+            {
+                return;
+            }
             if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
             {
                 timerLastUpdate.IsEnabled = false;
@@ -1278,7 +1309,10 @@ namespace FDS
         private async Task GetDeviceDetails()
         {
             var apiResponse = await apiService.GetDeviceDetailsAsync();
-
+            if (apiResponse == null)
+            {
+                return;
+            }
             if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
             {
                 var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
@@ -1309,8 +1343,10 @@ namespace FDS
                     }
                     else
                     {
-                        loadMenuItems("Assets/DeviceDisable.png", "Check With Administrator");
+                       
                         timerLastUpdate.IsEnabled = true;
+                        loadMenuItems("Assets/DeviceDisable.png", "Check With Administrator");
+
                     }
                 }
             }
@@ -1328,7 +1364,10 @@ namespace FDS
         {
 
             var apiResponse = await apiService.RetrieveServicesAsync();
-
+            if (apiResponse == null)
+            {
+                return;
+            }
             if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
             {
                 var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
@@ -1354,7 +1393,7 @@ namespace FDS
                 //btnGetStarted_Click(btnGetStarted, null);
                 if (showMessageBoxes == true)
                 {
-                    MessageBox.Show("An error occurred in RetrieveServices: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("An error occurred in RetrieveServices: " + apiResponse.HttpStatusCode.ToString(), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -1381,11 +1420,11 @@ namespace FDS
                             {
                                 if (subservice.Execute_now)
                                 {
-                                    ExecuteSubService(subservice,"M");
+                                    ExecuteSubService(subservice, "M");
                                 }
                                 else if (subservice.Execute_Skipped_Service)
                                 {
-                                    ExecuteSubService(subservice,"SK");
+                                    ExecuteSubService(subservice, "SK");
                                 }
                                 else
                                 {
@@ -1558,7 +1597,7 @@ namespace FDS
         }
 
 
-        private async void ExecuteSubService(SubservicesData subservices,string serviceType)
+        private async void ExecuteSubService(SubservicesData subservices, string serviceType)
         {
             try
             {
@@ -1691,7 +1730,10 @@ namespace FDS
         {
 
             var apiResponse = await apiService.UninstallProgramAsync();
-
+            if (apiResponse == null)
+            {
+                return;
+            }
             if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
             {
                 /// 1- Pending, 2 - Approved, 3 - Rejected
@@ -1864,12 +1906,17 @@ namespace FDS
         private async void AutoUpdate()
         {
             var apiResponse = await apiService.AutoUpdateAsync();
+            if (apiResponse == null)
+            {
+                return;
+            }
 
             if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
             {
                 var getresponse = await client.GetAsync(AppConstants.EndPoints.AutoUpdate + "?token=" + apiResponse.msg);
                 if (getresponse.IsSuccessStatusCode)
                 {
+
                     var getresponseString = await getresponse.Content.ReadAsStringAsync();
                     AutoUpdateResponse UpdateGetResponse = JsonConvert.DeserializeObject<AutoUpdateResponse>(getresponseString);
                     string Url = UpdateGetResponse.msg;
@@ -1884,76 +1931,97 @@ namespace FDS
         private async void DownloadFile(string url, string temporaryMSIPath)
         {
             try
-            {
+            {               
                 await DownloadEXEAsync(url, temporaryMSIPath);
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error downloading file: " + ex.Message);
+                if (showMessageBoxes == true)
+                {
+                    Console.WriteLine("Error downloading file: " + ex.Message);
+                }
             }
         }
 
 
         private async Task<bool> DownloadEXEAsync(string downloadUrl, string temporaryMSIPath)
         {
-            using (HttpClient client = new HttpClient())
+
+            bool result = await apiService.DownloadURLAsync(downloadUrl, temporaryMSIPath);
+
+            if (result != true)
             {
-                try
-                {
-                    var response = await client.GetAsync(downloadUrl);
+                return false;
+            }
 
-                    if (response.IsSuccessStatusCode)
+            //using (HttpClient client = new HttpClient())
+            //{
+            //try
+            //{
+            //    var response = await client.GetAsync(downloadUrl);
+            //    MessageBox.Show("DownloadFile Response " + response.ToString());
+            //    MessageBox.Show("DownloadFile URL " + downloadUrl.ToString());
+            //    if (response.IsSuccessStatusCode)
+            //    {
+            //        using (var fileStream = System.IO.File.Create(temporaryMSIPath))
+            //        {
+            //            await response.Content.CopyToAsync(fileStream);
+            //        }
+            //    }
+            //    else
+            //    {
+            //        return false;
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    Console.WriteLine("Error downloading file: " + ex.Message);
+            //}
+         
+            try
+            {
+
+                if (File.Exists(TempPath + "FDS.msi"))
+                {
+                    //string sourcePath = Directory.GetCurrentDirectory() + "\\AutoUpdate.exe";
+                    string tempPath1 = "C:\\Fusion Data Secure\\FDS\\AutoUpdate.exe";
+
+                    try
                     {
-                        using (var fileStream = System.IO.File.Create(temporaryMSIPath))
+
+                        if (File.Exists(tempPath1))
                         {
-                            await response.Content.CopyToAsync(fileStream);
-                        }
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Error downloading file: " + ex.Message);
-                }
-
-                try
-                {
-
-                    if (File.Exists(TempPath + "FDS.msi"))
-                    {
-                        //string sourcePath = Directory.GetCurrentDirectory() + "\\AutoUpdate.exe";
-                        string tempPath1 = "C:\\Fusion Data Secure\\FDS\\AutoUpdate.exe";
-
-                        try
-                        {
-
-                            if (File.Exists(tempPath1))
+                            if (TryCloseRunningProcess("AutoUpdate"))
                             {
-                                if (TryCloseRunningProcess("AutoUpdate"))
-                                {
-                                    File.Copy(tempPath1, TempPath + "AutoUpdate.exe", true);
-                                }
+
+                                File.Copy(tempPath1, TempPath + "AutoUpdate.exe", true);
+                                MessageBox.Show("File Copy Done");
                             }
                         }
-                        catch (Exception e)
+                    }
+                    catch (Exception e)
+                    {
+                        if (showMessageBoxes == true)
                         {
                             MessageBox.Show("Path not found for updated exe " + e.Message);
                         }
-                        string AutoUpdateExePath = TempPath + "AutoUpdate.exe";
-                        Process.Start(AutoUpdateExePath);
                     }
-
-                }
-                catch (Exception e)
-                {
-                    MessageBox.Show("Error is to open updated exe " + e.Message);
+                   
+                    string AutoUpdateExePath = TempPath + "AutoUpdate.exe";
+                    Process.Start(AutoUpdateExePath);
                 }
 
             }
+            catch (Exception e)
+            {
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("Error is to open updated exe " + e.Message);
+                }
+            }
+
+
             return true;
         }
 
@@ -1980,7 +2048,10 @@ namespace FDS
             }
             catch (Exception)
             {
-                MessageBox.Show("Error in TryCloseRunningProcess");
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("Error in TryCloseRunningProcess");
+                }
                 return false;
             }
         }

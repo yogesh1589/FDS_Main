@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace FDS.Services
 {
-    public class TrashDataProtection : IService,ILogger
+    public class TrashDataProtection : IService, ILogger
     {
         [DllImport("shell32.dll", CharSet = CharSet.Auto)]
         static extern int SHEmptyRecycleBin(IntPtr hwnd, string pszRootPath, RecycleFlags dwFlags);
@@ -41,7 +41,7 @@ namespace FDS.Services
         public bool RunService(SubservicesData subservices, string serviceTypeDetails)
         {
 
-             
+
             try
             {
 
@@ -50,14 +50,14 @@ namespace FDS.Services
 
                 int result = SHEmptyRecycleBin(IntPtr.Zero, null, RecycleFlags.SHERB_NOCONFIRMATION | RecycleFlags.SHERB_NOPROGRESSUI | RecycleFlags.SHERB_NOSOUND);
 
-                if (result == 0)
-                {
-                    LogInformation(subservices.Sub_service_authorization_code, subservices.Sub_service_name,Convert.ToInt32(initialFileCount), Convert.ToString(subservices.Id), subservices.Execute_now, serviceTypeDetails);
-                }
-                else
-                {
-                    Console.WriteLine("Failed to empty Recycle Bin. Error code: " + result);
-                }
+                //if (result == 0)
+                //{
+                LogInformation(subservices.Sub_service_authorization_code, subservices.Sub_service_name, Convert.ToInt32(initialFileCount), Convert.ToString(subservices.Id), subservices.Execute_now, serviceTypeDetails);
+                //}
+                //else
+                //{
+                //    Console.WriteLine("Failed to empty Recycle Bin. Error code: " + result);
+                //}
 
                 //Shell32.Shell shell = new Shell32.Shell();
 
@@ -69,19 +69,15 @@ namespace FDS.Services
                 //{
                 //    count++;
                 //}
-
                 ////SHEmptyRecycleBin(IntPtr.Zero, null, RecycleFlag.SHERB_NOCONFIRMATION | RecycleFlag.SHERB_NOPROGRESSUI | RecycleFlag.SHERB_NOSOUND);
 
                 //KillCmd();
-
-               
-
             }
             catch (Exception exp)
             {
                 exp.ToString();
             }
-            
+
 
             return true;
         }
