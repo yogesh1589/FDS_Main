@@ -1122,7 +1122,7 @@ namespace FDS
 
             isInternetConnected = Generic.CheckInternetConnection();
 
-            if(!isInternetConnected)
+            if (!isInternetConnected)
             {
                 System.Threading.Thread.Sleep(2000);
                 isInternetConnected = Generic.CheckInternetConnection();
@@ -1343,7 +1343,7 @@ namespace FDS
                     }
                     else
                     {
-                       
+
                         timerLastUpdate.IsEnabled = true;
                         loadMenuItems("Assets/DeviceDisable.png", "Check With Administrator");
 
@@ -1412,10 +1412,10 @@ namespace FDS
                     {
                         foreach (var subservice in services.Subservices)
                         {
-                            if (deviceDeletedFlag == true)
-                            {
-                                break;
-                            }
+                            //if (deviceDeletedFlag == true)
+                            //{
+                            //    break;
+                            //}
                             if (subservice.Sub_service_active)
                             {
                                 if (subservice.Execute_now)
@@ -1428,13 +1428,14 @@ namespace FDS
                                 }
                                 else
                                 {
-                                    var schedule = CrontabSchedule.Parse(subservice.Execution_period);
-                                    DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
+
                                     if (!string.IsNullOrEmpty(subservice.Execution_period))
                                     {
+                                        var schedule = CrontabSchedule.Parse(subservice.Execution_period);
+                                        DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
                                         lstCron.Add(subservice, nextRunTime);
                                     }
-                                    lstCronEvent.Add(subservice, nextRunTime);
+                                    lstCronEvent.Add(subservice, DateTime.MinValue);
                                 }
                             }
                         }
@@ -1473,15 +1474,18 @@ namespace FDS
 
 
                         //bool testCheck = false;
-                        ////if ((SubservicesData.Name.ToString() == "Web Session Protection") || (SubservicesData.Name.ToString() == "Web Cache Protection") || (SubservicesData.Name.ToString() == "Trash Data Protection") || (SubservicesData.Name.ToString() == "Web Tracking Protecting"))
-                        //if (SubservicesData.Name.ToString() == "DNS Cache Protection")
+                        //if ((SubservicesData.Name.ToString() == "DNS Cache Protection") || (SubservicesData.Name.ToString() == "Free Storage Protection") || (SubservicesData.Name.ToString() == "Trash Data Protection") || (SubservicesData.Name.ToString() == "Windows Registry Protection"))
                         //{
-                        //    testCheck = true;
+                        //testCheck = true;
+                        //}                         
+                        //string dateString = "2023-09-14 17:16:00"; // Example string in "yyyy-MM-dd HH:mm:ss" format
+                        //if (DateTime.TryParse(dateString, out DateTime dateTime))
+                        //{
+                        //    // Parsing was successful, use 'dateTime'
                         //}
-                        //if ((DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && DateTime.Now.Minute == key.Value.Minute) || (testCheck == true))
-
-
-                        if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && (DateTime.Now.Minute == key.Value.Minute || DateTime.Now.Minute - 1 == key.Value.Minute))
+                        //if (DateTime.Now.Date == dateTime.Date && DateTime.Now.Hour == dateTime.Hour && ((DateTime.Now.Minute == dateTime.Minute) || (DateTime.Now.Minute - 1 == dateTime.Minute)) && (testCheck == true))
+                        
+                        if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && (DateTime.Now.Minute == key.Value.Minute || (DateTime.Now.Minute - 1 == key.Value.Minute)))
                         {
 
                             var result = RunServices("S", SubservicesData);
@@ -1931,7 +1935,7 @@ namespace FDS
         private async void DownloadFile(string url, string temporaryMSIPath)
         {
             try
-            {               
+            {
                 await DownloadEXEAsync(url, temporaryMSIPath);
 
             }
@@ -1978,7 +1982,7 @@ namespace FDS
             //{
             //    Console.WriteLine("Error downloading file: " + ex.Message);
             //}
-         
+
             try
             {
 
@@ -2007,7 +2011,7 @@ namespace FDS
                             MessageBox.Show("Path not found for updated exe " + e.Message);
                         }
                     }
-                   
+
                     string AutoUpdateExePath = TempPath + "AutoUpdate.exe";
                     Process.Start(AutoUpdateExePath);
                 }

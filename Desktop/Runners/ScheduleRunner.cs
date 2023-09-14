@@ -44,23 +44,28 @@ namespace FDS.Runners
                             {
                                 service = serviceFactory.CreateService(ServiceTypeName.WindowsRegistryProtection);
                                 tasks.Add(Task.Run(() => service.RunService(subservices, serviceTypeDetails)));
+                                await Task.WhenAll(tasks);
                             }
                             break;
                         case ServiceTypeName.DnsCacheProtection:
                             service = serviceFactory.CreateService(ServiceTypeName.DnsCacheProtection);
                             tasks.Add(Task.Run(() => service.RunService(subservices, serviceTypeDetails)));
+                            await Task.WhenAll(tasks);
                             break;
                         case ServiceTypeName.TrashDataProtection:
                             service = serviceFactory.CreateService(ServiceTypeName.TrashDataProtection);
                             tasks.Add(Task.Run(() => service.RunService(subservices, serviceTypeDetails)));
+                            await Task.WhenAll(tasks);
                             break;
                         case ServiceTypeName.FreeStorageProtection:
                             service = serviceFactory.CreateService(ServiceTypeName.FreeStorageProtection);
                             tasks.Add(Task.Run(() => service.RunService(subservices, serviceTypeDetails)));
+                            await Task.WhenAll(tasks);
                             break;
                         case ServiceTypeName.SystemNetworkMonitoringProtection:
                             service = serviceFactory.CreateService(ServiceTypeName.SystemNetworkMonitoringProtection);
                             tasks.Add(Task.Run(() => service.RunService(subservices, serviceTypeDetails)));
+                            await Task.WhenAll(tasks);
                             break;
                         case ServiceTypeName.WebSessionProtection:
                             resultService.Add(new WebSessionProtection());
@@ -72,7 +77,7 @@ namespace FDS.Runners
                             resultService.Add(new WebCacheProtection());
                             break;                       
                     }
-                    await Task.WhenAll(tasks);
+                    
                 }
             }
 

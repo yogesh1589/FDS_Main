@@ -13,7 +13,7 @@ using System.Diagnostics;
 using System.IO;
 
 using System.Net.Http;
-
+using System.Windows.Forms;
 
 namespace FDS.Services
 {
@@ -24,8 +24,6 @@ namespace FDS.Services
 
         public override int ExecuteLogicForBrowserIfClosed(string browserName, bool isBrowserClosed, List<string> whiteListDomain = null)
         {
-
-
             switch (browserName)
             {
                 case "chrome":
@@ -35,11 +33,7 @@ namespace FDS.Services
                         if (!globals.IsLogicExecuted_ChromeCookies)
                         {                         
                             return ExecuteChromeLogic(whiteListDomain);
-                        }
-                        else
-                        {
-                            globals.IsLogicExecuted_ChromeCookies = false;
-                        }
+                        }                        
                     }
                     else
                     {
@@ -96,35 +90,20 @@ namespace FDS.Services
                     return 0;
             }
             return 0;
-
-            //if (isBrowserClosed)
-            //{
-            //    switch (browserName)
-            //    {
-            //        case "chrome":
-            //            return ExecuteChromeLogic(whiteListDomain);
-            //        case "edge":
-            //            return ExecuteEdgeLogic(whiteListDomain);
-            //        case "firefox":
-            //            return ExecuteFirefoxLogic(whiteListDomain);
-            //        case "opera":
-            //            return ExecuteOperaLogic(whiteListDomain);
-            //    }
-            //}
-            //return 0;
         }
 
         public int ExecuteChromeLogic(List<string> whitelistedDomain)
-        {
+        {            
+
             string chromeProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\";
 
             List<string> profiles = BrowsersGeneric.BrowsersProfileLists(chromeProfilePath);
 
             string cookiePath = "Network\\Cookies";
 
-            var result = BrowsersDB.ClearCookies(profiles, whitelistedDomain, cookiePath);
+            var result = BrowsersDB.ClearCookies(profiles, whitelistedDomain, cookiePath);            
 
-            if(result.Item2)
+            if (result.Item2)
             {
                 globals.IsLogicExecuted_ChromeCookies = true;
                 globalDict.DictionaryService["WebSessionProtection"] = false;
@@ -134,7 +113,8 @@ namespace FDS.Services
         }
 
         protected int ExecuteEdgeLogic(List<string> whitelistedDomain)
-        {
+        {           
+
             string edgeProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Microsoft\Edge\User Data\";
 
             List<string> profiles = BrowsersGeneric.BrowsersProfileLists(edgeProfilePath);
@@ -142,7 +122,7 @@ namespace FDS.Services
             string cookiePath = "Network\\Cookies";
 
             var result = BrowsersDB.ClearCookies(profiles, whitelistedDomain, cookiePath);
-
+         
             if (result.Item2)
             {
                 globals.IsLogicExecuted_EdgeCookies = true;
@@ -157,7 +137,7 @@ namespace FDS.Services
         {
 
             int TotalCount = 0;
-
+            
             string firefoxProfilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Mozilla", "Firefox", "Profiles");
             if (Directory.Exists(firefoxProfilePath))
             {
@@ -185,6 +165,7 @@ namespace FDS.Services
                                 }
                                 command.CommandText = query;
                                 TotalCount += command.ExecuteNonQuery();
+                                 
                                 globals.IsLogicExecuted_FirefoxCookies = true;
                                 globalDict.DictionaryService["WebSessionProtection"] = false;
                             }
@@ -201,7 +182,7 @@ namespace FDS.Services
         {
 
             int TotalCount = 0;
-
+            
             var str = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             var cookiePath = str + "\\Opera Software\\Opera Stable\\Network\\Cookies";
             if (BrowsersGeneric.CheckFileExistBrowser(cookiePath) > 0)
@@ -226,6 +207,7 @@ namespace FDS.Services
                         cmd.Prepare();
                         TotalCount = cmd.ExecuteNonQuery();
                         globals.IsLogicExecuted_OperaCookies = true;
+                         
                         globalDict.DictionaryService["WebSessionProtection"] = false;
                         Console.WriteLine($"Deleted {TotalCount} cookies.");
                     }
