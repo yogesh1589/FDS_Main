@@ -2000,7 +2000,7 @@ namespace FDS
                             {
 
                                 File.Copy(tempPath1, TempPath + "AutoUpdate.exe", true);
-                                MessageBox.Show("File Copy Done");
+                                //MessageBox.Show("File Copy Done");
                             }
                         }
                     }
