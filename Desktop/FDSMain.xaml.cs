@@ -1280,7 +1280,7 @@ namespace FDS
                                 if (!Directory.Exists(TempPath))
                                     Directory.CreateDirectory(TempPath);
 
-                                await DownloadFile("", TempPath + "FDS.msi");                                 
+                                await DownloadFile(DeviceConfigData.url, TempPath + "FDS.msi");                                 
                             }
                         }
                     }

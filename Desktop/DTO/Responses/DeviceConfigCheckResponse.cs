@@ -10,5 +10,7 @@ namespace FDS.DTO.Responses
     {
         public bool config_change { get; set; }
         public List<string> call_api { get; set; } = new List<string>();
+
+        public string url { get; set; } 
     }
 }
