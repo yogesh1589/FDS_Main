@@ -23,6 +23,7 @@ namespace FDS.Services.AbstractClass
     {
         private int totalLogicResult = 0;
         public HttpClient client { get; }
+        public string OriginalTypeName { get; set; }
 
         public void AddLogicResult(int result)
         {

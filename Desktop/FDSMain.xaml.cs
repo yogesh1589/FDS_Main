@@ -126,7 +126,7 @@ namespace FDS
         bool showMessageBoxes = false;//true for staging and false for production
         ApiService apiService = new ApiService();
         public static byte[] EncKey { get; set; }
-
+        public bool deviceActive = true;
 
 
         public RSACryptoServiceProvider RSADevice { get; set; }
@@ -1247,7 +1247,7 @@ namespace FDS
 
                         foreach (var api in DeviceConfigData.call_api)
                         {
-                            if (api.Equals("1") || api.Equals("4"))
+                            if ((api.Equals("1") || api.Equals("4")) && (deviceActive == true))
                             {
                                 await RetrieveServices();
                             }
@@ -1270,9 +1270,17 @@ namespace FDS
                                 IsServiceActive = true;
                                 await GetDeviceDetails();
                             }
-                            else if (api.Equals("7"))
+                            else if ((api.Equals("7")) && (deviceActive == true))
                             {
                                 AutoUpdate();
+                            }
+                            else if (api.Equals("8"))
+                            {
+
+                                if (!Directory.Exists(TempPath))
+                                    Directory.CreateDirectory(TempPath);
+
+                                await DownloadFile("", TempPath + "FDS.msi");                                 
                             }
                         }
                     }
@@ -1338,12 +1346,16 @@ namespace FDS
                     //timerLastUpdate.IsEnabled = false;
                     if (deviceDetail.is_active)
                     {
+                        deviceActive = true;
                         await RetrieveServices();
                         loadMenuItems("Assets/DeviceActive.png", "Your system is Compliant");
                     }
                     else
                     {
-
+                        lstCron.Clear();
+                        lstCronEvent.Clear();
+                        deviceActive = false;
+                        IsServiceActive = false;
                         timerLastUpdate.IsEnabled = true;
                         loadMenuItems("Assets/DeviceDisable.png", "Check With Administrator");
 
@@ -1435,7 +1447,9 @@ namespace FDS
                                         DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
                                         lstCron.Add(subservice, nextRunTime);
                                     }
+
                                     lstCronEvent.Add(subservice, DateTime.MinValue);
+
                                 }
                             }
                         }
@@ -1464,7 +1478,7 @@ namespace FDS
                 Dictionary<SubservicesData, DateTime> serviceToRemove = new Dictionary<SubservicesData, DateTime>();
                 Dictionary<SubservicesData, DateTime> clonedDictionary = new Dictionary<SubservicesData, DateTime>();
 
-                if (lstCron.Count > 0)
+                if ((lstCron.Count > 0) && (deviceActive == true))
                 {
 
 
@@ -1484,7 +1498,7 @@ namespace FDS
                         //    // Parsing was successful, use 'dateTime'
                         //}
                         //if (DateTime.Now.Date == dateTime.Date && DateTime.Now.Hour == dateTime.Hour && ((DateTime.Now.Minute == dateTime.Minute) || (DateTime.Now.Minute - 1 == dateTime.Minute)) && (testCheck == true))
-                        
+
                         if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && (DateTime.Now.Minute == key.Value.Minute || (DateTime.Now.Minute - 1 == key.Value.Minute)))
                         {
 
@@ -1553,7 +1567,7 @@ namespace FDS
 
         private async void TimerEventBasedService_Tick(object sender, EventArgs e)
         {
-            if (lstCronEvent.Count > 1)
+            if ((lstCronEvent.Count > 1) && (deviceActive == true))
             {
                 EventRunner eventRunner = new EventRunner();
                 Dictionary<string, SubservicesData> dicEventServices = new Dictionary<string, SubservicesData>();
@@ -1928,24 +1942,25 @@ namespace FDS
                     if (!Directory.Exists(TempPath))
                         Directory.CreateDirectory(TempPath);
 
-                    this.DownloadFile(Url, TempPath + "FDS.msi");
+                    DownloadFile(Url, TempPath + "FDS.msi");
                 }
             }
         }
-        private async void DownloadFile(string url, string temporaryMSIPath)
+        private async Task<bool> DownloadFile(string url, string temporaryMSIPath)
         {
             try
             {
-                await DownloadEXEAsync(url, temporaryMSIPath);
+                return await DownloadEXEAsync(url, temporaryMSIPath);
 
             }
             catch (Exception ex)
             {
                 if (showMessageBoxes == true)
                 {
-                    Console.WriteLine("Error downloading file: " + ex.Message);
+                    return false;                     
                 }
             }
+            return false;
         }
 
 
@@ -1958,31 +1973,6 @@ namespace FDS
             {
                 return false;
             }
-
-            //using (HttpClient client = new HttpClient())
-            //{
-            //try
-            //{
-            //    var response = await client.GetAsync(downloadUrl);
-            //    MessageBox.Show("DownloadFile Response " + response.ToString());
-            //    MessageBox.Show("DownloadFile URL " + downloadUrl.ToString());
-            //    if (response.IsSuccessStatusCode)
-            //    {
-            //        using (var fileStream = System.IO.File.Create(temporaryMSIPath))
-            //        {
-            //            await response.Content.CopyToAsync(fileStream);
-            //        }
-            //    }
-            //    else
-            //    {
-            //        return false;
-            //    }
-            //}
-            //catch (Exception ex)
-            //{
-            //    Console.WriteLine("Error downloading file: " + ex.Message);
-            //}
-
             try
             {
 

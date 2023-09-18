@@ -17,6 +17,7 @@ using System.Windows.Forms;
 
 namespace FDS.Services
 {
+
     public class WebSessionProtection : BaseService, IService
     {
         GlobalVariables globals = GlobalVariables.Instance;
@@ -24,6 +25,7 @@ namespace FDS.Services
 
         public override int ExecuteLogicForBrowserIfClosed(string browserName, bool isBrowserClosed, List<string> whiteListDomain = null)
         {
+             
             switch (browserName)
             {
                 case "chrome":

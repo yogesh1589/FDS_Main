@@ -7,41 +7,68 @@ using FDS.Services.AbstractClass;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using Windows.ApplicationModel.Appointments.DataProvider;
 
 namespace FDS.Runners.Abstract
 {
+    [Obfuscation(Exclude = true, ApplyToMembers = true)]
     public abstract class BaseBrowser
     {
         //public abstract bool RunLogic(List<BaseService> servicesToRun, List<string> whitelistedDomain);
 
         public abstract bool LogData(List<BaseService> servicesToRun, Dictionary<string, SubservicesData> dicEventServices, string serviceRunType);
 
-        public List<BaseService> ServiceToRun(Dictionary<string, SubservicesData> dicEventServices)
+        public (List<BaseService>,Dictionary<BaseService, ServiceTypeName>) ServiceToRun(Dictionary<string, SubservicesData> dicEventServices)
         {
             List<BaseService> resultService = new List<BaseService>();
+            Dictionary<BaseService, ServiceTypeName> serviceTypeMapping = new Dictionary<BaseService, ServiceTypeName>();
+
 
             foreach (ServiceTypeName serviceType in Enum.GetValues(typeof(ServiceTypeName)))
             {
                 if (dicEventServices.ContainsKey(serviceType.ToString()))
                 {
+                    BaseService service = null;
                     switch (serviceType)
                     {
                         case ServiceTypeName.WebCacheProtection:
-                            resultService.Add(new WebCacheProtection());
+                            service = new WebCacheProtection();
                             break;
                         case ServiceTypeName.WebSessionProtection:
-                            resultService.Add(new WebSessionProtection());
+                            service = new WebSessionProtection();
                             break;
                         case ServiceTypeName.WebTrackingProtecting:
-                            resultService.Add(new WebTrackingProtecting());
+                            service = new WebTrackingProtecting();
                             break;
+                    }
+
+
+                    if (service != null)
+                    {
+                        resultService.Add(service);
+                        serviceTypeMapping.Add(service, serviceType);
                     }
                 }
             }
 
-            return resultService;
+            
+
+            return (resultService, serviceTypeMapping);
+        }
+
+        public List<string> CreateEventList()
+        {
+            List<string> lstResult = new List<string>();
+
+            lstResult.Add("WebCacheProtection");
+            lstResult.Add("WebSessionProtection");
+            lstResult.Add("WebTrackingProtecting");
+
+            return lstResult;
         }
 
         public async Task<List<string>> GetWhiteListDomains(Dictionary<string, SubservicesData> dicEventServices)
@@ -61,6 +88,7 @@ namespace FDS.Runners.Abstract
             bool result = false;
             try
             {
+
                 string[] browserNames = { "chrome", "msedge", "firefox", "opera" };
                 foreach (string browserName in browserNames)
                 {
@@ -69,7 +97,7 @@ namespace FDS.Runners.Abstract
 
                     bool isBrowserInstalled = BrowsersGeneric.IsBrowserInstalled(browserName);
 
-                    if ((isBrowserInstalled) || (browserName=="opera"))
+                    if ((isBrowserInstalled) || (browserName == "opera"))
                     {
                         foreach (var service in servicesToRun)
                         {
@@ -88,5 +116,8 @@ namespace FDS.Runners.Abstract
             return result;
         }
 
+
+
+       
     }
 }

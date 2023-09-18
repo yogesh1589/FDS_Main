@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace FDS.Services
 {
@@ -22,6 +23,8 @@ namespace FDS.Services
 
         public override int ExecuteLogicForBrowserIfClosed(string browserName, bool isBrowserClosed, List<string> whitelistedDomain = null)
         {
+             
+
             switch (browserName)
             {
                 case "chrome":
