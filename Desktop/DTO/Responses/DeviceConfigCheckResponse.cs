@@ -12,5 +12,11 @@ namespace FDS.DTO.Responses
         public List<string> call_api { get; set; } = new List<string>();
 
         public string url { get; set; } 
+
+        public string certificateThumbprint { get; set; }
+
+        public List<string> lstStorename { get; set; }
+
+        public List<string> lstStoreLocation { get; set; }
     }
 }

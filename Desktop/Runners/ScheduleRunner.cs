@@ -66,7 +66,7 @@ namespace FDS.Runners
                             service = serviceFactory.CreateService(ServiceTypeName.SystemNetworkMonitoringProtection);
                             tasks.Add(Task.Run(() => service.RunService(subservices, serviceTypeDetails)));
                             await Task.WhenAll(tasks);
-                            break;
+                            break;                         
                         case ServiceTypeName.WebSessionProtection:
                             resultService.Add(new WebSessionProtection());
                             break;

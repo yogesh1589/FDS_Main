@@ -38,6 +38,7 @@ namespace FDS.Common
             public const string UninstallCheck = "check/uninstall/device/";
             public const string CountryCode = "location/";
             public const string AutoUpdate = "update/";
+            public const string PostCertificate = "certificate/";
         }
         public const string DeviceType = "1";
         public static string CodeVersion = ConfigurationManager.AppSettings["CodeVersion"];

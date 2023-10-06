@@ -24,6 +24,7 @@ namespace FDS.Common
 {
     static class Generic
     {
+        public static string certificateData = string.Empty;
         public static string BaseDir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
         static bool showMessageBoxes = true;
         private const string GoogleHost = "www.google.com";
@@ -194,32 +195,32 @@ namespace FDS.Common
         }
 
         public static void DeleteDirectoryContents(string directoryPath)
-        {            
+        {
             if (Directory.Exists(directoryPath))
             {
-                 
+
                 DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
                 foreach (FileInfo file in directoryInfo.GetFiles())
                 {
                     Thread.Sleep(10);
                     MessageBox.Show(file.ToString());
-                    if(!file.ToString().Contains("FDS.exe"))
+                    if (!file.ToString().Contains("FDS.exe"))
                     {
                         file.Delete();
                     }
                     //Console.WriteLine(file+ " Files Deleted from installation path");
-                   
+
                 }
                 foreach (DirectoryInfo dir in directoryInfo.GetDirectories())
                 {
-                    
-                        dir.Delete(true);          
+
+                    dir.Delete(true);
 
                 }
                 //MessageBox.Show(directoryPath);
                 //// Delete the directory and its contents recursively.
                 //Directory.Delete(directoryPath, true);               
-            }            
+            }
         }
 
 

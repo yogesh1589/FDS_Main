@@ -74,6 +74,7 @@ namespace FDS
         DispatcherTimer timerLastUpdate;
         DispatcherTimer QRGeneratortimer;
         DispatcherTimer CronLastUpdate;
+        DispatcherTimer timerNetworkMonitering;
         DispatcherTimer UninstallResponseTimer;
         DispatcherTimer timerEventBasedService;
 
@@ -218,6 +219,11 @@ namespace FDS
             timerEventBasedService.Interval = TimeSpan.FromMinutes(1);
             timerEventBasedService.Tick += TimerEventBasedService_Tick;
             timerEventBasedService.IsEnabled = false;
+
+            //timerNetworkMonitering = new DispatcherTimer();
+            //timerNetworkMonitering.Interval = TimeSpan.FromMinutes(2);
+            //timerNetworkMonitering.Tick += TimerNetworkMonitering_Tick;
+            //timerNetworkMonitering.IsEnabled = false;
         }
 
         public void LoadFDS()
@@ -544,11 +550,6 @@ namespace FDS
                 }
             }
         }
-
-
-
-
-
         private void btnGetStarted_Click(object sender, RoutedEventArgs e)
         {
             ConfigDataClear();
@@ -607,28 +608,43 @@ namespace FDS
             txtPhoneValidation.IsEnabled = false;
             btnSendOTP.IsEnabled = false;
 
-
-            // Show the spinner
-            ClearChildrenNode();
-            if (ImageContainerCountryCode.Children.Count == 0)
+            try
             {
-                ImageContainerCountryCode.Children.Add(imgLoader);
+                // Show the spinner
+                ClearChildrenNode();
+                if (ImageContainerCountryCode.Children.Count == 0)
+                {
+                    ImageContainerCountryCode.Children.Add(imgLoader);
+                }
+                var response = await client.GetAsync(AppConstants.EndPoints.CountryCode);
+                ClearChildrenNode();
+
+                //End
+                if (response.IsSuccessStatusCode)
+                {
+                    btnSendOTP.IsEnabled = true;
+                    txtPhoneValidation.IsEnabled = true;
+                    cmbCountryCode.IsEnabled = true;
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    CountryCodeResponse responseData = JsonConvert.DeserializeObject<CountryCodeResponse>(responseString);
+                    List<CountryCode> countryList = responseData.data;
+                    VM.AllCountries = countryList;
+                    cmbCountryCode.ItemsSource = VM.AllCountries;
+                }
             }
-            var response = await client.GetAsync(AppConstants.EndPoints.CountryCode);
-            ClearChildrenNode();
-
-            //End
-
-            if (response.IsSuccessStatusCode)
+            catch (Exception ex)
             {
-                btnSendOTP.IsEnabled = true;
-                txtPhoneValidation.IsEnabled = true;
-                cmbCountryCode.IsEnabled = true;
-                var responseString = await response.Content.ReadAsStringAsync();
-                CountryCodeResponse responseData = JsonConvert.DeserializeObject<CountryCodeResponse>(responseString);
-                List<CountryCode> countryList = responseData.data;
-                VM.AllCountries = countryList;
-                cmbCountryCode.ItemsSource = VM.AllCountries;
+                LoadMenu(Screens.GetStart);
+                MessageBox.Show("Your device has some issue contact to Admin", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                deviceDeletedFlag = true;
+                lstCron.Clear();
+                lstCronEvent.Clear();
+                encryptOutPutFile = basePathEncryption + @"\Main";
+                if (File.Exists(encryptOutPutFile))
+                {
+                    File.Delete(encryptOutPutFile);
+                    ConfigDataClear();
+                }
             }
         }
         private void cmbCountryCode_DropDownClosed(object sender, EventArgs e)
@@ -1133,11 +1149,19 @@ namespace FDS
                 var apiResponse = await apiService.CheckDeviceHealthAsync();
 
                 if (apiResponse == null)
-                {
+                {                   
+                    timerLastUpdate.IsEnabled = true;
+                    lblCompliant.Text = "Contact to Administrator";
+                    string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
+                    BitmapImage DeviceDeactive = new BitmapImage();
+                    DeviceDeactive.BeginInit();
+                    DeviceDeactive.UriSource = new Uri(ImagePath);
+                    DeviceDeactive.EndInit();
+                    imgCompliant.Source = DeviceDeactive;
                     return;
                 }
 
-                if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true) && (apiResponse.HttpStatusCode != HttpStatusCode.Unauthorized) && (apiResponse.HttpStatusCode != HttpStatusCode.MethodNotAllowed))
+                if (apiResponse.Success == true)
                 {
                     var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
                     int idx = plainText.LastIndexOf('}');
@@ -1280,8 +1304,9 @@ namespace FDS
                                 if (!Directory.Exists(TempPath))
                                     Directory.CreateDirectory(TempPath);
 
-                                await DownloadFile(DeviceConfigData.url, TempPath + "FDS.msi");                                 
+                                await DownloadFile(DeviceConfigData.url, TempPath + "FDS.msi");
                             }
+
                         }
                     }
                 }
@@ -1468,9 +1493,6 @@ namespace FDS
             }
         }
 
-
-
-
         private async void CronLastUpdate_Tick(object sender, EventArgs e)
         {
             try
@@ -1502,10 +1524,13 @@ namespace FDS
                         if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && (DateTime.Now.Minute == key.Value.Minute || (DateTime.Now.Minute - 1 == key.Value.Minute)))
                         {
 
-                            var result = RunServices("S", SubservicesData);
+                            bool result = await RunServices("S", SubservicesData);
 
-                            DateTime localDate = DateTime.Now.ToLocalTime();
-                            txtUpdatedOn.Text = localDate.ToString();
+                            if (result)
+                            {
+                                DateTime localDate = DateTime.Now.ToLocalTime();
+                                txtUpdatedOn.Text = localDate.ToString();
+                            }
 
                             var schedule = CrontabSchedule.Parse(SubservicesData.Execution_period);
                             DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
@@ -1527,7 +1552,6 @@ namespace FDS
         {
             try
             {
-
                 ScheduleRunner scheduleRunner = new ScheduleRunner();
                 string transformed = TransformString(SubservicesData.Sub_service_name);
                 Dictionary<string, SubservicesData> dicEventServices = new Dictionary<string, SubservicesData>();
@@ -1564,6 +1588,8 @@ namespace FDS
 
             return string.Concat(parts);
         }
+
+
 
         private async void TimerEventBasedService_Tick(object sender, EventArgs e)
         {
@@ -1602,6 +1628,30 @@ namespace FDS
         }
 
 
+        private async void TimerNetworkMonitering_Tick(object sender, EventArgs e)
+        {
+            if ((lstCronEvent.Count > 1) && (deviceActive == true))
+            {
+                foreach (var key in lstCronEvent)
+                {
+                    SubservicesData SubservicesData = key.Key;
+                    string transformed = TransformString(SubservicesData.Sub_service_name);
+                    if ((SubservicesData.Sub_service_active) && ((transformed == ServiceTypeName.SystemNetworkMonitoringProtection.ToString())))
+                    {
+
+                        bool result = await RunServices("E", SubservicesData);
+                        if (result)
+                        {
+                            DateTime localDate = DateTime.Now.ToLocalTime();
+                            txtUpdatedOn.Text = localDate.ToString();
+                        }
+                    }
+                }
+            }
+
+        }
+
+
         public async Task<List<string>> GetWhiteListDomainsList(Dictionary<string, SubservicesData> dicEventServices)
         {
             List<string> whitelistedDomain = new List<string>();
@@ -1621,6 +1671,7 @@ namespace FDS
             {
 
                 var result = await RunServices(serviceType, subservices);
+
 
                 DateTime localDate = DateTime.Now.ToLocalTime();
                 txtUpdatedOn.Text = localDate.ToString();
@@ -1957,7 +2008,7 @@ namespace FDS
             {
                 if (showMessageBoxes == true)
                 {
-                    return false;                     
+                    return false;
                 }
             }
             return false;

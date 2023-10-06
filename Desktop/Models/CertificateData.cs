@@ -8,8 +8,7 @@ namespace FDS.Models
 {
     public class CertificateData
     {
-        public string Subject { get; set; }
-        public string Thumbprint { get; set; }
-        public string FriendlyName { get; set; }
+        public string device_uuid { get; set; }
+        public Payload payload { get; set; }
     }
 }
