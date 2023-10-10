@@ -216,7 +216,7 @@ namespace FDS
 
             //TimerEventBasedService_Tick
             timerEventBasedService = new DispatcherTimer();
-            timerEventBasedService.Interval = TimeSpan.FromMinutes(1);
+            timerEventBasedService.Interval = TimeSpan.FromSeconds(30);
             timerEventBasedService.Tick += TimerEventBasedService_Tick;
             timerEventBasedService.IsEnabled = false;
 
@@ -1449,10 +1449,7 @@ namespace FDS
                     {
                         foreach (var subservice in services.Subservices)
                         {
-                            //if (deviceDeletedFlag == true)
-                            //{
-                            //    break;
-                            //}
+                             
                             if (subservice.Sub_service_active)
                             {
                                 if (subservice.Execute_now)
@@ -1478,6 +1475,7 @@ namespace FDS
                                 }
                             }
                         }
+                        break;
                     }
 
                     CronLastUpdate.Start();
@@ -1554,18 +1552,18 @@ namespace FDS
             {
                 ScheduleRunner scheduleRunner = new ScheduleRunner();
                 string transformed = TransformString(SubservicesData.Sub_service_name);
-                Dictionary<string, SubservicesData> dicEventServices = new Dictionary<string, SubservicesData>();
-                dicEventServices.Add(transformed, SubservicesData);
+                Dictionary<string, SubservicesData> dicEventServicesE = new Dictionary<string, SubservicesData>();
+                dicEventServicesE.Add(transformed, SubservicesData);
 
                 List<string> whitelistedDomain = new List<string>();
                 if (transformed == ServiceTypeName.WebSessionProtection.ToString())
                 {
-                    whitelistedDomain = await GetWhiteListDomainsList(dicEventServices);
+                    whitelistedDomain = await GetWhiteListDomainsList(dicEventServicesE);
                 }
-                if (dicEventServices.Count > 0)
+                if (dicEventServicesE.Count > 0)
                 {
-                    await scheduleRunner.RunAll(dicEventServices, serviceTypeFlag, whitelistedDomain);
-                    dicEventServices.Clear();
+                    await scheduleRunner.RunAll(dicEventServicesE, serviceTypeFlag, whitelistedDomain);
+                    dicEventServicesE.Clear();
                 }
             }
             catch (Exception ex)
