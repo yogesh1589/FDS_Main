@@ -12,5 +12,11 @@ namespace FDS.Models
         public List<CertificationLists> local_user_trusted_certs { get; set; }
         public List<CertificationLists> current_user_personal_certs { get; set; }
         public List<CertificationLists> current_user_trusted_certs { get; set; }
+
+        
+    }
+    public class PayloadProxy
+    {
+        public List<ProxyLists> proxy_info { get; set; }
     }
 }

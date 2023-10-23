@@ -135,9 +135,9 @@ namespace FDS.Services
         protected int ExecuteOperaLogic()
         {
             int totalSize = 0;
-            int totalCount = 0;
+            int totalCount = 0;            
 
-            string cachePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Opera Software\Opera Stable\Cache\Cache_Data";
+            string cachePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Opera Software\Opera Stable\Default\Cache\Cache_Data";
             if (Directory.Exists(cachePath))
             {
                 // Delete all files in the cache directory

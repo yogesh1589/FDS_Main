@@ -186,7 +186,7 @@ namespace FDS.Services
             int TotalCount = 0;
             
             var str = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            var cookiePath = str + "\\Opera Software\\Opera Stable\\Network\\Cookies";
+            var cookiePath = str + "\\Opera Software\\Opera Stable\\Default\\Network\\Cookies";
             if (BrowsersGeneric.CheckFileExistBrowser(cookiePath) > 0)
             {
                 using (SQLiteConnection connection = new SQLiteConnection(string.Format("Data Source={0};", cookiePath)))

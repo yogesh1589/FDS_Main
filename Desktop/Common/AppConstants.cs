@@ -39,6 +39,8 @@ namespace FDS.Common
             public const string CountryCode = "location/";
             public const string AutoUpdate = "update/";
             public const string PostCertificate = "certificate/";
+            public const string PostProxy = "proxy/";
+            public const string CertificateLog = "certificatelog/";
         }
         public const string DeviceType = "1";
         public static string CodeVersion = ConfigurationManager.AppSettings["CodeVersion"];

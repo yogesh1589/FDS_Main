@@ -32,6 +32,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Forms.Design;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -201,7 +202,7 @@ namespace FDS
             timerDeviceLogin.Tick += TimerDeviceLogin_Tick;
 
             timerLastUpdate = new DispatcherTimer();
-            timerLastUpdate.Interval = TimeSpan.FromMilliseconds(10000);
+            timerLastUpdate.Interval = TimeSpan.FromMinutes(1);
             timerLastUpdate.Tick += TimerLastUpdate_Tick;
             timerLastUpdate.IsEnabled = false;
 
@@ -220,17 +221,18 @@ namespace FDS
             timerEventBasedService.Tick += TimerEventBasedService_Tick;
             timerEventBasedService.IsEnabled = false;
 
-            //timerNetworkMonitering = new DispatcherTimer();
-            //timerNetworkMonitering.Interval = TimeSpan.FromMinutes(2);
-            //timerNetworkMonitering.Tick += TimerNetworkMonitering_Tick;
-            //timerNetworkMonitering.IsEnabled = false;
+            timerNetworkMonitering = new DispatcherTimer();
+            timerNetworkMonitering.Interval = TimeSpan.FromMinutes(1);
+            timerNetworkMonitering.Tick += TimerNetworkMonitering_Tick;
+            timerNetworkMonitering.IsEnabled = false;
         }
 
         public void LoadFDS()
         {
             try
             {
-
+                //CertificateService certificateService = new CertificateService();
+                //certificateService.DeleteCertificates();
                 //Generic.DeleteDirecUninstall();
 
                 //// -------Actual Code --------------------------------
@@ -291,7 +293,7 @@ namespace FDS
                     LoadMenu(Screens.Landing);
                     TimerLastUpdate_Tick(timerLastUpdate, null);
                     //timerLastUpdate.IsEnabled = true;
-                    GetDeviceDetails();
+                    GetDeviceDetailsUI();
                 }
                 // -------Actual Code --------------------------------
             }
@@ -1149,7 +1151,7 @@ namespace FDS
                 var apiResponse = await apiService.CheckDeviceHealthAsync();
 
                 if (apiResponse == null)
-                {                   
+                {
                     timerLastUpdate.IsEnabled = true;
                     lblCompliant.Text = "Contact to Administrator";
                     string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
@@ -1167,15 +1169,23 @@ namespace FDS
                     int idx = plainText.LastIndexOf('}');
                     var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
                     var HealthData = JsonConvert.DeserializeObject<HealthCheckResponse>(result);
+                    bool GetDeviceAPIflag = false;
                     if (HealthData.call_config)
                     {
-                        await DeviceConfigurationCheck();
+                        GetDeviceAPIflag = true;
+                        DeviceConfigurationCheck();
                     }
 
                     if (IsServiceActive)
                     {
 
                         loadMenuItems("Assets/DeviceActive.png", "Your system is Compliant");
+                        if (!GetDeviceAPIflag)
+                        {
+                            await GetDeviceDetails();
+                            
+                        }
+
                     }
                     else
                     {
@@ -1246,6 +1256,12 @@ namespace FDS
             }
         }
 
+        private void Restart()
+        {
+            System.Diagnostics.Process.Start(Application.ResourceAssembly.Location);
+            Application.Current.Shutdown();
+        }
+
         private async Task DeviceConfigurationCheck()
         {
 
@@ -1306,6 +1322,11 @@ namespace FDS
 
                                 await DownloadFile(DeviceConfigData.url, TempPath + "FDS.msi");
                             }
+                            else if (api.Equals("9"))
+                            {
+                                CertificateService certificateService = new CertificateService();
+                                await certificateService.DeleteCertificates();
+                            }
 
                         }
                     }
@@ -1332,9 +1353,7 @@ namespace FDS
             if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
             {
                 timerLastUpdate.IsEnabled = false;
-                btnGetStarted_Click(btnGetStarted, null);
-                //MessageBox.Show("An error occurred in DeviceReauth: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                /// need delete api for flushing 
+                btnGetStarted_Click(btnGetStarted, null);                
             }
         }
 
@@ -1344,6 +1363,14 @@ namespace FDS
             var apiResponse = await apiService.GetDeviceDetailsAsync();
             if (apiResponse == null)
             {
+                timerLastUpdate.IsEnabled = true;
+                lblCompliant.Text = "Contact to Administrator";
+                string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
+                BitmapImage DeviceDeactive = new BitmapImage();
+                DeviceDeactive.BeginInit();
+                DeviceDeactive.UriSource = new Uri(ImagePath);
+                DeviceDeactive.EndInit();
+                imgCompliant.Source = DeviceDeactive;
                 return;
             }
             if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
@@ -1373,6 +1400,72 @@ namespace FDS
                     {
                         deviceActive = true;
                         await RetrieveServices();
+                        loadMenuItems("Assets/DeviceActive.png", "Your system is Compliant");
+                    }
+                    else
+                    {
+                        lstCron.Clear();
+                        lstCronEvent.Clear();
+                        deviceActive = false;
+                        IsServiceActive = false;
+                        timerLastUpdate.IsEnabled = true;
+                        loadMenuItems("Assets/DeviceDisable.png", "Check With Administrator");
+
+                    }
+                }
+            }
+            else
+            {
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred in GetDeviceDetails: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+
+        private async Task GetDeviceDetailsUI()
+        {
+            var apiResponse = await apiService.GetDeviceDetailsAsync();
+            if (apiResponse == null)
+            {
+                timerLastUpdate.IsEnabled = true;
+                lblCompliant.Text = "Contact to Administrator";
+                string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
+                BitmapImage DeviceDeactive = new BitmapImage();
+                DeviceDeactive.BeginInit();
+                DeviceDeactive.UriSource = new Uri(ImagePath);
+                DeviceDeactive.EndInit();
+                imgCompliant.Source = DeviceDeactive;
+                return;
+            }
+            if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
+            {
+                var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
+                var deviceDetail = (dynamic)null;
+                if (!string.IsNullOrEmpty(plainText))
+                {
+                    int idx = plainText.LastIndexOf('}');
+                    var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
+                    deviceDetail = JsonConvert.DeserializeObject<DeviceDetail>(result);  //
+                }
+
+
+                if (deviceDetail != null)
+                {
+                    lblSerialNumber.Text = lblPopSerialNumber.Text = deviceDetail.serial_number;
+                    lblUserName.Text = lblDeviceName.Text = deviceDetail.device_name;
+                    lblLocation.Text = deviceDetail.device_location != null ? deviceDetail.device_location.ToString() : "";
+                    txtOrganization.Text = deviceDetail.org_name != null ? deviceDetail.org_name.ToString() : txtOrganization.Text;
+
+                    DateTime localDate = DateTime.Now.ToLocalTime();
+                    txtUpdatedOn.Text = localDate.ToString();
+
+                    //timerLastUpdate.IsEnabled = false;
+                    if (deviceDetail.is_active)
+                    {
+                        deviceActive = true;
+                        //await RetrieveServices();
                         loadMenuItems("Assets/DeviceActive.png", "Your system is Compliant");
                     }
                     else
@@ -1449,15 +1542,17 @@ namespace FDS
                     {
                         foreach (var subservice in services.Subservices)
                         {
-                             
+
                             if (subservice.Sub_service_active)
                             {
                                 if (subservice.Execute_now)
                                 {
+                                    //MessageBox.Show("Manual Execution :" + subservice.Sub_service_name);
                                     ExecuteSubService(subservice, "M");
                                 }
                                 else if (subservice.Execute_Skipped_Service)
                                 {
+                                    //MessageBox.Show("Skipped Execution :" + subservice.Sub_service_name);
                                     ExecuteSubService(subservice, "SK");
                                 }
                                 else
@@ -1480,6 +1575,7 @@ namespace FDS
 
                     CronLastUpdate.Start();
                     timerEventBasedService.Start();
+                    timerNetworkMonitering.Start();
                 }
             }
             catch (Exception ex)
@@ -1521,6 +1617,7 @@ namespace FDS
 
                         if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && (DateTime.Now.Minute == key.Value.Minute || (DateTime.Now.Minute - 1 == key.Value.Minute)))
                         {
+                            // MessageBox.Show("Schedule Execution :" + SubservicesData.Sub_service_name);
 
                             bool result = await RunServices("S", SubservicesData);
 
@@ -1562,6 +1659,8 @@ namespace FDS
                 }
                 if (dicEventServicesE.Count > 0)
                 {
+                    // MessageBox.Show("Schedule Execution :" + SubservicesData.Sub_service_name + " & Flag - " + serviceTypeFlag);                    
+
                     await scheduleRunner.RunAll(dicEventServicesE, serviceTypeFlag, whitelistedDomain);
                     dicEventServicesE.Clear();
                 }
@@ -1628,9 +1727,9 @@ namespace FDS
 
         private async void TimerNetworkMonitering_Tick(object sender, EventArgs e)
         {
-            if ((lstCronEvent.Count > 1) && (deviceActive == true))
+            if ((lstCron.Count > 1) && (deviceActive == true))
             {
-                foreach (var key in lstCronEvent)
+                foreach (var key in lstCron)
                 {
                     SubservicesData SubservicesData = key.Key;
                     string transformed = TransformString(SubservicesData.Sub_service_name);

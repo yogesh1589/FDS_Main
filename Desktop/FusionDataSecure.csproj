@@ -165,15 +165,21 @@
     </ApplicationDefinition>
     <Compile Include="API Service\ApiService.cs" />
     <Compile Include="API Service\CertificateService.cs" />
+    <Compile Include="API Service\ProxyService.cs" />
     <Compile Include="Common\BrowsersGeneric.cs" />
-    <Compile Include="Common\CertificateDetails.cs" />
+    <Compile Include="Common\SystemMoniteringService\CertificateDetails.cs" />
     <Compile Include="Common\Cipher.cs" />
     <Compile Include="Common\EncryptDecryptData.cs" />
     <Compile Include="Common\EncryptionDecryption.cs" />
     <Compile Include="Common\Enums\SubServicesEnum.cs" />
     <Compile Include="Common\Generic.cs" />
+    <Compile Include="Common\SystemMoniteringService\MozilaProxies.cs" />
+    <Compile Include="Common\ProxyDetails.cs" />
     <Compile Include="Common\ReadWriteFile.cs" />
     <Compile Include="Common\RSAParametersSerializable.cs" />
+    <Compile Include="Common\SystemMoniteringService\SystemProxies.cs" />
+    <Compile Include="DTO\Requests\CertificateDeletionRequest.cs" />
+    <Compile Include="DTO\Requests\DeletedCertificationReuest.cs" />
     <Compile Include="DTO\Requests\LogServiceRequest.cs" />
     <Compile Include="DTO\Requests\RetriveServices.cs" />
     <Compile Include="DTO\Requests\ExecuteNow.cs" />
@@ -194,6 +200,8 @@
     <Compile Include="Models\CertificateData.cs" />
     <Compile Include="Models\CertificationLists.cs" />
     <Compile Include="Models\Payload.cs" />
+    <Compile Include="Models\ProxyData.cs" />
+    <Compile Include="Models\ProxyLists.cs" />
     <Compile Include="Runners\Abstract\BaseBrowser.cs" />
     <Compile Include="Runners\EventRunner.cs" />
     <Compile Include="Runners\ScheduleRunner.cs" />

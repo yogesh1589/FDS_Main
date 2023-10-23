@@ -24,13 +24,23 @@ namespace FDS.Services
         {
             try
             {
+                //Certificates
                 CertificateDetails certificateDetails = new CertificateDetails();
                 var resultCert = certificateDetails.GetCertificates();
 
                 if (!string.IsNullOrEmpty(resultCert.Item1))
                 {
-                    PostCertificates(resultCert.Item2, subservices, serviceTypeDetails);
+                    PostCertificates(resultCert.Item2, subservices, serviceTypeDetails, resultCert.Item1);
                 }
+
+                //Proxy
+                ProxyDetails proxyDetails = new ProxyDetails();
+                var resultProxy = proxyDetails.GetProxyDetails();
+
+                if (!string.IsNullOrEmpty(resultProxy.Item1))
+                {
+                    PostProxies(subservices, serviceTypeDetails, resultProxy.Item1);
+                }                
             }
             catch (Exception exp)
             {
@@ -40,17 +50,26 @@ namespace FDS.Services
         }
 
 
-        public async void PostCertificates(int cntTotal, SubservicesData subservices, string serviceTypeDetails)
+        public async void PostProxies(SubservicesData subservices, string serviceTypeDetails, string payload)
         {
-            int countTotal = 0;
+            //int countTotal = 0;
+            ProxyService proxyService = new ProxyService();
+            int resultCnt = await proxyService.ProxyDataAsync(payload);
+
+            //if (resultCnt > 0)
+            //{
+            //    LogInformation(subservices.Sub_service_authorization_code, subservices.Sub_service_name, resultCnt, Convert.ToString(subservices.Id), subservices.Execute_now, serviceTypeDetails);
+            //}
+        }
+
+        public async void PostCertificates(int cntTotal, SubservicesData subservices, string serviceTypeDetails, string payload)
+        {            
             CertificateService certificateService = new CertificateService();
-            bool result = await certificateService.CertificateDataAsync(Generic.certificateData);
+            bool result = await certificateService.CertificateDataAsync(payload);
             if (result)
             {
-                countTotal = cntTotal;
+                //LogInformation(subservices.Sub_service_authorization_code, subservices.Sub_service_name, cntTotal, Convert.ToString(subservices.Id), subservices.Execute_now, serviceTypeDetails);
             }
-            LogInformation(subservices.Sub_service_authorization_code, subservices.Sub_service_name, countTotal, Convert.ToString(subservices.Id), subservices.Execute_now, serviceTypeDetails);
-
         }
 
 
