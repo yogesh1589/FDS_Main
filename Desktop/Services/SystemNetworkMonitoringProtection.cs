@@ -34,13 +34,13 @@ namespace FDS.Services
                 }
 
                 //Proxy
-                ProxyDetails proxyDetails = new ProxyDetails();
-                var resultProxy = proxyDetails.GetProxyDetails();
+                //ProxyDetails proxyDetails = new ProxyDetails();
+                //var resultProxy = proxyDetails.GetProxyDetails();
 
-                if (!string.IsNullOrEmpty(resultProxy.Item1))
-                {
-                    PostProxies(subservices, serviceTypeDetails, resultProxy.Item1);
-                }                
+                //if (!string.IsNullOrEmpty(resultProxy.Item1))
+                //{
+                //    PostProxies(subservices, serviceTypeDetails, resultProxy.Item1);
+                //}                
             }
             catch (Exception exp)
             {

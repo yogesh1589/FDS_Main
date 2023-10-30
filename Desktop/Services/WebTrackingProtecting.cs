@@ -181,7 +181,7 @@ namespace FDS.Services
         protected int ExecuteOperaLogic()
         {
             int totalCount = 0;
-            string historyPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\Opera Software\Opera Stable\";
+            string historyPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\Opera Software\Opera Stable\Default\";
             if (Directory.Exists(historyPath))
             {
 

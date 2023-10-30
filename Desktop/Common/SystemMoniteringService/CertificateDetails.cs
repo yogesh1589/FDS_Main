@@ -2,10 +2,13 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace FDS.Common
 {
@@ -21,11 +24,13 @@ namespace FDS.Common
             {
 
                 List<CertificationLists> lstLocalMachinePersonal = GetCertificates_LocalMachine_My();
-                List<CertificationLists> lstLocalMachineTrusted = GetCertificates_LocalMachine_Root();
+                //List<CertificationLists> lstLocalMachineTrusted = GetCertificates_LocalMachine_Root();
                 List<CertificationLists> lstCurrentUserPersonal = GetCertificates_CurrentUser_My();
-                List<CertificationLists> lstCurrentUserTrusted = GetCertificates_CurrentUser_Root();
+                //List<CertificationLists> lstCurrentUserTrusted = GetCertificates_CurrentUser_Root();
 
-                cntCertif = lstLocalMachinePersonal.Count + lstLocalMachineTrusted.Count + lstCurrentUserPersonal.Count + lstCurrentUserTrusted.Count;
+                // cntCertif = lstLocalMachinePersonal.Count + lstLocalMachineTrusted.Count + lstCurrentUserPersonal.Count + lstCurrentUserTrusted.Count;
+
+                cntCertif = lstLocalMachinePersonal.Count + lstCurrentUserPersonal.Count;
 
 
                 var certificateData = new CertificateData
@@ -34,9 +39,9 @@ namespace FDS.Common
                     payload = new Payload
                     {
                         local_user_personal_certs = lstLocalMachinePersonal,
-                        local_user_trusted_certs = lstLocalMachineTrusted,
+                        //local_user_trusted_certs = lstLocalMachineTrusted,
                         current_user_personal_certs = lstCurrentUserPersonal,
-                        current_user_trusted_certs = lstCurrentUserTrusted
+                        //current_user_trusted_certs = lstCurrentUserTrusted
                     }
                 };
 
@@ -49,6 +54,79 @@ namespace FDS.Common
             }
             return (jsonMergedList, cntCertif);
         }
+
+
+        public List<CertificationLists> GetCertificatesTrusted(string storeLocation)
+        {
+            List<CertificationLists> certificateList = new List<CertificationLists>();
+
+            StoreLocation storeLocationV = StoreLocation.LocalMachine;
+
+            if (storeLocation == "CurrentUser")
+            { storeLocationV = StoreLocation.CurrentUser; }
+            else
+            {
+                storeLocationV = StoreLocation.LocalMachine;
+            }
+            X509Store rootStore = new X509Store(StoreName.Root, storeLocationV);
+            X509Store caStore = new X509Store(StoreName.CertificateAuthority, storeLocationV);
+
+            rootStore.Open(OpenFlags.ReadOnly);
+            caStore.Open(OpenFlags.ReadOnly);
+
+            List<X509Certificate2> commonCertificates = FindCommonCertificates(rootStore, caStore);
+
+            rootStore.Close();
+            caStore.Close();
+
+            // Enumerate through all certificates in the store
+            foreach (X509Certificate2 certificate in commonCertificates)
+            {
+                // Add certificate data to the list
+                certificateList.Add(new CertificationLists
+                {
+                    Subject = string.IsNullOrEmpty(certificate.Subject) ? string.Empty : certificate.Subject,
+                    Thumbprint = string.IsNullOrEmpty(certificate.Thumbprint) ? string.Empty : certificate.Thumbprint,
+                    FriendlyName = string.IsNullOrEmpty(certificate.FriendlyName) ? string.Empty : certificate.FriendlyName,
+                    Version = certificate.Version.ToString(),
+                    SerialNumber = string.IsNullOrEmpty(certificate.SerialNumber) ? string.Empty : certificate.SerialNumber,
+                    SignatureAlgorithm = string.IsNullOrEmpty(certificate.SignatureAlgorithm.FriendlyName) ? string.Empty : certificate.SignatureAlgorithm.FriendlyName.ToString(),
+                    Issuer = string.IsNullOrEmpty(certificate.Issuer) ? string.Empty : certificate.Issuer,
+                    ValidFrom = certificate.NotBefore,
+                    ValidTo = certificate.NotAfter,
+                    PublicKey = string.IsNullOrEmpty(certificate.PublicKey.Oid.FriendlyName) ? string.Empty : certificate.PublicKey.Oid.FriendlyName.ToString(),
+                    StoreName = "Trusted",
+                    StoreLocation = storeLocation
+                });
+            }
+
+            // Serialize the list to JSON
+            //string json = JsonConvert.SerializeObject(certificateList, Newtonsoft.Json.Formatting.Indented);
+
+
+            return certificateList;
+
+        }
+
+        public List<X509Certificate2> FindCommonCertificates(X509Store store1, X509Store store2)
+        {
+            List<X509Certificate2> commonCertificates = new List<X509Certificate2>();
+
+            foreach (X509Certificate2 cert1 in store1.Certificates)
+            {
+                foreach (X509Certificate2 cert2 in store2.Certificates)
+                {
+                    if (cert1.Thumbprint == cert2.Thumbprint)
+                    {
+                        commonCertificates.Add(cert1);
+                        break; // Once a match is found, no need to continue searching in store2
+                    }
+                }
+            }
+
+            return commonCertificates;
+        }
+
 
         public List<CertificationLists> GetCertificates(X509Store store, string storeName, string storeLocation)
         {
@@ -97,8 +175,7 @@ namespace FDS.Common
         {
             // Root Store - LocalMachine
             List<CertificationLists> rootCertificateList = new List<CertificationLists>();
-            X509Store rootStore = new X509Store(StoreName.Root, StoreLocation.LocalMachine);
-            rootCertificateList = GetCertificates(rootStore, "Trusted", "LocalComputer");
+            rootCertificateList = GetCertificatesTrusted("LocalComputer");
             return rootCertificateList;
         }
 
@@ -116,8 +193,8 @@ namespace FDS.Common
         {
             // Root Store - CurrentUser
             List<CertificationLists> rootCertificateListCurrentUser = new List<CertificationLists>();
-            X509Store rootStoreCurrentUser = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
-            rootCertificateListCurrentUser = GetCertificates(rootStoreCurrentUser, "Trusted", "CurrentUser");
+
+            rootCertificateListCurrentUser = GetCertificatesTrusted("CurrentUser");
             return rootCertificateListCurrentUser;
 
         }
@@ -131,22 +208,22 @@ namespace FDS.Common
             StoreName storeNameV = StoreName.My;
             StoreLocation storeLocationV = StoreLocation.LocalMachine;
 
-            if ((storename == "My") && (storeLocation == "LocalMachine"))
+            if ((storename == "Personal") && (storeLocation == "LocalComputer"))
             {
                 storeNameV = StoreName.My;
                 storeLocationV = StoreLocation.LocalMachine;
             }
-            else if ((storename == "Root") && (storeLocation == "LocalMachine"))
+            else if ((storename == "Trusted") && (storeLocation == "LocalComputer"))
             {
                 storeNameV = StoreName.Root;
                 storeLocationV = StoreLocation.LocalMachine;
             }
-            else if ((storename == "Root") && (storeLocation == "CurrentUser"))
+            else if ((storename == "Trusted") && (storeLocation == "CurrentUser"))
             {
                 storeNameV = StoreName.Root;
                 storeLocationV = StoreLocation.CurrentUser;
             }
-            else if ((storename == "My") && (storeLocation == "CurrentUser"))
+            else if ((storename == "Personal") && (storeLocation == "CurrentUser"))
             {
                 storeNameV = StoreName.My;
                 storeLocationV = StoreLocation.CurrentUser;
@@ -158,17 +235,25 @@ namespace FDS.Common
             }
             catch (Exception ex)
             {
-                return false;                 
-            }             
+                return false;
+            }
             return result;
         }
 
         public bool DeleteCertificationDetails(string certificateThumbprint, StoreName storeName, StoreLocation storeLocation)
         {
-            bool result = false;
+
             try
             {
-                // Open the certificate store
+                if (IsAdministrator())
+                {
+                    DeleteCertificateFromTrustedRoot(certificateThumbprint);
+                }
+                else
+                {
+                    return false;
+                }
+                //// Open the certificate store
                 using (X509Store store = new X509Store(storeName, storeLocation))
                 {
                     store.Open(OpenFlags.ReadWrite); // Open the store for writing
@@ -182,24 +267,63 @@ namespace FDS.Common
                     // Check if the certificate was found
                     if (certificates.Count > 0)
                     {
-                        result = true;
+
                         // Remove the certificate from the store
                         store.RemoveRange(certificates);
-                        Console.WriteLine("Certificate removed successfully.");
+
                     }
                     else
                     {
-                        result = false;
-                        Console.WriteLine("Certificate not found in the store.");
+                        return false;
                     }
                 }
             }
             catch
             {
+                MessageBox.Show("Require Admin Access");
                 return false;
             }
 
-            return result;
+            return true;
         }
+
+
+        static bool DeleteCertificateFromTrustedRoot(string certificateThumbprint)
+        {
+            try
+            {
+                ProcessStartInfo startInfo = new ProcessStartInfo
+                {
+                    FileName = "certutil",
+                    Arguments = $"-delstore -user -split -enterprise -f \"Root\" \"{certificateThumbprint}\"",
+                    Verb = "runas", // Request administrator privileges
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true
+                };
+
+                using (Process process = new Process { StartInfo = startInfo })
+                {
+                    process.Start();
+                    process.WaitForExit();
+                    return process.ExitCode == 0; // Exit code 0 indicates success
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message);
+                return false;
+            }
+        }
+
+
+
+        static bool IsAdministrator()
+        {
+            WindowsIdentity identity = WindowsIdentity.GetCurrent();
+            WindowsPrincipal principal = new WindowsPrincipal(identity);
+            return principal.IsInRole(WindowsBuiltInRole.Administrator);
+        }
+
     }
 }

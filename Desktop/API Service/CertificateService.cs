@@ -30,7 +30,7 @@ namespace FDS.API_Service
 
         public async Task<bool> CertificateDataAsync(string payload)
         {
-            
+
             try
             {
 
@@ -59,7 +59,7 @@ namespace FDS.API_Service
 
         public async Task<bool> DeleteCertificates()
         {
-             
+
             try
             {
                 var getresponse = await client1.GetAsync(AppConstants.EndPoints.CertificateLog + "?device_uuid=" + AppConstants.UUId);
@@ -81,90 +81,102 @@ namespace FDS.API_Service
 
                     bool resultSet = false;
 
-                    foreach (CertificateResponse certificate in localUserPersonalCerts)
+                    if (localUserPersonalCerts != null)
                     {
-
-                        resultSet = certificateDetails.DeleteCertificate(certificate.Thumbprint, certificate.StoreName, certificate.StoreLocation);
-
-                        var deletionRequest = new CertificateDeletionRequest
+                        foreach (CertificateResponse certificate in localUserPersonalCerts)
                         {
-                            Thumbprint = certificate.Thumbprint,
-                            StoreName = certificate.StoreName,
-                            StoreLocation = certificate.StoreLocation
-                        };
 
-                        if (resultSet)
-                        {
-                            deleted_certificates.Add(deletionRequest);
+                            resultSet = certificateDetails.DeleteCertificate(certificate.Thumbprint, certificate.StoreName, certificate.StoreLocation);
+
+                            var deletionRequest = new CertificateDeletionRequest
+                            {
+                                Thumbprint = certificate.Thumbprint,
+                                StoreName = certificate.StoreName,
+                                StoreLocation = certificate.StoreLocation
+                            };
+
+                            if (resultSet)
+                            {
+                                deleted_certificates.Add(deletionRequest);
+                            }
+                            else
+                            {
+                                no_deleted_certificates.Add(deletionRequest);
+                            }
+
                         }
-                        else
+                    }
+                    if (localUserTrustedCerts != null)
+                    {
+                        foreach (CertificateResponse certificate in localUserTrustedCerts)
                         {
-                            no_deleted_certificates.Add(deletionRequest);
+                            resultSet = certificateDetails.DeleteCertificate(certificate.Thumbprint, certificate.StoreName, certificate.StoreLocation);
+
+                            var deletionRequest = new CertificateDeletionRequest
+                            {
+                                Thumbprint = certificate.Thumbprint,
+                                StoreName = certificate.StoreName,
+                                StoreLocation = certificate.StoreLocation
+                            };
+
+                            if (resultSet)
+                            {
+                                deleted_certificates.Add(deletionRequest);
+                            }
+                            else
+                            {
+                                no_deleted_certificates.Add(deletionRequest);
+                            }
+                        }
+                    }
+                    if (currentUserPersonalCerts != null)
+                    {
+                        foreach (CertificateResponse certificate in currentUserPersonalCerts)
+                        {
+
+                            resultSet = certificateDetails.DeleteCertificate(certificate.Thumbprint, certificate.StoreName, certificate.StoreLocation);
+
+                            var deletionRequest = new CertificateDeletionRequest
+                            {
+                                Thumbprint = certificate.Thumbprint,
+                                StoreName = certificate.StoreName,
+                                StoreLocation = certificate.StoreLocation
+                            };
+
+                            if (resultSet)
+                            {
+                                deleted_certificates.Add(deletionRequest);
+                            }
+                            else
+                            {
+                                no_deleted_certificates.Add(deletionRequest);
+                            }
+                        }
+                    }
+                    if (currentUserTrustedCerts != null)
+                    {
+                        foreach (CertificateResponse certificate in currentUserTrustedCerts)
+                        {
+                            resultSet = certificateDetails.DeleteCertificate(certificate.Thumbprint, certificate.StoreName, certificate.StoreLocation);
+
+                            var deletionRequest = new CertificateDeletionRequest
+                            {
+                                Thumbprint = certificate.Thumbprint,
+                                StoreName = certificate.StoreName,
+                                StoreLocation = certificate.StoreLocation
+                            };
+
+                            if (resultSet)
+                            {
+                                deleted_certificates.Add(deletionRequest);
+                            }
+                            else
+                            {
+                                no_deleted_certificates.Add(deletionRequest);
+                            }
                         }
 
                     }
-                    foreach (CertificateResponse certificate in localUserTrustedCerts)
-                    {
-                        resultSet = certificateDetails.DeleteCertificate(certificate.Thumbprint, certificate.StoreName, certificate.StoreLocation);
-
-                        var deletionRequest = new CertificateDeletionRequest
-                        {
-                            Thumbprint = certificate.Thumbprint,
-                            StoreName = certificate.StoreName,
-                            StoreLocation = certificate.StoreLocation
-                        };
-
-                        if (resultSet)
-                        {
-                            deleted_certificates.Add(deletionRequest);
-                        }
-                        else
-                        {
-                            no_deleted_certificates.Add(deletionRequest);
-                        }
-                    }
-                    foreach (CertificateResponse certificate in currentUserPersonalCerts)
-                    {
-
-                        resultSet = certificateDetails.DeleteCertificate(certificate.Thumbprint, certificate.StoreName, certificate.StoreLocation);
-
-                        var deletionRequest = new CertificateDeletionRequest
-                        {
-                            Thumbprint = certificate.Thumbprint,
-                            StoreName = certificate.StoreName,
-                            StoreLocation = certificate.StoreLocation
-                        };
-
-                        if (resultSet)
-                        {
-                            deleted_certificates.Add(deletionRequest);
-                        }
-                        else
-                        {
-                            no_deleted_certificates.Add(deletionRequest);
-                        }
-                    }
-                    foreach (CertificateResponse certificate in currentUserTrustedCerts)
-                    {
-                        resultSet = certificateDetails.DeleteCertificate(certificate.Thumbprint, certificate.StoreName, certificate.StoreLocation);
-
-                        var deletionRequest = new CertificateDeletionRequest
-                        {
-                            Thumbprint = certificate.Thumbprint,
-                            StoreName = certificate.StoreName,
-                            StoreLocation = certificate.StoreLocation
-                        };
-
-                        if (resultSet)
-                        {
-                            deleted_certificates.Add(deletionRequest);
-                        }
-                        else
-                        {
-                            no_deleted_certificates.Add(deletionRequest);
-                        }
-                    }
-
                     var deletedCertificates = new DeletedCertificationReuest
                     {
                         device_uuid = AppConstants.UUId,

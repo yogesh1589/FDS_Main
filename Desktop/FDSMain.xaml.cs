@@ -129,7 +129,7 @@ namespace FDS
         ApiService apiService = new ApiService();
         public static byte[] EncKey { get; set; }
         public bool deviceActive = true;
-
+        public bool deviceOffline = false;
 
         public RSACryptoServiceProvider RSADevice { get; set; }
         public RSACryptoServiceProvider RSAServer { get; set; }
@@ -293,7 +293,7 @@ namespace FDS
                     LoadMenu(Screens.Landing);
                     TimerLastUpdate_Tick(timerLastUpdate, null);
                     //timerLastUpdate.IsEnabled = true;
-                    GetDeviceDetailsUI();
+                    GetDeviceDetails();
                 }
                 // -------Actual Code --------------------------------
             }
@@ -991,8 +991,8 @@ namespace FDS
                 {
                     switch (QRCodeResponse.StatusCode)
                     {
-                        //case System.Net.HttpStatusCode.Unauthorized:
-                        //    break;
+                        case System.Net.HttpStatusCode.Unauthorized:
+                            break;
                         case System.Net.HttpStatusCode.NotFound:
                             timerDeviceLogin.IsEnabled = false;
                             timerQRCode.IsEnabled = false;
@@ -1152,6 +1152,7 @@ namespace FDS
 
                 if (apiResponse == null)
                 {
+                    deviceOffline = true;
                     timerLastUpdate.IsEnabled = true;
                     lblCompliant.Text = "Contact to Administrator";
                     string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
@@ -1165,14 +1166,15 @@ namespace FDS
 
                 if (apiResponse.Success == true)
                 {
+                    timerLastUpdate.IsEnabled = true;
                     var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
                     int idx = plainText.LastIndexOf('}');
                     var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
                     var HealthData = JsonConvert.DeserializeObject<HealthCheckResponse>(result);
-                    bool GetDeviceAPIflag = false;
+
                     if (HealthData.call_config)
                     {
-                        GetDeviceAPIflag = true;
+
                         DeviceConfigurationCheck();
                     }
 
@@ -1180,10 +1182,10 @@ namespace FDS
                     {
 
                         loadMenuItems("Assets/DeviceActive.png", "Your system is Compliant");
-                        if (!GetDeviceAPIflag)
+                        if (deviceOffline)
                         {
-                            await GetDeviceDetails();
-                            
+                            await GetDeviceDetailsUI();
+                            deviceOffline = false;
                         }
 
                     }
@@ -1196,7 +1198,7 @@ namespace FDS
                 else if (apiResponse.HttpStatusCode == HttpStatusCode.BadGateway)
                 {
                     timerLastUpdate.IsEnabled = true;
-
+                    deviceOffline = true;
                     loadMenuItems("Assets/DeviceDisable.png", "Ooops! Will be back soon.");
                 }
                 else if (apiResponse.HttpStatusCode == HttpStatusCode.Unauthorized)
@@ -1231,6 +1233,7 @@ namespace FDS
                 }
                 else
                 {
+                    deviceOffline = true;
                     timerLastUpdate.IsEnabled = true;
                     lblCompliant.Text = "Contact to Administrator";
                     string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
@@ -1353,7 +1356,7 @@ namespace FDS
             if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
             {
                 timerLastUpdate.IsEnabled = false;
-                btnGetStarted_Click(btnGetStarted, null);                
+                btnGetStarted_Click(btnGetStarted, null);
             }
         }
 
@@ -1363,6 +1366,7 @@ namespace FDS
             var apiResponse = await apiService.GetDeviceDetailsAsync();
             if (apiResponse == null)
             {
+                deviceOffline = true;
                 timerLastUpdate.IsEnabled = true;
                 lblCompliant.Text = "Contact to Administrator";
                 string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
@@ -1429,6 +1433,7 @@ namespace FDS
             var apiResponse = await apiService.GetDeviceDetailsAsync();
             if (apiResponse == null)
             {
+                deviceOffline = true;
                 timerLastUpdate.IsEnabled = true;
                 lblCompliant.Text = "Contact to Administrator";
                 string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
@@ -1465,7 +1470,7 @@ namespace FDS
                     if (deviceDetail.is_active)
                     {
                         deviceActive = true;
-                        //await RetrieveServices();
+                        // await RetrieveServices();
                         loadMenuItems("Assets/DeviceActive.png", "Your system is Compliant");
                     }
                     else
@@ -1550,7 +1555,7 @@ namespace FDS
                                     //MessageBox.Show("Manual Execution :" + subservice.Sub_service_name);
                                     ExecuteSubService(subservice, "M");
                                 }
-                                else if (subservice.Execute_Skipped_Service)
+                                else if ((subservice.Execute_Skipped_Service) && (subservice.Sub_service_name != "system_network_monitoring_protection"))
                                 {
                                     //MessageBox.Show("Skipped Execution :" + subservice.Sub_service_name);
                                     ExecuteSubService(subservice, "SK");
@@ -1711,7 +1716,7 @@ namespace FDS
                 List<string> whitelistedDomain = await GetWhiteListDomainsList(dicEventServices);
 
 
-                if (dicEventServices.Count > 1)
+                if (dicEventServices.Count > 0)
                 {
                     bool result = eventRunner.RunAll(dicEventServices, "E", whitelistedDomain);
                     if (result)
