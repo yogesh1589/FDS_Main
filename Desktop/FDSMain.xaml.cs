@@ -1732,9 +1732,9 @@ namespace FDS
 
         private async void TimerNetworkMonitering_Tick(object sender, EventArgs e)
         {
-            if ((lstCron.Count > 1) && (deviceActive == true))
+            if ((lstCronEvent.Count > 0) && (deviceActive == true))
             {
-                foreach (var key in lstCron)
+                foreach (var key in lstCronEvent)
                 {
                     SubservicesData SubservicesData = key.Key;
                     string transformed = TransformString(SubservicesData.Sub_service_name);
