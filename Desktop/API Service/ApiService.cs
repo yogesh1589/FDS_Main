@@ -1,11 +1,15 @@
 ﻿using FDS.Common;
 using FDS.DTO.Requests;
 using FDS.DTO.Responses;
+using FDS.Models;
 using Newtonsoft.Json;
+using OpenQA.Selenium;
 using OpenQA.Selenium.DevTools;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
@@ -16,11 +20,23 @@ namespace FDS.API_Service
     public class ApiService
     {
         private readonly HttpClient client;
+        public string proxyAddress = string.Empty;
+        public string proxyPort = string.Empty;
+        bool proxyEnabled = false;
 
         public ApiService()
         {
-            client = new HttpClient();
-            client = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI };
+            // WebProxy proxy = new WebProxy();
+            //HttpClientHandler handler = new HttpClientHandler
+            //{
+            //    Proxy = proxy,
+            //    UseProxy = false // Set UseProxy to false to bypass the proxy.
+            //};
+
+            //client = new HttpClient(handler);
+            //client = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI };
+
+
             // Configure client settings if needed (base URL, headers, etc.).
         }
 
@@ -35,23 +51,33 @@ namespace FDS.API_Service
                 new KeyValuePair<string, string>("code_version", codeVersion),
             };
 
-                var response = await client.PostAsync(AppConstants.EndPoints.CheckAuth, new FormUrlEncodedContent(formContent));
 
-                if (response.IsSuccessStatusCode)
+                var handler = new HttpClientHandler
                 {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<QRCodeResponse>(responseString);
+                    UseProxy = false // Disable using the system proxy
+                };
 
-                    return apiResponse;
-                }
-                else
+                using (var client1 = new HttpClient(handler))
                 {
-                    QRCodeResponse qRCodeResponse = new QRCodeResponse
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var response = await client1.PostAsync(AppConstants.EndPoints.CheckAuth, new FormUrlEncodedContent(formContent));
+
+                    if (response.IsSuccessStatusCode)
                     {
-                        StatusCode = response.StatusCode
-                       
-                    };
-                    return qRCodeResponse;
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var apiResponse = JsonConvert.DeserializeObject<QRCodeResponse>(responseString);
+
+                        return apiResponse;
+                    }
+                    else
+                    {
+                        QRCodeResponse qRCodeResponse = new QRCodeResponse
+                        {
+                            StatusCode = response.StatusCode
+
+                        };
+                        return qRCodeResponse;
+                    }
                 }
             }
             catch (Exception ex)
@@ -84,24 +110,34 @@ namespace FDS.API_Service
                 new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion)
             };
 
-                var response = await client.PostAsync(AppConstants.EndPoints.KeyExchange, new FormUrlEncodedContent(formContent));
+                var handler = new HttpClientHandler
+                {
+                    UseProxy = false // Disable using the system proxy
+                };
+
+                using (var client1 = new HttpClient(handler))
+                {
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+
+                    var response = await client1.PostAsync(AppConstants.EndPoints.KeyExchange, new FormUrlEncodedContent(formContent));
 
 
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
-                    apiResponse.Success = true;
-                    return apiResponse;
-                }
-                else
-                {
-                    ResponseData qRCodeResponse = new ResponseData
+                    if (response.IsSuccessStatusCode)
                     {
-                        HttpStatusCode = response.StatusCode,
-                        Success = false
-                    };
-                    return qRCodeResponse;
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
+                        apiResponse.Success = true;
+                        return apiResponse;
+                    }
+                    else
+                    {
+                        ResponseData qRCodeResponse = new ResponseData
+                        {
+                            HttpStatusCode = response.StatusCode,
+                            Success = false
+                        };
+                        return qRCodeResponse;
+                    }
                 }
             }
             catch (Exception ex)
@@ -135,22 +171,31 @@ namespace FDS.API_Service
                 new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
             };
 
-                var response = await client.PostAsync(AppConstants.EndPoints.DeviceHealth, new FormUrlEncodedContent(formContent));
-                if (response.IsSuccessStatusCode)
+                var handler = new HttpClientHandler
                 {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
-                    apiResponse.Success = true;
-                    return apiResponse;
-                }
-                else
+                    UseProxy = false // Disable using the system proxy
+                };
+
+                using (var client1 = new HttpClient(handler))
                 {
-                    ResponseData qRCodeResponse = new ResponseData
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var response = await client1.PostAsync(AppConstants.EndPoints.DeviceHealth, new FormUrlEncodedContent(formContent));
+                    if (response.IsSuccessStatusCode)
                     {
-                        HttpStatusCode = response.StatusCode,
-                        Success = false
-                    };
-                    return qRCodeResponse;
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
+                        apiResponse.Success = true;
+                        return apiResponse;
+                    }
+                    else
+                    {
+                        ResponseData qRCodeResponse = new ResponseData
+                        {
+                            HttpStatusCode = response.StatusCode,
+                            Success = false
+                        };
+                        return qRCodeResponse;
+                    }
                 }
             }
             catch (Exception ex)
@@ -180,22 +225,31 @@ namespace FDS.API_Service
                 new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
             };
 
-                var response = await client.PostAsync(AppConstants.EndPoints.DeviceConfigCheck, new FormUrlEncodedContent(formContent));
-                if (response.IsSuccessStatusCode)
+                var handler = new HttpClientHandler
                 {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
-                    apiResponse.Success = true;
-                    return apiResponse;
-                }
-                else
+                    UseProxy = false // Disable using the system proxy
+                };
+
+                using (var client1 = new HttpClient(handler))
                 {
-                    ResponseData qRCodeResponse = new ResponseData
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var response = await client1.PostAsync(AppConstants.EndPoints.DeviceConfigCheck, new FormUrlEncodedContent(formContent));
+                    if (response.IsSuccessStatusCode)
                     {
-                        HttpStatusCode = response.StatusCode,
-                        Success = false
-                    };
-                    return qRCodeResponse;
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
+                        apiResponse.Success = true;
+                        return apiResponse;
+                    }
+                    else
+                    {
+                        ResponseData qRCodeResponse = new ResponseData
+                        {
+                            HttpStatusCode = response.StatusCode,
+                            Success = false
+                        };
+                        return qRCodeResponse;
+                    }
                 }
             }
             catch (Exception ex)
@@ -214,19 +268,28 @@ namespace FDS.API_Service
             {
                 try
                 {
-                    HttpResponseMessage response = await httpClient.GetAsync(apiUrl);
-
-                    // Check if the response status code is successful (2xx)
-
-                    if (response.IsSuccessStatusCode)
+                    var handler = new HttpClientHandler
                     {
-                        string jsonResponse = await response.Content.ReadAsStringAsync();
+                        UseProxy = false // Disable using the system proxy
+                    };
 
-                        // Deserialize the JSON response into an object
-                        DeviceConfigCheckResponse config = Newtonsoft.Json.JsonConvert.DeserializeObject<DeviceConfigCheckResponse>(jsonResponse);
-                       
-                        return config;
-                    }                  
+                    using (var client1 = new HttpClient(handler))
+                    {
+                        client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                        HttpResponseMessage response = await client1.GetAsync(apiUrl);
+
+                        // Check if the response status code is successful (2xx)
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            string jsonResponse = await response.Content.ReadAsStringAsync();
+
+                            // Deserialize the JSON response into an object
+                            DeviceConfigCheckResponse config = Newtonsoft.Json.JsonConvert.DeserializeObject<DeviceConfigCheckResponse>(jsonResponse);
+
+                            return config;
+                        }
+                    }
 
                 }
                 catch (Exception ex)
@@ -257,23 +320,32 @@ namespace FDS.API_Service
                 new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
             };
 
+                var handler = new HttpClientHandler
+                {
+                    UseProxy = false // Disable using the system proxy
+                };
 
-                var response = await client.PostAsync(AppConstants.EndPoints.DeviceReauth, new FormUrlEncodedContent(formContent));
-                if (response.IsSuccessStatusCode)
+                using (var client1 = new HttpClient(handler))
                 {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
-                    apiResponse.Success = true;
-                    return apiResponse;
-                }
-                else
-                {
-                    ResponseData qRCodeResponse = new ResponseData
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+
+                    var response = await client1.PostAsync(AppConstants.EndPoints.DeviceReauth, new FormUrlEncodedContent(formContent));
+                    if (response.IsSuccessStatusCode)
                     {
-                        HttpStatusCode = response.StatusCode,
-                        Success = false
-                    };
-                    return qRCodeResponse;
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
+                        apiResponse.Success = true;
+                        return apiResponse;
+                    }
+                    else
+                    {
+                        ResponseData qRCodeResponse = new ResponseData
+                        {
+                            HttpStatusCode = response.StatusCode,
+                            Success = false
+                        };
+                        return qRCodeResponse;
+                    }
                 }
             }
             catch (Exception ex)
@@ -300,23 +372,31 @@ namespace FDS.API_Service
                 };
 
 
+                var handler = new HttpClientHandler
+                {
+                    UseProxy = false // Disable using the system proxy
+                };
 
-                var response = await client.PostAsync(AppConstants.EndPoints.Start, new FormUrlEncodedContent(formContent));
-                if (response.IsSuccessStatusCode)
+                using (var client1 = new HttpClient(handler))
                 {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<DeviceResponse>(responseString);
-                    apiResponse.Success = true;
-                    return apiResponse;
-                }
-                else
-                {
-                    DeviceResponse qRCodeResponse = new DeviceResponse
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var response = await client1.PostAsync(AppConstants.EndPoints.Start, new FormUrlEncodedContent(formContent));
+                    if (response.IsSuccessStatusCode)
                     {
-                        httpStatusCode = response.StatusCode,
-                        Success = false
-                    };
-                    return qRCodeResponse;
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var apiResponse = JsonConvert.DeserializeObject<DeviceResponse>(responseString);
+                        apiResponse.Success = true;
+                        return apiResponse;
+                    }
+                    else
+                    {
+                        DeviceResponse qRCodeResponse = new DeviceResponse
+                        {
+                            httpStatusCode = response.StatusCode,
+                            Success = false
+                        };
+                        return qRCodeResponse;
+                    }
                 }
             }
             catch (Exception ex)
@@ -349,24 +429,41 @@ namespace FDS.API_Service
                         new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion)
 
                     };
-                var response = await client.PostAsync(AppConstants.EndPoints.DeviceDetails, new FormUrlEncodedContent(formContent));
 
-                if (response.IsSuccessStatusCode)
+
+                var handler = new HttpClientHandler
                 {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
-                    apiResponse.Success = true;
-                    return apiResponse;
-                }
-                else
+                    UseProxy = false // Disable using the system proxy
+                };
+
+                using (var client1 = new HttpClient(handler))
                 {
-                    ResponseData qRCodeResponse = new ResponseData
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var response = await client1.PostAsync(AppConstants.EndPoints.DeviceDetails, new FormUrlEncodedContent(formContent));
+
+                    if (response.IsSuccessStatusCode)
                     {
-                        HttpStatusCode = response.StatusCode,
-                        Success = false
-                    };
-                    return qRCodeResponse;
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
+                        apiResponse.Success = true;
+                        return apiResponse;
+                    }
+                    else
+                    {
+                        ResponseData qRCodeResponse = new ResponseData
+                        {
+                            HttpStatusCode = response.StatusCode,
+                            Success = false
+                        };
+                        return qRCodeResponse;
+                    }
                 }
+
+
+
+
+
+
             }
             catch (Exception ex)
             {
@@ -395,23 +492,32 @@ namespace FDS.API_Service
                         new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
                     };
 
-                var response = await client.PostAsync(AppConstants.EndPoints.DeviceServices, new FormUrlEncodedContent(formContent));
+                var handler = new HttpClientHandler
+                {
+                    UseProxy = false // Disable using the system proxy
+                };
 
-                if (response.IsSuccessStatusCode)
+                using (var client1 = new HttpClient(handler))
                 {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-                    responseData.Success = true;
-                    return responseData;
-                }
-                else
-                {
-                    ResponseData qRCodeResponse = new ResponseData
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var response = await client1.PostAsync(AppConstants.EndPoints.DeviceServices, new FormUrlEncodedContent(formContent));
+
+                    if (response.IsSuccessStatusCode)
                     {
-                        HttpStatusCode = response.StatusCode,
-                        Success = false
-                    };
-                    return qRCodeResponse;
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
+                        responseData.Success = true;
+                        return responseData;
+                    }
+                    else
+                    {
+                        ResponseData qRCodeResponse = new ResponseData
+                        {
+                            HttpStatusCode = response.StatusCode,
+                            Success = false
+                        };
+                        return qRCodeResponse;
+                    }
                 }
             }
             catch (Exception ex)
@@ -433,23 +539,32 @@ namespace FDS.API_Service
                 new KeyValuePair<string, string>("device_uuid", AppConstants.UUId)
             };
 
-                var response = await client.PostAsync(AppConstants.EndPoints.UninstallDevice, new FormUrlEncodedContent(formContent));
+                var handler = new HttpClientHandler
+                {
+                    UseProxy = false // Disable using the system proxy
+                };
 
-                if (response.IsSuccessStatusCode)
+                using (var client1 = new HttpClient(handler))
                 {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-                    responseData.Success = true;
-                    return responseData;
-                }
-                else
-                {
-                    ResponseData qRCodeResponse = new ResponseData
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var response = await client1.PostAsync(AppConstants.EndPoints.UninstallDevice, new FormUrlEncodedContent(formContent));
+
+                    if (response.IsSuccessStatusCode)
                     {
-                        HttpStatusCode = response.StatusCode,
-                        Success = false
-                    };
-                    return qRCodeResponse;
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
+                        responseData.Success = true;
+                        return responseData;
+                    }
+                    else
+                    {
+                        ResponseData qRCodeResponse = new ResponseData
+                        {
+                            HttpStatusCode = response.StatusCode,
+                            Success = false
+                        };
+                        return qRCodeResponse;
+                    }
                 }
             }
             catch (Exception ex)
@@ -472,23 +587,32 @@ namespace FDS.API_Service
                 new KeyValuePair<string, string>("device_uuid", AppConstants.UUId)
             };
 
-                var response = await client.PostAsync(AppConstants.EndPoints.UninstallCheck, new FormUrlEncodedContent(formContent));
+                var handler = new HttpClientHandler
+                {
+                    UseProxy = false // Disable using the system proxy
+                };
 
-                if (response.IsSuccessStatusCode)
+                using (var client1 = new HttpClient(handler))
                 {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-                    responseData.Success = true;
-                    return responseData;
-                }
-                else
-                {
-                    ResponseData qRCodeResponse = new ResponseData
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var response = await client1.PostAsync(AppConstants.EndPoints.UninstallCheck, new FormUrlEncodedContent(formContent));
+
+                    if (response.IsSuccessStatusCode)
                     {
-                        HttpStatusCode = response.StatusCode,
-                        Success = false
-                    };
-                    return qRCodeResponse;
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
+                        responseData.Success = true;
+                        return responseData;
+                    }
+                    else
+                    {
+                        ResponseData qRCodeResponse = new ResponseData
+                        {
+                            HttpStatusCode = response.StatusCode,
+                            Success = false
+                        };
+                        return qRCodeResponse;
+                    }
                 }
             }
             catch (Exception ex)
@@ -511,23 +635,32 @@ namespace FDS.API_Service
                         new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion)
                     };
 
-                var response = await client.PostAsync(AppConstants.EndPoints.AutoUpdate, new FormUrlEncodedContent(formContent));
+                var handler = new HttpClientHandler
+                {
+                    UseProxy = false // Disable using the system proxy
+                };
 
-                if (response.IsSuccessStatusCode)
+                using (var client1 = new HttpClient(handler))
                 {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-                    responseData.Success = true;
-                    return responseData;
-                }
-                else
-                {
-                    ResponseData qRCodeResponse = new ResponseData
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var response = await client1.PostAsync(AppConstants.EndPoints.AutoUpdate, new FormUrlEncodedContent(formContent));
+
+                    if (response.IsSuccessStatusCode)
                     {
-                        HttpStatusCode = response.StatusCode,
-                        Success = false
-                    };
-                    return qRCodeResponse;
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
+                        responseData.Success = true;
+                        return responseData;
+                    }
+                    else
+                    {
+                        ResponseData qRCodeResponse = new ResponseData
+                        {
+                            HttpStatusCode = response.StatusCode,
+                            Success = false
+                        };
+                        return qRCodeResponse;
+                    }
                 }
             }
             catch (Exception ex)
@@ -538,7 +671,7 @@ namespace FDS.API_Service
         }
 
 
-        
+
 
         public async Task<ResponseData> SendOTPAsync(string email, string phone, string countryCode)
         {
@@ -552,23 +685,32 @@ namespace FDS.API_Service
                     };
 
 
-                var response = await client.PostAsync(AppConstants.EndPoints.Otp, new FormUrlEncodedContent(formContent));
+                var handler = new HttpClientHandler
+                {
+                    UseProxy = false // Disable using the system proxy
+                };
 
-                if (response.IsSuccessStatusCode)
+                using (var client1 = new HttpClient(handler))
                 {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-                    responseData.Success = true;
-                    return responseData;
-                }
-                else
-                {
-                    ResponseData qRCodeResponse = new ResponseData
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var response = await client1.PostAsync(AppConstants.EndPoints.Otp, new FormUrlEncodedContent(formContent));
+
+                    if (response.IsSuccessStatusCode)
                     {
-                        HttpStatusCode = response.StatusCode,
-                        Success = false
-                    };
-                    return qRCodeResponse;
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
+                        responseData.Success = true;
+                        return responseData;
+                    }
+                    else
+                    {
+                        ResponseData qRCodeResponse = new ResponseData
+                        {
+                            HttpStatusCode = response.StatusCode,
+                            Success = false
+                        };
+                        return qRCodeResponse;
+                    }
                 }
             }
             catch (Exception ex)
@@ -594,23 +736,32 @@ namespace FDS.API_Service
                     };
 
 
-                var response = await client.PostAsync(AppConstants.EndPoints.DeviceToken, new FormUrlEncodedContent(formContent));
+                var handler = new HttpClientHandler
+                {
+                    UseProxy = false // Disable using the system proxy
+                };
 
-                if (response.IsSuccessStatusCode)
+                using (var client1 = new HttpClient(handler))
                 {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
-                    responseData.Success = true;
-                    return responseData;
-                }
-                else
-                {
-                    ResponseData qRCodeResponse = new ResponseData
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var response = await client1.PostAsync(AppConstants.EndPoints.DeviceToken, new FormUrlEncodedContent(formContent));
+
+                    if (response.IsSuccessStatusCode)
                     {
-                        HttpStatusCode = response.StatusCode,
-                        Success = false
-                    };
-                    return qRCodeResponse;
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
+                        responseData.Success = true;
+                        return responseData;
+                    }
+                    else
+                    {
+                        ResponseData qRCodeResponse = new ResponseData
+                        {
+                            HttpStatusCode = response.StatusCode,
+                            Success = false
+                        };
+                        return qRCodeResponse;
+                    }
                 }
             }
             catch (Exception ex)
@@ -621,20 +772,29 @@ namespace FDS.API_Service
         }
 
 
-        public async Task<bool> DownloadURLAsync(string downloadUrl,string temporaryMSIPath)
+        public async Task<bool> DownloadURLAsync(string downloadUrl, string temporaryMSIPath)
         {
 
-            var response = await client.GetAsync(downloadUrl);
-            if (response.IsSuccessStatusCode)
+            var handler = new HttpClientHandler
             {
-                using (var fileStream = System.IO.File.Create(temporaryMSIPath))
+                UseProxy = false // Disable using the system proxy
+            };
+
+            using (var client1 = new HttpClient(handler))
+            {
+                client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                var response = await client1.GetAsync(downloadUrl);
+                if (response.IsSuccessStatusCode)
                 {
-                    await response.Content.CopyToAsync(fileStream);
+                    using (var fileStream = System.IO.File.Create(temporaryMSIPath))
+                    {
+                        await response.Content.CopyToAsync(fileStream);
+                    }
                 }
-            }
-            else
-            {
-                return false;
+                else
+                {
+                    return false;
+                }
             }
 
             return true;

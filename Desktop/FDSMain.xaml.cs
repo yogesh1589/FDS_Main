@@ -4,6 +4,7 @@ using FDS.DTO.Requests;
 using FDS.DTO.Responses;
 using FDS.Factories;
 using FDS.Logging;
+using FDS.Models;
 using FDS.Runners;
 using FDS.SingleTon;
 using Microsoft.Win32;
@@ -83,7 +84,7 @@ namespace FDS
         System.Windows.Forms.NotifyIcon icon;
         public DeviceResponse DeviceResponse { get; private set; }
         public Window thisWindow { get; }
-        public HttpClient client { get; }
+        //public HttpClient client { get; }
         public QRCodeResponse QRCodeResponse { get; private set; }
 
 
@@ -134,6 +135,8 @@ namespace FDS
         public RSACryptoServiceProvider RSADevice { get; set; }
         public RSACryptoServiceProvider RSAServer { get; set; }
 
+        public string proxyAddress = string.Empty;
+        public string proxyPort = string.Empty;
 
         public FDSMain()
         {
@@ -150,7 +153,7 @@ namespace FDS
                 InitializeFDS();
                 DataContext = new ViewModel();
                 thisWindow = GetWindow(this);
-                client = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI };
+                //client = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI };
 
             }
             catch (Exception ex)
@@ -222,15 +225,21 @@ namespace FDS
             timerEventBasedService.IsEnabled = false;
 
             timerNetworkMonitering = new DispatcherTimer();
-            timerNetworkMonitering.Interval = TimeSpan.FromMinutes(1);
+            timerNetworkMonitering.Interval = TimeSpan.FromMinutes(5);
             timerNetworkMonitering.Tick += TimerNetworkMonitering_Tick;
             timerNetworkMonitering.IsEnabled = false;
         }
 
+
+       
         public void LoadFDS()
         {
             try
             {
+
+                //ProxyService proxyService = new ProxyService();
+                //proxyService.RemoveSystemProxy();
+
                 //CertificateService certificateService = new CertificateService();
                 //certificateService.DeleteCertificates();
                 //Generic.DeleteDirecUninstall();
@@ -618,20 +627,29 @@ namespace FDS
                 {
                     ImageContainerCountryCode.Children.Add(imgLoader);
                 }
-                var response = await client.GetAsync(AppConstants.EndPoints.CountryCode);
-                ClearChildrenNode();
-
-                //End
-                if (response.IsSuccessStatusCode)
+                var handler = new HttpClientHandler
                 {
-                    btnSendOTP.IsEnabled = true;
-                    txtPhoneValidation.IsEnabled = true;
-                    cmbCountryCode.IsEnabled = true;
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    CountryCodeResponse responseData = JsonConvert.DeserializeObject<CountryCodeResponse>(responseString);
-                    List<CountryCode> countryList = responseData.data;
-                    VM.AllCountries = countryList;
-                    cmbCountryCode.ItemsSource = VM.AllCountries;
+                    UseProxy = false // Disable using the system proxy
+                };
+
+                using (var client1 = new HttpClient(handler))
+                {
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var response = await client1.GetAsync(AppConstants.EndPoints.CountryCode);
+                    ClearChildrenNode();
+
+                    //End
+                    if (response.IsSuccessStatusCode)
+                    {
+                        btnSendOTP.IsEnabled = true;
+                        txtPhoneValidation.IsEnabled = true;
+                        cmbCountryCode.IsEnabled = true;
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        CountryCodeResponse responseData = JsonConvert.DeserializeObject<CountryCodeResponse>(responseString);
+                        List<CountryCode> countryList = responseData.data;
+                        VM.AllCountries = countryList;
+                        cmbCountryCode.ItemsSource = VM.AllCountries;
+                    }
                 }
             }
             catch (Exception ex)
@@ -1276,7 +1294,7 @@ namespace FDS
             //var DeviceConfigData = await apiService.DeviceConfigurationTestCheckAsync();
             //if (DeviceConfigData != null)
             //{
-            if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
+            if (((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true)) && (apiResponse.Data != null))
             {
                 var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
                 int idx = plainText.LastIndexOf('}');
@@ -1329,6 +1347,11 @@ namespace FDS
                             {
                                 CertificateService certificateService = new CertificateService();
                                 await certificateService.DeleteCertificates();
+                            }
+                            else if (api.Equals("10"))
+                            {
+                                ProxyService proxyService = new ProxyService();
+                                await proxyService.DeleteProxies();
                             }
 
                         }
@@ -2084,18 +2107,27 @@ namespace FDS
 
             if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
             {
-                var getresponse = await client.GetAsync(AppConstants.EndPoints.AutoUpdate + "?token=" + apiResponse.msg);
-                if (getresponse.IsSuccessStatusCode)
+                var handler = new HttpClientHandler
                 {
+                    UseProxy = false // Disable using the system proxy
+                };
 
-                    var getresponseString = await getresponse.Content.ReadAsStringAsync();
-                    AutoUpdateResponse UpdateGetResponse = JsonConvert.DeserializeObject<AutoUpdateResponse>(getresponseString);
-                    string Url = UpdateGetResponse.msg;
+                using (var client1 = new HttpClient(handler))
+                {
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var getresponse = await client1.GetAsync(AppConstants.EndPoints.AutoUpdate + "?token=" + apiResponse.msg);
+                    if (getresponse.IsSuccessStatusCode)
+                    {
 
-                    if (!Directory.Exists(TempPath))
-                        Directory.CreateDirectory(TempPath);
+                        var getresponseString = await getresponse.Content.ReadAsStringAsync();
+                        AutoUpdateResponse UpdateGetResponse = JsonConvert.DeserializeObject<AutoUpdateResponse>(getresponseString);
+                        string Url = UpdateGetResponse.msg;
 
-                    DownloadFile(Url, TempPath + "FDS.msi");
+                        if (!Directory.Exists(TempPath))
+                            Directory.CreateDirectory(TempPath);
+
+                        DownloadFile(Url, TempPath + "FDS.msi");
+                    }
                 }
             }
         }

@@ -14,5 +14,6 @@ namespace FDS.Models
         public string proxy_address { get; set; }
         public string proxy_port { get; set; }
         public string proxy_ip { get; set; }
+        public string autoconfig_url { get; set; }
     }
 }

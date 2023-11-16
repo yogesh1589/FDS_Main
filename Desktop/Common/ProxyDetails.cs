@@ -54,7 +54,7 @@ namespace FDS.Common
         {
             List<ProxyLists> proxyDatas = new List<ProxyLists>();
             SystemProxies proxyDetails = new SystemProxies();
-            proxyDetails.CheckSystemProxy();
+            proxyDatas = proxyDetails.CheckSystemProxy();
             return proxyDatas;
         }
 

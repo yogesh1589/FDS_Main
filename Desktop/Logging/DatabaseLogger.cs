@@ -19,12 +19,12 @@ namespace FDS.Logging
 {
     public class DatabaseLogger : ILogger
     {
-        public HttpClient client { get; }
+        //public HttpClient client { get; }
         public byte[] EncKey { get; set; }
 
         RSACryptoServiceProvider RSAServer { get; set; }
 
-        public DatabaseLogger() { client = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI }; }
+        //public DatabaseLogger() { client = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI }; }
 
         public async void LogInformation(string authorizationCode, string subServiceName, long FileProcessed, string ServiceId, bool IsManualExecution,string serviceTypeDetails)
         {
@@ -65,17 +65,26 @@ namespace FDS.Logging
                 new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
                     };
 
-            var response = await client.PostAsync(AppConstants.EndPoints.LogServicesData, new FormUrlEncodedContent(formContent));
-            if (response.IsSuccessStatusCode)
+            var handler = new HttpClientHandler
             {
-                //timerLastUpdate.IsEnabled = false;
-                var ExecuteNowContent = new List<KeyValuePair<string, string>> {
+                UseProxy = false // Disable using the system proxy
+            };
+
+            using (var client1 = new HttpClient(handler))
+            {
+                client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                var response = await client1.PostAsync(AppConstants.EndPoints.LogServicesData, new FormUrlEncodedContent(formContent));
+                if (response.IsSuccessStatusCode)
+                {
+                    //timerLastUpdate.IsEnabled = false;
+                    var ExecuteNowContent = new List<KeyValuePair<string, string>> {
                     new KeyValuePair<string, string>("execute_now", "false") ,
                     };
-                var ExecuteNowResponse = await client.PutAsync(AppConstants.EndPoints.ExecuteNow + ServiceId + "/", new FormUrlEncodedContent(ExecuteNowContent));
-                if (ExecuteNowResponse.IsSuccessStatusCode)
-                {
+                    var ExecuteNowResponse = await client1.PutAsync(AppConstants.EndPoints.ExecuteNow + ServiceId + "/", new FormUrlEncodedContent(ExecuteNowContent));
+                    if (ExecuteNowResponse.IsSuccessStatusCode)
+                    {
 
+                    }
                 }
             }
         }
@@ -84,25 +93,33 @@ namespace FDS.Logging
         public async Task<List<string>> GetWhiteListDomains(string SubServiceId)
         {
             List<string> whitelistedDomain = new List<string>();
-
-            var response = await client.GetAsync(AppConstants.EndPoints.WhiteListDomains + SubServiceId + "/");
-            if (response.IsSuccessStatusCode)
+            var handler = new HttpClientHandler
             {
-                var responseString = await response.Content.ReadAsStringAsync();
-                var responseData = JsonConvert.DeserializeObject<WhiteListDomainResponse>(responseString);
-                if (responseData.device_domains.Count > 0)
-                {
-                    foreach (var domain in responseData.device_domains)
-                    {
-                        whitelistedDomain.Add("'%" + domain.domain_name + "%'");
-                    }
+                UseProxy = false // Disable using the system proxy
+            };
 
-                }
-                if (responseData.org_domains.Count > 0)
+            using (var client1 = new HttpClient(handler))
+            {
+                client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                var response = await client1.GetAsync(AppConstants.EndPoints.WhiteListDomains + SubServiceId + "/");
+                if (response.IsSuccessStatusCode)
                 {
-                    foreach (var domain in responseData.org_domains)
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    var responseData = JsonConvert.DeserializeObject<WhiteListDomainResponse>(responseString);
+                    if (responseData.device_domains.Count > 0)
                     {
-                        whitelistedDomain.Add("'%" + domain.domain_name + "%'");
+                        foreach (var domain in responseData.device_domains)
+                        {
+                            whitelistedDomain.Add("'%" + domain.domain_name + "%'");
+                        }
+
+                    }
+                    if (responseData.org_domains.Count > 0)
+                    {
+                        foreach (var domain in responseData.org_domains)
+                        {
+                            whitelistedDomain.Add("'%" + domain.domain_name + "%'");
+                        }
                     }
                 }
             }

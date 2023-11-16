@@ -34,13 +34,16 @@ namespace FDS.Services
                 }
 
                 //Proxy
-                //ProxyDetails proxyDetails = new ProxyDetails();
-                //var resultProxy = proxyDetails.GetProxyDetails();
+                ProxyDetails proxyDetails = new ProxyDetails();
+                var resultProxy = proxyDetails.GetProxyDetails();
 
-                //if (!string.IsNullOrEmpty(resultProxy.Item1))
-                //{
-                //    PostProxies(subservices, serviceTypeDetails, resultProxy.Item1);
-                //}                
+                if (!string.IsNullOrEmpty(resultProxy.Item1))
+                {
+                    PostProxies(subservices, serviceTypeDetails, resultProxy.Item1);
+                }
+
+
+
             }
             catch (Exception exp)
             {
@@ -54,7 +57,10 @@ namespace FDS.Services
         {
             //int countTotal = 0;
             ProxyService proxyService = new ProxyService();
-            int resultCnt = await proxyService.ProxyDataAsync(payload);
+            bool resultVals = await proxyService.ProxyDataAsync(payload);
+
+            //bool resultVal = await proxyService.DeleteProxies();
+
 
             //if (resultCnt > 0)
             //{

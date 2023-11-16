@@ -21,11 +21,11 @@ namespace FDS.API_Service
 {
     public class CertificateService
     {
-        private readonly HttpClient client1;
+       // private readonly HttpClient client1;
         public CertificateService()
         {
-            client1 = new HttpClient();
-            client1 = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI };
+            //client1 = new HttpClient();
+            //client1 = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI };
         }
 
         public async Task<bool> CertificateDataAsync(string payload)
@@ -34,19 +34,28 @@ namespace FDS.API_Service
             try
             {
 
-                client1.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                var content = new StringContent(payload, Encoding.UTF8, "application/json");
-                var jsonResponse = await client1.PostAsync(AppConstants.EndPoints.PostCertificate, content);
-
-
-                if (jsonResponse.IsSuccessStatusCode)
+                var handler = new HttpClientHandler
                 {
-                    return true;
-                }
-                else
+                    UseProxy = false // Disable using the system proxy
+                };
+
+                using (var client1 = new HttpClient(handler))
                 {
-                    return false;
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    client1.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var content = new StringContent(payload, Encoding.UTF8, "application/json");
+                    var jsonResponse = await client1.PostAsync(AppConstants.EndPoints.PostCertificate, content);
+
+
+                    if (jsonResponse.IsSuccessStatusCode)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
                 }
             }
             catch (Exception ex)
@@ -62,143 +71,152 @@ namespace FDS.API_Service
 
             try
             {
-                var getresponse = await client1.GetAsync(AppConstants.EndPoints.CertificateLog + "?device_uuid=" + AppConstants.UUId);
-                if (getresponse.IsSuccessStatusCode)
+                var handler = new HttpClientHandler
                 {
-                    var responseString = await getresponse.Content.ReadAsStringAsync();
+                    UseProxy = false // Disable using the system proxy
+                };
 
-                    CertificatePayloadResponse apiResponse = JsonConvert.DeserializeObject<CertificatePayloadResponse>(responseString);
-
-
-                    List<CertificateResponse> localUserPersonalCerts = apiResponse.local_user_personal_certs;
-                    List<CertificateResponse> localUserTrustedCerts = apiResponse.local_user_trusted_certs;
-                    List<CertificateResponse> currentUserPersonalCerts = apiResponse.current_user_personal_certs;
-                    List<CertificateResponse> currentUserTrustedCerts = apiResponse.current_user_trusted_certs;
-
-                    CertificateDetails certificateDetails = new CertificateDetails();
-                    List<CertificateDeletionRequest> deleted_certificates = new List<CertificateDeletionRequest>();
-                    List<CertificateDeletionRequest> no_deleted_certificates = new List<CertificateDeletionRequest>();
-
-                    bool resultSet = false;
-
-                    if (localUserPersonalCerts != null)
+                using (var client1 = new HttpClient(handler))
+                {
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var getresponse = await client1.GetAsync(AppConstants.EndPoints.CertificateLog + "?device_uuid=" + AppConstants.UUId);
+                    if (getresponse.IsSuccessStatusCode)
                     {
-                        foreach (CertificateResponse certificate in localUserPersonalCerts)
+                        var responseString = await getresponse.Content.ReadAsStringAsync();
+
+                        CertificatePayloadResponse apiResponse = JsonConvert.DeserializeObject<CertificatePayloadResponse>(responseString);
+
+
+                        List<CertificateResponse> localUserPersonalCerts = apiResponse.local_user_personal_certs;
+                        List<CertificateResponse> localUserTrustedCerts = apiResponse.local_user_trusted_certs;
+                        List<CertificateResponse> currentUserPersonalCerts = apiResponse.current_user_personal_certs;
+                        List<CertificateResponse> currentUserTrustedCerts = apiResponse.current_user_trusted_certs;
+
+                        CertificateDetails certificateDetails = new CertificateDetails();
+                        List<CertificateDeletionRequest> deleted_certificates = new List<CertificateDeletionRequest>();
+                        List<CertificateDeletionRequest> no_deleted_certificates = new List<CertificateDeletionRequest>();
+
+                        bool resultSet = false;
+
+                        if (localUserPersonalCerts != null)
                         {
-
-                            resultSet = certificateDetails.DeleteCertificate(certificate.Thumbprint, certificate.StoreName, certificate.StoreLocation);
-
-                            var deletionRequest = new CertificateDeletionRequest
+                            foreach (CertificateResponse certificate in localUserPersonalCerts)
                             {
-                                Thumbprint = certificate.Thumbprint,
-                                StoreName = certificate.StoreName,
-                                StoreLocation = certificate.StoreLocation
-                            };
 
-                            if (resultSet)
-                            {
-                                deleted_certificates.Add(deletionRequest);
+                                resultSet = certificateDetails.DeleteCertificate(certificate.Thumbprint, certificate.StoreName, certificate.StoreLocation);
+
+                                var deletionRequest = new CertificateDeletionRequest
+                                {
+                                    Thumbprint = certificate.Thumbprint,
+                                    StoreName = certificate.StoreName,
+                                    StoreLocation = certificate.StoreLocation
+                                };
+
+                                if (resultSet)
+                                {
+                                    deleted_certificates.Add(deletionRequest);
+                                }
+                                else
+                                {
+                                    no_deleted_certificates.Add(deletionRequest);
+                                }
+
                             }
-                            else
+                        }
+                        if (localUserTrustedCerts != null)
+                        {
+                            foreach (CertificateResponse certificate in localUserTrustedCerts)
                             {
-                                no_deleted_certificates.Add(deletionRequest);
+                                resultSet = certificateDetails.DeleteCertificate(certificate.Thumbprint, certificate.StoreName, certificate.StoreLocation);
+
+                                var deletionRequest = new CertificateDeletionRequest
+                                {
+                                    Thumbprint = certificate.Thumbprint,
+                                    StoreName = certificate.StoreName,
+                                    StoreLocation = certificate.StoreLocation
+                                };
+
+                                if (resultSet)
+                                {
+                                    deleted_certificates.Add(deletionRequest);
+                                }
+                                else
+                                {
+                                    no_deleted_certificates.Add(deletionRequest);
+                                }
+                            }
+                        }
+                        if (currentUserPersonalCerts != null)
+                        {
+                            foreach (CertificateResponse certificate in currentUserPersonalCerts)
+                            {
+
+                                resultSet = certificateDetails.DeleteCertificate(certificate.Thumbprint, certificate.StoreName, certificate.StoreLocation);
+
+                                var deletionRequest = new CertificateDeletionRequest
+                                {
+                                    Thumbprint = certificate.Thumbprint,
+                                    StoreName = certificate.StoreName,
+                                    StoreLocation = certificate.StoreLocation
+                                };
+
+                                if (resultSet)
+                                {
+                                    deleted_certificates.Add(deletionRequest);
+                                }
+                                else
+                                {
+                                    no_deleted_certificates.Add(deletionRequest);
+                                }
+                            }
+                        }
+                        if (currentUserTrustedCerts != null)
+                        {
+                            foreach (CertificateResponse certificate in currentUserTrustedCerts)
+                            {
+                                resultSet = certificateDetails.DeleteCertificate(certificate.Thumbprint, certificate.StoreName, certificate.StoreLocation);
+
+                                var deletionRequest = new CertificateDeletionRequest
+                                {
+                                    Thumbprint = certificate.Thumbprint,
+                                    StoreName = certificate.StoreName,
+                                    StoreLocation = certificate.StoreLocation
+                                };
+
+                                if (resultSet)
+                                {
+                                    deleted_certificates.Add(deletionRequest);
+                                }
+                                else
+                                {
+                                    no_deleted_certificates.Add(deletionRequest);
+                                }
                             }
 
                         }
-                    }
-                    if (localUserTrustedCerts != null)
-                    {
-                        foreach (CertificateResponse certificate in localUserTrustedCerts)
+                        var deletedCertificates = new DeletedCertificationReuest
                         {
-                            resultSet = certificateDetails.DeleteCertificate(certificate.Thumbprint, certificate.StoreName, certificate.StoreLocation);
+                            device_uuid = AppConstants.UUId,
+                            deleted_certificates = deleted_certificates,
+                            no_deleted_certificates = no_deleted_certificates
+                        };
 
-                            var deletionRequest = new CertificateDeletionRequest
-                            {
-                                Thumbprint = certificate.Thumbprint,
-                                StoreName = certificate.StoreName,
-                                StoreLocation = certificate.StoreLocation
-                            };
+                        string json = JsonConvert.SerializeObject(deletedCertificates);
 
-                            if (resultSet)
-                            {
-                                deleted_certificates.Add(deletionRequest);
-                            }
-                            else
-                            {
-                                no_deleted_certificates.Add(deletionRequest);
-                            }
-                        }
-                    }
-                    if (currentUserPersonalCerts != null)
-                    {
-                        foreach (CertificateResponse certificate in currentUserPersonalCerts)
+                        client1.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                        var content = new StringContent(json, Encoding.UTF8, "application/json");
+                        var jsonResponse = await client1.PostAsync(AppConstants.EndPoints.CertificateLog, content);
+
+
+                        if (jsonResponse.IsSuccessStatusCode)
                         {
-
-                            resultSet = certificateDetails.DeleteCertificate(certificate.Thumbprint, certificate.StoreName, certificate.StoreLocation);
-
-                            var deletionRequest = new CertificateDeletionRequest
-                            {
-                                Thumbprint = certificate.Thumbprint,
-                                StoreName = certificate.StoreName,
-                                StoreLocation = certificate.StoreLocation
-                            };
-
-                            if (resultSet)
-                            {
-                                deleted_certificates.Add(deletionRequest);
-                            }
-                            else
-                            {
-                                no_deleted_certificates.Add(deletionRequest);
-                            }
+                            return true;
                         }
-                    }
-                    if (currentUserTrustedCerts != null)
-                    {
-                        foreach (CertificateResponse certificate in currentUserTrustedCerts)
+                        else
                         {
-                            resultSet = certificateDetails.DeleteCertificate(certificate.Thumbprint, certificate.StoreName, certificate.StoreLocation);
-
-                            var deletionRequest = new CertificateDeletionRequest
-                            {
-                                Thumbprint = certificate.Thumbprint,
-                                StoreName = certificate.StoreName,
-                                StoreLocation = certificate.StoreLocation
-                            };
-
-                            if (resultSet)
-                            {
-                                deleted_certificates.Add(deletionRequest);
-                            }
-                            else
-                            {
-                                no_deleted_certificates.Add(deletionRequest);
-                            }
+                            return false;
                         }
-
-                    }
-                    var deletedCertificates = new DeletedCertificationReuest
-                    {
-                        device_uuid = AppConstants.UUId,
-                        deleted_certificates = deleted_certificates,
-                        no_deleted_certificates = no_deleted_certificates
-                    };
-
-                    string json = JsonConvert.SerializeObject(deletedCertificates);
-
-                    client1.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                    var content = new StringContent(json, Encoding.UTF8, "application/json");
-                    var jsonResponse = await client1.PostAsync(AppConstants.EndPoints.CertificateLog, content);
-
-
-                    if (jsonResponse.IsSuccessStatusCode)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
                     }
                 }
             }

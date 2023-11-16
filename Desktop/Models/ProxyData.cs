@@ -6,13 +6,6 @@ using System.Threading.Tasks;
 
 namespace FDS.Models
 {
-    public class CertData
-    {
-        public string device_uuid { get; set; }
-        public Payload payload { get; set; }
-
-         
-    }
 
     public class ProxyData
     {
