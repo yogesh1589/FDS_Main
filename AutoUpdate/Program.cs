@@ -55,7 +55,7 @@ namespace AutoUpdate
             try
             {
 
-           
+
                 // Get the directory info
                 DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
 
@@ -74,7 +74,7 @@ namespace AutoUpdate
                     {
                         subdirectory.Delete(true);
                     }
-                    
+
                 }
                 //Hide the console window
                 IntPtr hWnd = GetConsoleWindow();
@@ -91,8 +91,8 @@ namespace AutoUpdate
                 string AutoUpdateExePath = directoryPath + "FDS.exe";
                 //Console.WriteLine("start FDS from " + AutoUpdateExePath);
                 Process.Start(AutoUpdateExePath);
-               
-                
+
+
             }
             catch (Exception ex)
             {
@@ -129,7 +129,7 @@ namespace AutoUpdate
             finally
             {
                 process.Close();
-                
+
             }
         }
     }

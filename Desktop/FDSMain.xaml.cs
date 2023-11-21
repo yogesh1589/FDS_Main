@@ -250,17 +250,17 @@ namespace FDS
                 ConfigDataClear();
 
                 if (File.Exists(encryptOutPutFile))
-                {
+                {                     
                     string finalOutPutFile = basePathEncryption + @"\FinalDecrypt";
                     Common.EncryptionDecryption.DecryptFile(encryptOutPutFile, finalOutPutFile);
-                    Common.EncryptionDecryption.ReadDecryptFile(finalOutPutFile);
+                    Common.EncryptionDecryption.ReadDecryptFile(finalOutPutFile);                     
                 }
 
 
 
                 if (!CheckAllKeys())
                 {
-                    #region Auto start on startup done by Installer
+                    #region Auto start on startup done by Installer 
 
                     string applicationPath = "";
                     RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
@@ -269,7 +269,7 @@ namespace FDS
                         object obj = registryKey.GetValue("FDS");
                         if (obj != null)
                             applicationPath = Path.GetDirectoryName(obj.ToString());
-                    }
+                    }                    
                     if (IsAdmin)
                     {
                         RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
@@ -1155,9 +1155,9 @@ namespace FDS
 
         public async Task CheckDeviceHealth()
         {
-
+             
             isInternetConnected = Generic.CheckInternetConnection();
-
+            
             if (!isInternetConnected)
             {
                 System.Threading.Thread.Sleep(2000);
@@ -1167,7 +1167,7 @@ namespace FDS
             if (isInternetConnected)
             {
                 var apiResponse = await apiService.CheckDeviceHealthAsync();
-
+                 
                 if (apiResponse == null)
                 {
                     deviceOffline = true;
@@ -2164,12 +2164,22 @@ namespace FDS
                 if (File.Exists(TempPath + "FDS.msi"))
                 {
                     //string sourcePath = Directory.GetCurrentDirectory() + "\\AutoUpdate.exe";
-                    string tempPath1 = "C:\\Fusion Data Secure\\FDS\\AutoUpdate.exe";
+                    string tempPath1 = "C:\\Program Files (x86)\\FDS\\AutoUpdate.exe";
+                    string tempPath2 = "C:\\Fusion Data Secure\\FDS\\AutoUpdate.exe";
 
                     try
                     {
 
                         if (File.Exists(tempPath1))
+                        {
+                            if (TryCloseRunningProcess("AutoUpdate"))
+                            {
+
+                                File.Copy(tempPath1, TempPath + "AutoUpdate.exe", true);
+                                //MessageBox.Show("File Copy Done");
+                            }
+                        }
+                        else if (File.Exists(tempPath2))
                         {
                             if (TryCloseRunningProcess("AutoUpdate"))
                             {
