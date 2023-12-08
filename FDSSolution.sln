@@ -15,6 +15,8 @@ Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "FDS", "FDS\FDS.vdproj", "{9
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoUpdate", "AutoUpdate\AutoUpdate.csproj", "{A1AE7FCC-02F1-46A3-9A8C-5AD099099224}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LauncherApp", "LauncherApp\LauncherApp.csproj", "{3B81C27B-D4F7-41FC-9B0A-F8C072DA28FE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -84,6 +86,18 @@ Global
 		{A1AE7FCC-02F1-46A3-9A8C-5AD099099224}.Release|x64.Build.0 = Release|Any CPU
 		{A1AE7FCC-02F1-46A3-9A8C-5AD099099224}.Release|x86.ActiveCfg = Release|Any CPU
 		{A1AE7FCC-02F1-46A3-9A8C-5AD099099224}.Release|x86.Build.0 = Release|Any CPU
+		{3B81C27B-D4F7-41FC-9B0A-F8C072DA28FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B81C27B-D4F7-41FC-9B0A-F8C072DA28FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B81C27B-D4F7-41FC-9B0A-F8C072DA28FE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3B81C27B-D4F7-41FC-9B0A-F8C072DA28FE}.Debug|x64.Build.0 = Debug|Any CPU
+		{3B81C27B-D4F7-41FC-9B0A-F8C072DA28FE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3B81C27B-D4F7-41FC-9B0A-F8C072DA28FE}.Debug|x86.Build.0 = Debug|Any CPU
+		{3B81C27B-D4F7-41FC-9B0A-F8C072DA28FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B81C27B-D4F7-41FC-9B0A-F8C072DA28FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B81C27B-D4F7-41FC-9B0A-F8C072DA28FE}.Release|x64.ActiveCfg = Release|Any CPU
+		{3B81C27B-D4F7-41FC-9B0A-F8C072DA28FE}.Release|x64.Build.0 = Release|Any CPU
+		{3B81C27B-D4F7-41FC-9B0A-F8C072DA28FE}.Release|x86.ActiveCfg = Release|Any CPU
+		{3B81C27B-D4F7-41FC-9B0A-F8C072DA28FE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

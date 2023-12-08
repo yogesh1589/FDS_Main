@@ -5,7 +5,9 @@ using Shell32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Management;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
@@ -44,7 +46,7 @@ namespace FDS.Services
 
             try
             {
-
+                int fileCount = GetRecycleBinItemCount();
 
                 ulong initialFileCount = GetDeletedFileCount();
 
@@ -83,8 +85,46 @@ namespace FDS.Services
         }
 
 
+        static int GetRecycleBinItemCount()
+        {
+            int totalFiles = 0;
+
+            try
+            {
+                string recycleBinPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "RecycleBin");
+
+                if (Directory.Exists(recycleBinPath))
+                {
+                    DirectoryInfo recycleBinInfo = new DirectoryInfo(recycleBinPath);
+                    FileInfo[] files = recycleBinInfo.GetFiles("*.*", SearchOption.AllDirectories);
+                    totalFiles = files.Length;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+
+            return totalFiles;
+        }
+
+        //static int GetRecycleBinItemCount()
+        //{
+        //    Shell shell = new Shell();
+        //    Folder recycleBin = shell.NameSpace(10); // 10 is the Recycle Bin's virtual folder constant
+
+        //    if (recycleBin != null)
+        //    {
+        //        return recycleBin.Items().Count;
+        //    }
+
+        //    return 0;
+        //}
+
         public static ulong GetDeletedFileCount()
         {
+
+
             SHQUERYRBINFO rbInfo = new SHQUERYRBINFO
             {
                 cbSize = (uint)Marshal.SizeOf(typeof(SHQUERYRBINFO))

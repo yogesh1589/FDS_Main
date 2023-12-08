@@ -9,6 +9,7 @@ namespace FDS.Common
     {
         GetOTP,
         GetStart,
+        AuthenticationMethods2,
         AuthenticationMethods,
         AuthenticationStep1,
         AuthenticationStep2,

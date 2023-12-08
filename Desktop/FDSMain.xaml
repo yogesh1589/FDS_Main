@@ -96,11 +96,68 @@
                                 </StackPanel>
                             </Border>
                         </Grid>
+
+                        <Grid x:Name="AuthenticationMethods2" Margin="150,100,150,100" Visibility="Hidden">
+                            <Border Background="White"  BorderThickness="1,1,1,1"  CornerRadius="30">
+                                <StackPanel HorizontalAlignment="Stretch">
+                                    <TextBlock HorizontalAlignment="Center"  FontFamily="Radian" FontWeight="Bold" FontSize="24" Foreground="Black"  Text="Select authentication type" Margin="0,20,0,0" />
+                                    <Grid VerticalAlignment="Top" HorizontalAlignment="Center" Background="White"  >
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="auto"></ColumnDefinition>
+                                            <ColumnDefinition Width="auto"></ColumnDefinition>
+                                        </Grid.ColumnDefinitions>
+                                        <Button BorderThickness="0,0,0,0" Foreground="White" BorderBrush="White" Background="White" Grid.Column="0" x:Name="btnOrganization"  Click="btnOrganisation_Click"  Cursor="Hand" Margin="0,20,10,20" Width="110" Height="110">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Content">
+                                                        <Setter.Value>
+                                                            <Image Source="/Assets/Org1.png" Width="100" Height="200"/>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Content">
+                                                                <Setter.Value>
+                                                                    <Image Source="/Assets/Org2.png" Width="100" Height="200"/>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <TextBlock Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Bottom" Text="By Organization" Margin="0,20,0,0" FontFamily="Radian" FontWeight="Bold"/>
+                                        <Button Grid.Column="1" x:Name="btnIndividual" Click="btnIndividual_Click" Background="Transparent" BorderThickness="0" BorderBrush="Transparent" Cursor="Hand" Margin="10,20,0,20" Width="110" Height="110">
+                                            <Button.Style >
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Content">
+                                                        <Setter.Value>
+                                                            <Image Source="/Assets/Ind1.png" Width="100" Height="200"/>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Content">
+                                                                <Setter.Value>
+                                                                    <Image Source="/Assets/Ind2.png" Width="100" Height="200" />
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <TextBlock Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Text="By Individual" Margin="0,0,0,0" FontFamily="Radian" FontWeight="Bold"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
                         <Grid x:Name="AuthenticationMethods" Margin="150,100,150,100" Visibility="Hidden">
                             <Border Background="White"  BorderThickness="1,1,1,1"  CornerRadius="30">
                                 <StackPanel HorizontalAlignment="Stretch">
                                     <TextBlock HorizontalAlignment="Center"  FontFamily="Radian" FontWeight="Bold" FontSize="24" Foreground="Black"  Text="Select device authentication method" Margin="0,20,0,0" />
-                                    <Grid VerticalAlignment="Top" HorizontalAlignment="Center" Background="White"  >
+                                    <Grid VerticalAlignment="Top" HorizontalAlignment="Center" Background="White">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="auto"></ColumnDefinition>
                                             <ColumnDefinition Width="auto"></ColumnDefinition>
@@ -125,7 +182,7 @@
                                                 </Style>
                                             </Button.Style>
                                         </Button>
-                                        <TextBlock Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Bottom" Text="with credential" Margin="0,20,0,0" FontFamily="Radian" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Bottom" Text="With Credential" Margin="0,20,0,0" FontFamily="Radian" FontWeight="Bold"/>
                                         <Button Grid.Column="1" x:Name="btnQR" Click="btnQR_Click" Background="Transparent" BorderThickness="0" BorderBrush="Transparent" Cursor="Hand" Margin="10,20,0,20" Width="110" Height="110">
                                             <Button.Style >
                                                 <Style TargetType="Button">
@@ -146,11 +203,49 @@
                                                 </Style>
                                             </Button.Style>
                                         </Button>
-                                        <TextBlock Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Text="scan QR" Margin="0,0,0,0" FontFamily="Radian" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Text="Scan QR" Margin="0,0,0,0" FontFamily="Radian" FontWeight="Bold"/>
+
+                                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.ColumnSpan="2" x:Name="txtBackAuth" Foreground="Blue" Margin="0,20,0,-30" FontSize="12" FontWeight="Bold" FontFamily="Radian" PreviewMouseDown="txtBackAuth_PreviewMouseDown" Cursor="Hand">
+                                            <TextBlock.TextDecorations>
+                                                <TextDecoration/>
+                                            </TextBlock.TextDecorations> Back</TextBlock>
                                     </Grid>
                                 </StackPanel>
                             </Border>
                         </Grid>
+
+                        <Grid x:Name="AuthenticationStep3" Margin="150,20,150,20" Visibility="Hidden" Height="330">
+                            <Border Background="White"  BorderThickness="1,1,1,1"  CornerRadius="30">
+                                <StackPanel HorizontalAlignment="Stretch" Height="300">
+                                    <Image Source="/Assets/KeyBG.png" Margin="0,10,0,0" Height="50"/>
+                                    <TextBlock HorizontalAlignment="Center"  FontFamily="Radian" FontWeight="Bold" FontSize="24" Foreground="Black"  Text="Please enter license key" Margin="0,20,0,0" />
+                                    <Grid  HorizontalAlignment="Center" DataContext="{Binding}">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="auto"></RowDefinition>
+                                            <RowDefinition Height="auto"></RowDefinition>
+                                            <RowDefinition Height="auto"></RowDefinition>
+                                            <RowDefinition Height="auto"></RowDefinition>
+                                            <RowDefinition Height="auto"></RowDefinition>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition ></ColumnDefinition>
+                                            <ColumnDefinition ></ColumnDefinition>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock HorizontalAlignment="Left" Grid.Row="0" Text="License key" Margin="0,10,0,0" Grid.ColumnSpan="2"/>
+                                        <TextBox x:Name="txtlicenseToken" HorizontalAlignment="Left" Grid.Row="1" Margin="0,10,0,0" Width="270" Grid.ColumnSpan="2"  />
+                                        <TextBlock x:Name="txtlicenseTokenValidation" Grid.Row="2" HorizontalAlignment="Left" Text="" Margin="0,0,0,0"  Foreground="Red" Visibility="Hidden"/>
+
+                                        <Button x:Name="btnStep4Submit" Grid.Row="3" Click="btnStep4Submit_Click" Grid.ColumnSpan="2" Style="{StaticResource sendOTPStyle}" Content="Submit" FontFamily="Radian" FontStyle="Normal"  FontSize="14" Foreground="White" Margin="0,20,0,0"></Button>
+                                        <StackPanel x:Name="ImageContainerlicense"  Grid.Row="3" Margin="0,10,0,0" Grid.ColumnSpan="2" Width="20" Height="15"/>
+                                        <TextBlock HorizontalAlignment="Center" Grid.Row="4" Grid.ColumnSpan="2" x:Name="txtBackLicense" Foreground="Blue" Margin="0,20,0,0" FontSize="12" FontWeight="Bold" FontFamily="Radian" PreviewMouseDown="txtBackLicense_PreviewMouseDown" Cursor="Hand">
+                                            <TextBlock.TextDecorations>
+                                                <TextDecoration/>
+                                            </TextBlock.TextDecorations> Back</TextBlock>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
                         <Grid x:Name="AuthenticationStep1" Margin="200,20,200,20" Visibility="Hidden">
                             <Border Background="White"  BorderThickness="1,1,1,1"  CornerRadius="30">
                                 <StackPanel HorizontalAlignment="Stretch">
@@ -174,12 +269,12 @@
                                             <ColumnDefinition ></ColumnDefinition>
                                             <ColumnDefinition ></ColumnDefinition>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock HorizontalAlignment="Left" Grid.Row="0" Text="Enter Email Token" Margin="0,10,0,0" Grid.ColumnSpan="2"/>
+                                        <TextBlock HorizontalAlignment="Left" Grid.Row="0" Text="Enter email token" Margin="0,10,0,0" Grid.ColumnSpan="2"/>
                                         <TextBox x:Name="txtEmailToken" HorizontalAlignment="Left" Grid.Row="1" Text="" Margin="0,10,0,0" Width="270" Grid.ColumnSpan="2"  />
                                         <TextBlock x:Name="txtEmailTokenValidation" Grid.Row="2" HorizontalAlignment="Left" Text="" Margin="0,0,0,0"  Foreground="Red" Visibility="Hidden"/>
                                         <!--<TextBox x:Name="txtEmail"  HorizontalAlignment="Left" Grid.Row="1" Text="" Margin="0,10,0,0" Width="270" Grid.ColumnSpan="2" />
                                         <TextBlock x:Name="txtEmailValidation" Grid.Row="2" HorizontalAlignment="Left" Text="" Margin="0,0,0,0"  Foreground="Red" Visibility="Hidden"/>-->
-                                        <TextBlock HorizontalAlignment="Left" Grid.Row="3" Text="Country Code" Margin="0,10,0,0" Grid.ColumnSpan="2"/>
+                                        <TextBlock HorizontalAlignment="Left" Grid.Row="3" Text="Country code" Margin="0,10,0,0" Grid.ColumnSpan="2"/>
                                         <ComboBox x:Name="cmbCountryCode" HorizontalAlignment="Left" Grid.Row="4" Margin="0,10,0,0" Width="270" Grid.ColumnSpan="2"
                                             DisplayMemberPath="DisplayText"
                                            SelectedValuePath="Phone_code"
@@ -223,6 +318,7 @@
                                 </StackPanel>
                             </Border>
                         </Grid>
+                        
                         <Grid x:Name="AuthenticationStep2" Margin="200,50,200,50" Visibility="Hidden">
                             <Border Background="White"  BorderThickness="1,1,1,1"  CornerRadius="30">
                                 <StackPanel HorizontalAlignment="Stretch">
@@ -517,7 +613,7 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Center" Text="Organisation:" Margin="0,0,100,0" FontWeight="Bold" FontSize="10" />
+                        <TextBlock Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Center" Text="Organization:" Margin="0,0,100,0" FontWeight="Bold" FontSize="10" />
                         <TextBlock Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Center" Text="" Margin="100,0,0,0"  FontSize="10" />
 
                         <TextBlock Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Text="Device Name:" Margin="0,0,100,0" FontWeight="Bold" FontSize="10" />

@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Condition=" '$(EAZFUSCATOR_NET_HOME)' != '' and Exists('$(EAZFUSCATOR_NET_HOME)\Integration\MSBuild\Eazfuscator.NET.targets') " Project="$(EAZFUSCATOR_NET_HOME)\Integration\MSBuild\Eazfuscator.NET.targets" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <ContentSQLiteInteropFiles>true</ContentSQLiteInteropFiles>
@@ -23,12 +22,6 @@
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-  </PropertyGroup>
-  <PropertyGroup>
-    <!-- Eazfuscator.NET is integrated with this project at MSBuild level: https://www.gapotchenko.com/eazfuscator.net/kb/100036 -->
-    <EazfuscatorIntegration>MSBuild</EazfuscatorIntegration>
-    <EazfuscatorActiveConfiguration>Release</EazfuscatorActiveConfiguration>
-    <EazfuscatorCompatibilityVersion>2023.3</EazfuscatorCompatibilityVersion>
   </PropertyGroup>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -199,6 +192,7 @@
     <Compile Include="DTO\Responses\CountryCodeResponse.cs" />
     <Compile Include="DTO\Responses\DeviceConfigCheckResponse.cs" />
     <Compile Include="DTO\Responses\HealthCheckResponse.cs" />
+    <Compile Include="DTO\Responses\LicenseResponse.cs" />
     <Compile Include="DTO\Responses\ProxyPayloadResponse.cs" />
     <Compile Include="DTO\Responses\ProxyResponse.cs" />
     <Compile Include="DTO\Responses\ServicesResponse.cs" />
@@ -533,12 +527,31 @@
   <ItemGroup>
     <Resource Include="Assets\AuthenticationStep1.png" />
     <Resource Include="Assets\AuthenticationStep2.png" />
+    <Resource Include="Assets\ByIndividual.png" />
+    <Resource Include="Assets\ByIndividual2.png" />
+    <Resource Include="Assets\ByOrganisation.png" />
+    <Resource Include="Assets\ByOrganisation2.png" />
+    <Resource Include="Assets\IndividualKey.png" />
+    <Resource Include="Assets\AuthenticationStep4.png" />
+    <Resource Include="Assets\Ind1.png" />
+    <Resource Include="Assets\Ind2.png" />
+    <Resource Include="Assets\KeyBG.png" />
+    <Resource Include="Assets\Org1.png" />
+    <Resource Include="Assets\Org2.png" />
     <Content Include="Assets\spinner.gif">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AutoUpdate\AutoUpdate.csproj">
+      <Project>{a1ae7fcc-02f1-46a3-9a8c-5ad099099224}</Project>
+      <Name>AutoUpdate</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\LauncherApp\LauncherApp.csproj">
+      <Project>{3b81c27b-d4f7-41fc-9b0a-f8c072da28fe}</Project>
+      <Name>LauncherApp</Name>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>REM Eazfuscator.NET is integrated with this project at MSBuild level: https://www.gapotchenko.com/eazfuscator.net/kb/100036</PostBuildEvent>
-  </PropertyGroup>
 </Project>

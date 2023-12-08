@@ -1,0 +1,7 @@
+F:\Fusion\FDS\windowsapp\LauncherApp\bin\Debug\LauncherApp.exe.config
+F:\Fusion\FDS\windowsapp\LauncherApp\bin\Debug\LauncherApp.exe
+F:\Fusion\FDS\windowsapp\LauncherApp\bin\Debug\LauncherApp.pdb
+F:\Fusion\FDS\windowsapp\LauncherApp\obj\Debug\LauncherApp.csproj.AssemblyReference.cache
+F:\Fusion\FDS\windowsapp\LauncherApp\obj\Debug\LauncherApp.csproj.CoreCompileInputs.cache
+F:\Fusion\FDS\windowsapp\LauncherApp\obj\Debug\LauncherApp.exe
+F:\Fusion\FDS\windowsapp\LauncherApp\obj\Debug\LauncherApp.pdb

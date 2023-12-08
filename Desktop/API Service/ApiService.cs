@@ -87,6 +87,53 @@ namespace FDS.API_Service
             }
         }
 
+        public async Task<ResponseData> CheckLicenseAsync(string qrCodeToken, string licenseToken)
+        {
+            try
+            {
+                var formContent = new List<KeyValuePair<string, string>>
+            {
+                new KeyValuePair<string, string>("token", licenseToken),
+                new KeyValuePair<string, string>("qr_code_token", qrCodeToken),
+            };
+
+
+                var handler = new HttpClientHandler
+                {
+                    UseProxy = false // Disable using the system proxy
+                };
+
+                using (var client1 = new HttpClient(handler))
+                {
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var response = await client1.PostAsync(AppConstants.EndPoints.individual, new FormUrlEncodedContent(formContent));
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
+                        apiResponse.Success = true;
+                        return apiResponse;
+                    }
+                    else
+                    {
+                        ResponseData qRCodeResponse = new ResponseData
+                        {
+                            HttpStatusCode = response.StatusCode,
+                            Success = false
+
+                    };
+                        return qRCodeResponse;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions and log errors if needed.
+                return null;
+            }
+        }
+
         public async Task<ResponseData> PerformKeyExchangeAsync()
         {
             try
@@ -354,6 +401,63 @@ namespace FDS.API_Service
                 return null;
             }
         }
+
+
+        public async Task<DeviceResponse> GenerateQRCodeLicenseAsync(string vals)
+        {
+            try
+            {
+
+                // Get the latest txtlicense.Text value just before sending the request
+                string licenseText = vals; 
+
+                var formContent = new List<KeyValuePair<string, string>>
+                {
+                    new KeyValuePair<string, string>("serial_number", AppConstants.SerialNumber),
+                    new KeyValuePair<string, string>("device_name", AppConstants.MachineName),
+                    new KeyValuePair<string, string>("mac_address", AppConstants.MACAddress),
+                    new KeyValuePair<string, string>("device_type", AppConstants.DeviceType),
+                    new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
+                    new KeyValuePair<string, string>("os_version", AppConstants.OSVersion),
+                    new KeyValuePair<string, string>("device_uuid", AppConstants.UUId),
+                    new KeyValuePair<string, string>("license_text", licenseText),
+                };
+
+
+                var handler = new HttpClientHandler
+                {
+                    UseProxy = false // Disable using the system proxy
+                };
+
+                using (var client1 = new HttpClient(handler))
+                {
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var response = await client1.PostAsync(AppConstants.EndPoints.Start, new FormUrlEncodedContent(formContent));
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var apiResponse = JsonConvert.DeserializeObject<DeviceResponse>(responseString);
+                        apiResponse.Success = true;
+                        return apiResponse;
+                    }
+                    else
+                    {
+                        DeviceResponse qRCodeResponse = new DeviceResponse
+                        {
+                            httpStatusCode = response.StatusCode,
+                            Success = false
+                        };
+                        return qRCodeResponse;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions and log errors if needed.
+                return null;
+            }
+        }
+
 
 
         public async Task<DeviceResponse> GenerateQRCodeAsync()

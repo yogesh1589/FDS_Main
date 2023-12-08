@@ -17,18 +17,23 @@ using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Entity.Infrastructure;
 using System.Diagnostics;
+using System.DirectoryServices.AccountManagement;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
+using System.IO.Pipes;
 using System.Linq;
 using System.Management;
+using System.Management.Automation;
 using System.Net;
 using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Principal;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
@@ -131,6 +136,7 @@ namespace FDS
         public static byte[] EncKey { get; set; }
         public bool deviceActive = true;
         public bool deviceOffline = false;
+        public string strScreenVals = string.Empty;
 
         public RSACryptoServiceProvider RSADevice { get; set; }
         public RSACryptoServiceProvider RSAServer { get; set; }
@@ -172,7 +178,7 @@ namespace FDS
             cmbCountryCode.DropDownClosed += cmbCountryCode_DropDownClosed;
             txtCodeVersion.Text = AppConstants.CodeVersion;
             imgLoader = SetGIF("Assets\\spinner.gif");
-            if (IsAdmin)
+            if (Generic.IsUserAdministrator())
             {
                 IsUninstallFlagUpdated();
             }
@@ -231,18 +237,33 @@ namespace FDS
         }
 
 
-       
+
+
         public void LoadFDS()
         {
             try
             {
+                              
 
-                //ProxyService proxyService = new ProxyService();
-                //proxyService.RemoveSystemProxy();
 
-                //CertificateService certificateService = new CertificateService();
-                //certificateService.DeleteCertificates();
-                //Generic.DeleteDirecUninstall();
+                //Generic.UninstallFDS();
+
+                string AutoStartBaseDir = Generic.GetApplicationpath();
+
+                string exeFile = Path.Combine(AutoStartBaseDir, "LauncherApp.exe");
+
+                MessageBox.Show("launcher path " + exeFile);
+
+                if (Generic.IsAppRunning(exeFile))
+                {
+                    MessageBox.Show("Stop running launcher");
+                    Generic.StopRemoveStartupApplication();
+
+                }                
+                Generic.AutoStartLauncherApp(exeFile);
+
+
+                //   Generic.CreateBackup();
 
                 //// -------Actual Code --------------------------------
                 encryptOutPutFile = basePathEncryption + @"\Main";
@@ -250,42 +271,26 @@ namespace FDS
                 ConfigDataClear();
 
                 if (File.Exists(encryptOutPutFile))
-                {                     
+                {
                     string finalOutPutFile = basePathEncryption + @"\FinalDecrypt";
                     Common.EncryptionDecryption.DecryptFile(encryptOutPutFile, finalOutPutFile);
-                    Common.EncryptionDecryption.ReadDecryptFile(finalOutPutFile);                     
+                    Common.EncryptionDecryption.ReadDecryptFile(finalOutPutFile);
                 }
-
-
 
                 if (!CheckAllKeys())
                 {
-                    #region Auto start on startup done by Installer 
-
-                    string applicationPath = "";
-                    RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
-                    if (registryKey != null)
+                    Generic.AutoRestart();
+                    if (strScreenVals == string.Empty)
                     {
-                        object obj = registryKey.GetValue("FDS");
-                        if (obj != null)
-                            applicationPath = Path.GetDirectoryName(obj.ToString());
-                    }                    
-                    if (IsAdmin)
-                    {
-                        RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
-                        string AutoStartBaseDir = applicationPath;
-                        string exeFile = Path.Combine(AutoStartBaseDir, "FDS.exe");
-                        key.SetValue("FDS", exeFile + " --opened-at-login --minimize");
+                        LoadMenu(Screens.GetStart);
                     }
-                    #endregion
-
-                    LoadMenu(Screens.GetStart);
 
                 }
                 else
                 {
                     try
                     {
+                        Generic.AutoRestart();
                         if (File.Exists(TempPath + "AutoUpdate.exe"))
                         {
                             if (TryCloseRunningProcess("AutoUpdate"))
@@ -314,6 +319,8 @@ namespace FDS
                 }
             }
         }
+
+
 
         public void FDSMain_Loaded(object sender, RoutedEventArgs e)
         {
@@ -351,6 +358,7 @@ namespace FDS
                         GetOTP.Visibility = Visibility.Visible;
                         break;
                     case Screens.GetStart:
+                        strScreenVals = "GetStart";
                         //imgPantgone.Visibility = Visibility.Hidden;
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
@@ -358,11 +366,38 @@ namespace FDS
                         cntGetStart.Visibility = Visibility.Visible;
                         btnUninstall.Visibility = Visibility.Hidden;
                         break;
-                    case Screens.AuthenticationMethods:
-                        AuthenticationMethods.Visibility = Visibility.Visible;
+                    case Screens.AuthenticationMethods2:
+                        strScreenVals = "AuthenticationMethods2";
+                        AuthenticationMethods2.Visibility = Visibility.Visible;
+                        AuthenticationMethods.Visibility = Visibility.Hidden;
                         AuthenticationStep1.Visibility = Visibility.Hidden;
                         AuthenticationStep2.Visibility = Visibility.Hidden;
-                        //AuthenticationStep3.Visibility = Visibility.Hidden;
+                        AuthenticationStep3.Visibility = Visibility.Hidden;
+                        lblUserName.Visibility = Visibility.Hidden;
+                        AuthenticationProcessing.Visibility = Visibility.Hidden;
+                        AuthenticationFailed.Visibility = Visibility.Hidden;
+                        AuthenticationSuccessfull.Visibility = Visibility.Hidden;
+                        //txtEmail.Text = string.Empty;
+                        txtPhoneNubmer.Text = string.Empty;
+                        txtEmailToken.Text = string.Empty;
+                        txtDigit1.Text = string.Empty;
+                        txtDigit2.Text = string.Empty;
+                        txtDigit3.Text = string.Empty;
+                        txtDigit4.Text = string.Empty;
+                        txtDigit5.Text = string.Empty;
+                        txtDigit6.Text = string.Empty;
+                        header.Visibility = Visibility.Visible;
+                        lblUserName.Visibility = Visibility.Hidden;
+                        imgDesktop.Visibility = Visibility.Hidden;
+                        btnUninstall.Visibility = Visibility.Hidden;
+                        break;
+                    case Screens.AuthenticationMethods:
+                        strScreenVals = "AuthenticationMethods";
+                        AuthenticationMethods.Visibility = Visibility.Visible;
+                        AuthenticationMethods2.Visibility = Visibility.Hidden;
+                        AuthenticationStep1.Visibility = Visibility.Hidden;
+                        AuthenticationStep2.Visibility = Visibility.Hidden;
+                        AuthenticationStep3.Visibility = Visibility.Hidden;
                         lblUserName.Visibility = Visibility.Hidden;
                         AuthenticationProcessing.Visibility = Visibility.Hidden;
                         AuthenticationFailed.Visibility = Visibility.Hidden;
@@ -382,9 +417,12 @@ namespace FDS
                         btnUninstall.Visibility = Visibility.Hidden;
                         break;
                     case Screens.AuthenticationStep1:
+                        strScreenVals = "AuthenticationStep1";
                         AuthenticationStep1.Visibility = Visibility.Visible;
                         AuthenticationMethods.Visibility = Visibility.Hidden;
+                        AuthenticationMethods2.Visibility = Visibility.Hidden;
                         AuthenticationStep2.Visibility = Visibility.Hidden;
+                        AuthenticationStep3.Visibility = Visibility.Hidden;
                         lblUserName.Visibility = Visibility.Hidden;
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
@@ -398,19 +436,26 @@ namespace FDS
                         txtDigit6.Text = string.Empty;
                         break;
                     case Screens.AuthenticationStep2:
+                        strScreenVals = "AuthenticationStep2";
                         AuthenticationStep2.Visibility = Visibility.Visible;
+                        AuthenticationStep3.Visibility = Visibility.Hidden;
                         AuthenticationStep1.Visibility = Visibility.Hidden;
                         AuthenticationMethods.Visibility = Visibility.Hidden;
-                        //AuthenticationStep3.Visibility = Visibility.Hidden;
+                        AuthenticationMethods2.Visibility = Visibility.Hidden;
+                        AuthenticationStep3.Visibility = Visibility.Hidden;
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
                         btnUninstall.Visibility = Visibility.Hidden;
                         break;
                     case Screens.AuthenticationStep3:
-                        //AuthenticationStep3.Visibility = Visibility.Visible;
+                        strScreenVals = "AuthenticationStep3";
+                        AuthenticationStep3.Visibility = Visibility.Visible;
+                        txtlicenseToken.Text = "";
                         AuthenticationStep2.Visibility = Visibility.Hidden;
+
                         AuthenticationMethods.Visibility = Visibility.Hidden;
+                        AuthenticationMethods2.Visibility = Visibility.Hidden;
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
@@ -419,6 +464,7 @@ namespace FDS
                     case Screens.AuthenticationProcessing:
                         AuthenticationProcessing.Visibility = Visibility.Visible;
                         AuthenticationStep2.Visibility = Visibility.Hidden;
+                        AuthenticationStep3.Visibility = Visibility.Hidden;
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
@@ -428,6 +474,7 @@ namespace FDS
                     case Screens.AuthSuccessfull:
                         AuthenticationSuccessfull.Visibility = Visibility.Visible;
                         AuthenticationStep2.Visibility = Visibility.Hidden;
+                        AuthenticationStep3.Visibility = Visibility.Hidden;
                         AuthenticationProcessing.Visibility = Visibility.Hidden;
                         AuthenticationFailed.Visibility = Visibility.Hidden;
                         header.Visibility = Visibility.Visible;
@@ -438,6 +485,8 @@ namespace FDS
                         break;
                     case Screens.AuthFailed:
                         AuthenticationMethods.Visibility = Visibility.Hidden;
+                        AuthenticationMethods2.Visibility = Visibility.Hidden;
+                        AuthenticationStep3.Visibility = Visibility.Hidden;
                         AuthenticationFailed.Visibility = Visibility.Visible;
                         AuthenticationStep2.Visibility = Visibility.Hidden;
                         AuthenticationSuccessfull.Visibility = Visibility.Hidden;
@@ -457,6 +506,7 @@ namespace FDS
                         btnUninstall.Visibility = Visibility.Hidden;
                         break;
                     case Screens.Landing:
+                        AuthenticationStep3.Visibility = Visibility.Hidden;
                         //imgWires.Visibility = Visibility.Visible;
                         cntLanding.Visibility = Visibility.Visible;
                         cntDataProtection.Visibility = Visibility.Hidden;
@@ -473,6 +523,7 @@ namespace FDS
                         AuthenticationFailed.Visibility = Visibility.Hidden;
                         AuthenticationSuccessfull.Visibility = Visibility.Hidden;
                         AuthenticationMethods.Visibility = Visibility.Hidden;
+                        AuthenticationMethods2.Visibility = Visibility.Hidden;
                         btnUninstall.Visibility = Visibility.Visible;
                         break;
                     case Screens.ServiceClear:
@@ -564,8 +615,22 @@ namespace FDS
         private void btnGetStarted_Click(object sender, RoutedEventArgs e)
         {
             ConfigDataClear();
+            LoadMenu(Screens.AuthenticationMethods2);
+        }
+
+        private void btnOrganisation_Click(object sender, RoutedEventArgs e)
+        {
+            ConfigDataClear();
             LoadMenu(Screens.AuthenticationMethods);
         }
+
+        private void btnIndividual_Click(object sender, RoutedEventArgs e)
+        {
+            ConfigDataClear();
+            LoadMenu(Screens.AuthenticationStep3);
+        }
+
+
         private void btnQR_Click(object sender, RoutedEventArgs e)
         {
             GenerateQRCode("QR");
@@ -603,10 +668,10 @@ namespace FDS
             {
                 ImageContainerOTP.Children.Remove(imgLoader);
             }
-            //if (ImageContainerToken.Children.Count > 0)
-            //{
-            //    ImageContainerToken.Children.Remove(imgLoader);
-            //}
+            if (ImageContainerlicense.Children.Count > 0)
+            {
+                ImageContainerlicense.Children.Remove(imgLoader);
+            }
             if (ImageContainerQR.Children.Count > 0)
             {
                 ImageContainerQR.Children.Remove(imgLoader);
@@ -755,6 +820,28 @@ namespace FDS
             txtPhoneNubmer.Text = "";
         }
 
+        private void btnSubmitLicense_Click(object sender, MouseButtonEventArgs e)
+        {
+            LoadMenu(Screens.AuthenticationMethods);
+            txtEmailToken.Text = "";
+            txtPhoneNubmer.Text = "";
+        }
+
+        private void txtBackAuth_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            LoadMenu(Screens.AuthenticationMethods2);
+            txtEmailToken.Text = "";
+            txtPhoneNubmer.Text = "";
+        }
+
+
+        private void txtBackLicense_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            LoadMenu(Screens.AuthenticationMethods2);
+            txtEmailToken.Text = "";
+            txtPhoneNubmer.Text = "";
+        }
+
         private void btnStep2Next_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtDigit1.Text) || string.IsNullOrWhiteSpace(txtDigit2.Text) || string.IsNullOrWhiteSpace(txtDigit3.Text)
@@ -769,7 +856,7 @@ namespace FDS
                 txtTokenValidation.Visibility = Visibility.Visible;
             }
             else
-                LoadMenu(Screens.AuthenticationStep3);
+                LoadMenu(Screens.AuthenticationStep2);
         }
         private void TextBox_LostFocus(object sender, KeyEventArgs e)
         {
@@ -858,6 +945,25 @@ namespace FDS
             GenerateQRCode("Token");
 
         }
+
+        private async void btnStep4Submit_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(txtlicenseToken.Text))
+            {
+                txtlicenseTokenValidation.Text = "Please enter license key !";
+                txtlicenseTokenValidation.Visibility = Visibility.Visible;
+                return;
+            }
+            else
+            {
+                txtlicenseTokenValidation.Text = "";
+                txtlicenseTokenValidation.Visibility = Visibility.Hidden;
+                GenerateLicenseCode();
+            }
+            // txtlicenseToken.Text = "";
+
+
+        }
         private void txtstep2Back_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             LoadMenu(Screens.AuthenticationStep1);
@@ -868,12 +974,38 @@ namespace FDS
         }
 
 
+        string qr_code_token = string.Empty;
+
+        public async void GenerateLicenseCode()
+        {
+            ClearChildrenNode();
+            ImageContainerlicense.Children.Add(imgLoader);
+            LicenseResponse licenseResponse = new LicenseResponse();
+            licenseResponse.LicenseText = txtlicenseToken.Text;
+            DeviceResponse DeviceResponse = await licenseResponse.LoadData(licenseResponse.LicenseText);
+            qr_code_token = DeviceResponse.qr_code_token;
+            ClearChildrenNode();
+            if (DeviceResponse.Success)
+            {
+                txtlicenseTokenValidation.Text = "";
+                txtlicenseTokenValidation.Visibility = Visibility.Hidden;
+            }
+            else
+            {
+                txtlicenseTokenValidation.Text = "Invalid license key !";
+                txtlicenseTokenValidation.Visibility = Visibility.Visible;
+                return;
+            }
+
+            QRGeneratortimer.Start();
+            timerDeviceLogin.Start();
+        }
+
 
         public async void GenerateQRCode(string vals)
         {
             try
             {
-
                 //Code for Loader
                 ClearChildrenNode();
                 if ((vals == "QR") && (ImageContainerQR.Children.Count == 0))
@@ -882,7 +1014,6 @@ namespace FDS
                 }
 
                 DeviceResponse = await apiService.GenerateQRCodeAsync();
-
                 ClearChildrenNode();
 
 
@@ -892,12 +1023,14 @@ namespace FDS
                     TotalSeconds = Common.AppConstants.TotalKeyActivationSeconds;
                     timerQRCode.IsEnabled = true;
 
-
                     IsQRGenerated = DeviceResponse != null ? true : false;
                     //timerDeviceLogin.IsEnabled = true;
                     imgQR.Source = Generic.GetQRCode(DeviceResponse.qr_code_token);
 
+
                     IsAuthenticationFromQR = string.IsNullOrEmpty(txtEmailToken.Text) ? true : false;
+
+
 
                     QRGeneratortimer.Start();
 
@@ -944,8 +1077,9 @@ namespace FDS
             RSAParameters RSAParam;
             try
             {
-
-                var QRCodeResponse = await apiService.CheckAuthAsync(DeviceResponse.qr_code_token, AppConstants.CodeVersion);
+                string qrCodeToken = (DeviceResponse == null) ? qr_code_token : DeviceResponse.qr_code_token;
+                //DeviceResponse.qr_code_token = string.IsNullOrEmpty(DeviceResponse.qr_code_token) ? qr_code_token : DeviceResponse.qr_code_token;
+                var QRCodeResponse = await apiService.CheckAuthAsync(qrCodeToken, AppConstants.CodeVersion);
 
                 if ((QRCodeResponse.StatusCode == HttpStatusCode.OK) || (QRCodeResponse.Public_key != null))
                 {
@@ -1155,9 +1289,9 @@ namespace FDS
 
         public async Task CheckDeviceHealth()
         {
-             
+
             isInternetConnected = Generic.CheckInternetConnection();
-            
+
             if (!isInternetConnected)
             {
                 System.Threading.Thread.Sleep(2000);
@@ -1167,7 +1301,7 @@ namespace FDS
             if (isInternetConnected)
             {
                 var apiResponse = await apiService.CheckDeviceHealthAsync();
-                 
+
                 if (apiResponse == null)
                 {
                     deviceOffline = true;
@@ -1221,9 +1355,11 @@ namespace FDS
                 }
                 else if (apiResponse.HttpStatusCode == HttpStatusCode.Unauthorized)
                 {
+                    MessageBox.Show("Checking Request " + isUninstallRequestRaised);
                     timerLastUpdate.IsEnabled = false;
                     if (isUninstallRequestRaised)
                     {
+                        MessageBox.Show("Start Checking Request " + isUninstallRequestRaised);
                         UninstallProgram();
                     }
                     else
@@ -1839,51 +1975,56 @@ namespace FDS
 
         public void IsUninstallFlagUpdated()
         {
-            if (!IsUnInstallFlag)
+            try
             {
-                string displayName = "FDS";
-                string uninstallKeyPath = null;
-
-                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"))
+                if (!IsUnInstallFlag)
                 {
-                    if (key != null)
-                    {
+                    string displayName = "FDS";
+                    string uninstallKeyPath = null;
 
-                        foreach (string subKeyName in key.GetSubKeyNames())
+                    using (RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"))
+                    {
+                        if (key != null)
                         {
-                            //MessageBox.Show("Uninstall subKeyName " + subKeyName);
-                            using (RegistryKey subKey = key.OpenSubKey(subKeyName))
+
+                            foreach (string subKeyName in key.GetSubKeyNames())
                             {
-                                object displayNameValue = subKey.GetValue("DisplayName");
-                                if (displayNameValue != null && displayNameValue.ToString() == displayName)
+                                //MessageBox.Show("Uninstall subKeyName " + subKeyName);
+                                using (RegistryKey subKey = key.OpenSubKey(subKeyName))
                                 {
-                                    uninstallKeyPath = subKey.Name;
-                                    //MessageBox.Show("ProductKey unistall" + uninstallKeyPath);
-                                    IsUnInstallFlag = true;
-                                    break;
+                                    object displayNameValue = subKey.GetValue("DisplayName");
+                                    if (displayNameValue != null && displayNameValue.ToString().Contains(displayName))
+                                    {
+                                        uninstallKeyPath = subKey.Name;
+                                        //MessageBox.Show("ProductKey unistall" + uninstallKeyPath);
+                                        IsUnInstallFlag = true;
+                                        break;
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                if (uninstallKeyPath != null)
-                {
-                    uninstallKeyPath = uninstallKeyPath.Replace("HKEY_LOCAL_MACHINE\\", "");
-                    // Modify the registry key to prevent uninstallation
-                    using (RegistryKey uninstallKey = Registry.LocalMachine.OpenSubKey(uninstallKeyPath, true))
+                    if (uninstallKeyPath != null)
                     {
-                        if (uninstallKey != null)
+                        uninstallKeyPath = uninstallKeyPath.Replace("HKEY_LOCAL_MACHINE\\", "");
+                        // Modify the registry key to prevent uninstallation
+                        using (RegistryKey currentUserKey = Registry.CurrentUser.CreateSubKey(uninstallKeyPath))
                         {
-                            //MessageBox.Show("Modified unistall" + uninstallKey);
-                            uninstallKey.SetValue("SystemComponent", 1, RegistryValueKind.DWord);
+                            if (currentUserKey != null)
+                            {
+                                currentUserKey.SetValue("SystemComponent", 1, RegistryValueKind.DWord);
+                            }
                         }
                     }
                 }
             }
+            catch
+            {
+            }
         }
         private async void btnUninstall_Click(object sender, RoutedEventArgs e)
         {
-            if (!IsAdmin)
+            if (!Generic.IsUserAdministrator())
             {
                 MessageBox.Show("You Can't Uninstall, Please Contact Admin to Uninstall.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
@@ -1895,6 +2036,7 @@ namespace FDS
             {
                 MessageBox.Show("Uninstall request has been raised successfully!", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 isUninstallRequestRaised = true;
+                MessageBox.Show("Change flag to true" + isUninstallRequestRaised);
                 btnUninstall.ToolTip = "Your uninstall request is pending.";
                 btnUninstall.Foreground = System.Windows.Media.Brushes.Gold;
                 UninstallResponseTimer.Start();
@@ -1924,26 +2066,29 @@ namespace FDS
         {
 
             var apiResponse = await apiService.UninstallProgramAsync();
+
             if (apiResponse == null)
             {
                 return;
             }
             if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
             {
+
                 /// 1- Pending, 2 - Approved, 3 - Rejected
                 try
                 {
                     if (apiResponse.Data == "1")
                     {
+
                         btnUninstall.ToolTip = "Your uninstall request is pending.";
                         btnUninstall.Foreground = System.Windows.Media.Brushes.Gold;
 
                     }
                     else if (apiResponse.Data == "3")
                     {
+
                         UninstallResponseTimer.Stop();
                         btnUninstall.ToolTip = "Your uninstall request has been declined!";
-                        //MessageBox.Show("Uninstall request has been rejected! Please contact your Administrator", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                         btnUninstall.Foreground = System.Windows.Media.Brushes.Red;
                     }
                     else
@@ -1955,97 +2100,18 @@ namespace FDS
                             File.Delete(encryptOutPutFile);
                             ConfigDataClear();
                         }
-                        //MessageBox.Show("Deleting start");
-                        //Generic.DeleteDirecUninstall();
+
                         btnUninstall.ToolTip = "Your uninstall request has been approved! ";
                         btnUninstall.Foreground = System.Windows.Media.Brushes.DarkGreen;
-                        //MessageBox.Show("Uninstall request has been approved! Will process your request soon", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                        string applicationName = "FDS";
-
-                        // Get the uninstall registry key for the application
-                        RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\");
-                        if (key != null)
-                        {
-                            foreach (string subKeyName in key.GetSubKeyNames())
-                            {
-                                using (RegistryKey subKey = key.OpenSubKey(subKeyName))
-                                {
-                                    object displayNameValue = subKey.GetValue("DisplayName");
-                                    if (displayNameValue != null && displayNameValue.ToString() == applicationName)
-                                    {
-                                        // Get the uninstall string from the registry key
-                                        string uninstallString = subKey.GetValue("UninstallString").ToString();
-                                        //MessageBox.Show(uninstallString, "Info", MessageBoxButton.OK, MessageBoxImage.Information);                                      
 
 
-                                        string productCode = uninstallString;
+                        Generic.StopRemoveStartupApplication();
+
+                        cleanSystem();
+
+                        Generic.UninstallFDS();
 
 
-                                        //MessageBox.Show(uninstallString, "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                                        cleanSystem();
-
-                                        try
-                                        {
-                                            string productCode1 = uninstallString.Replace("/I", "").Replace("MsiExec.exe", "").Trim();
-
-                                            string uninstallCommand = $"MsiExec.exe /x{productCode1} /qn";
-
-                                            ProcessStartInfo uninstallStartInfo = new ProcessStartInfo
-                                            {
-                                                FileName = "cmd.exe",
-                                                Arguments = $"/c {uninstallCommand}",
-                                                RedirectStandardOutput = true,
-                                                RedirectStandardError = true,
-                                                UseShellExecute = false,
-                                                CreateNoWindow = true
-                                            };
-
-                                            using (Process uninstallProcess = new Process { StartInfo = uninstallStartInfo })
-                                            {
-                                                uninstallProcess.Start();
-
-                                            }
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            if (showMessageBoxes == true)
-                                            {
-                                                MessageBox.Show(ex.ToString());
-                                            }
-                                        }
-                                        Process[] processes = Process.GetProcessesByName(applicationName);
-
-                                        foreach (Process process in processes)
-                                        {
-                                            try
-                                            {
-                                                process.Kill();
-
-
-                                                //Console.WriteLine($"Process with ID {process.Id} killed successfully.");
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                //Console.WriteLine($"Error killing process: {ex.Message}");
-                                            }
-                                        }
-                                        // Delete the registry key for the application
-                                        key.DeleteSubKeyTree(applicationName);
-                                        MessageBox.Show("Application uninstalled successfully", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-
-
-                                    }
-                                }
-                            }
-
-                        }
-
-                        else
-                        {
-                            // The application was not found in the registry
-                            Console.WriteLine("Application not found.");
-                            MessageBox.Show("Application not found", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                        }
                     }
                 }
                 catch (Exception ex)
@@ -2094,9 +2160,6 @@ namespace FDS
             }
 
         }
-
-
-
         private async void AutoUpdate()
         {
             var apiResponse = await apiService.AutoUpdateAsync();
@@ -2147,8 +2210,6 @@ namespace FDS
             }
             return false;
         }
-
-
         private async Task<bool> DownloadEXEAsync(string downloadUrl, string temporaryMSIPath)
         {
 
@@ -2213,8 +2274,6 @@ namespace FDS
 
             return true;
         }
-
-
         private bool TryCloseRunningProcess(string processName)
         {
             try
@@ -2244,8 +2303,6 @@ namespace FDS
                 return false;
             }
         }
-
-
         private void btnSettings_Click(object sender, RoutedEventArgs e)
         {
             //imgServiceClearUnCheck.Visibility = true ? Visibility.Hidden : Visibility.Visible;
@@ -2270,12 +2327,10 @@ namespace FDS
             e.Cancel = true;
             btnClose_Click(btnClose, null);
         }
-
         private void header_MouseDown(object sender, MouseButtonEventArgs e)
         {
             DragMove();
         }
-
         private void btnGetOTP_Click(object sender, RoutedEventArgs e)
         {
         }
@@ -2287,7 +2342,6 @@ namespace FDS
                 e.Handled = true;
             }
         }
-
         private void btnViewServices_Click(object sender, RoutedEventArgs e)
         {
             LoadMenu(Screens.DataProtection);
@@ -2296,7 +2350,6 @@ namespace FDS
         {
             LoadMenu(Screens.Landing);
         }
-
         public void ConfigDataClear()
         {
             ConfigDetails.Key1 = string.Empty;
@@ -2311,7 +2364,6 @@ namespace FDS
             ConfigDetails.Q = string.Empty;
             ConfigDetails.InverseQ = string.Empty;
         }
-
         public void updateTrayIcon()
         {
             try

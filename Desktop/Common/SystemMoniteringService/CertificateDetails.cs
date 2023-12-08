@@ -245,14 +245,14 @@ namespace FDS.Common
 
             try
             {
-                if (IsAdministrator())
-                {
-                    DeleteCertificateFromTrustedRoot(certificateThumbprint);
-                }
-                else
-                {
-                    return false;
-                }
+                //if (IsAdministrator())
+                //{
+                DeleteCertificateFromTrustedRoot(certificateThumbprint);
+                //}
+                //else
+                //{
+                //    return false;
+                //}
                 //// Open the certificate store
                 using (X509Store store = new X509Store(storeName, storeLocation))
                 {

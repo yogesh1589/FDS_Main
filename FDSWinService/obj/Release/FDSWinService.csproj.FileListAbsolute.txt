@@ -1,0 +1,10 @@
+F:\Fusion\FDS\windowsapp\FDSWinService\bin\Release\FDSWinService.exe.config
+F:\Fusion\FDS\windowsapp\FDSWinService\bin\Release\FDSWinService.exe
+F:\Fusion\FDS\windowsapp\FDSWinService\bin\Release\FDSWinService.pdb
+F:\Fusion\FDS\windowsapp\FDSWinService\obj\Release\FDSWinService.csproj.AssemblyReference.cache
+F:\Fusion\FDS\windowsapp\FDSWinService\obj\Release\FDSWinService.csproj.CoreCompileInputs.cache
+F:\Fusion\FDS\windowsapp\FDSWinService\obj\Release\FDSWinService.exe
+F:\Fusion\FDS\windowsapp\FDSWinService\obj\Release\FDSWinService.pdb
+F:\Fusion\FDS\windowsapp\FDSWinService\obj\Release\FDSWinService.ProjectInstaller.resources
+F:\Fusion\FDS\windowsapp\FDSWinService\obj\Release\FDSWinService.ServiceFDS.resources
+F:\Fusion\FDS\windowsapp\FDSWinService\obj\Release\FDSWinService.csproj.GenerateResource.cache

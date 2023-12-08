@@ -22,7 +22,7 @@ namespace FDS.DTO.Responses
         public string flag { get; set; }
         public string country_code { get; set; }
         public string flag_emoji { get; set; }
-   
+
         public string Phone_code
         {
             get { return phone_code; }
@@ -66,6 +66,8 @@ namespace FDS.DTO.Responses
                 OnPropertyChanged(nameof(SelectedCountryCode));
             }
         }
+
+         
 
         //public ViewModel()
         //{
