@@ -46,9 +46,9 @@ namespace FDS.Services
 
             try
             {
-                int fileCount = GetRecycleBinItemCount();
 
-                ulong initialFileCount = GetDeletedFileCount();
+
+                int initialFileCount = GetRecycleBinItemCount1();
 
                 int result = SHEmptyRecycleBin(IntPtr.Zero, null, RecycleFlags.SHERB_NOCONFIRMATION | RecycleFlags.SHERB_NOPROGRESSUI | RecycleFlags.SHERB_NOSOUND);
 
@@ -85,19 +85,36 @@ namespace FDS.Services
         }
 
 
-        static int GetRecycleBinItemCount()
+     
+        static int GetRecycleBinItemCount1()
         {
             int totalFiles = 0;
 
             try
             {
-                string recycleBinPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "RecycleBin");
+                ProcessStartInfo psi = new ProcessStartInfo();
+                psi.FileName = "powershell.exe";
+                psi.Arguments = "(New-Object -ComObject Shell.Application).NameSpace(0xA).Items().Count";
+                //psi.Arguments = "Get-ChildItem -Path $env:USERPROFILE\\RecycleBin -Force | Measure-Object | Select-Object -ExpandProperty Count";
+                psi.RedirectStandardOutput = true;
+                psi.UseShellExecute = false;
+                psi.CreateNoWindow = true;
 
-                if (Directory.Exists(recycleBinPath))
+                using (Process process = Process.Start(psi))
                 {
-                    DirectoryInfo recycleBinInfo = new DirectoryInfo(recycleBinPath);
-                    FileInfo[] files = recycleBinInfo.GetFiles("*.*", SearchOption.AllDirectories);
-                    totalFiles = files.Length;
+                    if (process != null)
+                    {
+                        process.WaitForExit();
+                        string output = process.StandardOutput.ReadToEnd().Trim();
+                        if (int.TryParse(output, out totalFiles))
+                        {
+                            Console.WriteLine($"Successfully retrieved: {totalFiles}");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Error: Couldn't parse output.");
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -108,19 +125,7 @@ namespace FDS.Services
             return totalFiles;
         }
 
-        //static int GetRecycleBinItemCount()
-        //{
-        //    Shell shell = new Shell();
-        //    Folder recycleBin = shell.NameSpace(10); // 10 is the Recycle Bin's virtual folder constant
-
-        //    if (recycleBin != null)
-        //    {
-        //        return recycleBin.Items().Count;
-        //    }
-
-        //    return 0;
-        //}
-
+ 
         public static ulong GetDeletedFileCount()
         {
 

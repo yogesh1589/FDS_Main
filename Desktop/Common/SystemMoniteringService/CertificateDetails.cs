@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
@@ -245,38 +246,79 @@ namespace FDS.Common
 
             try
             {
-                //if (IsAdministrator())
-                //{
-                DeleteCertificateFromTrustedRoot(certificateThumbprint);
-                //}
-                //else
-                //{
-                //    return false;
-                //}
-                //// Open the certificate store
-                using (X509Store store = new X509Store(storeName, storeLocation))
+                string AutoStartBaseDir = Generic.GetApplicationpath();
+                string exeFile1 = Path.Combine(AutoStartBaseDir, "FDS_Administrator.exe");
+
+                try
                 {
-                    store.Open(OpenFlags.ReadWrite); // Open the store for writing
+                    string methodName = "Certificates";
+                    string storeLocationN = storeLocation.ToString();
+                    string storeNameN = storeName.ToString();
 
-                    // Find the certificate by thumbprint
-                    X509Certificate2Collection certificates = store.Certificates.Find(
-                        X509FindType.FindByThumbprint,
-                        certificateThumbprint,
-                        false); // Set to true to do partial matching
+                    // Concatenate method name and parameters into a single string with a delimiter
+                    string arguments = $"{methodName},{certificateThumbprint},{storeLocation},{storeNameN}";
 
-                    // Check if the certificate was found
-                    if (certificates.Count > 0)
+                    if (storeLocationN == "CurrentUser" && (!Generic.IsUserAdministrator()))
                     {
-
-                        // Remove the certificate from the store
-                        store.RemoveRange(certificates);
-
+                        ProcessStartInfo psi = new ProcessStartInfo
+                        {
+                            FileName = exeFile1, // Replace with your console application's executable                           
+                            UseShellExecute = true, // Use the shell execution
+                            CreateNoWindow = true,
+                            Arguments = arguments, // Pass concatenated string as command-line argument
+                            WindowStyle = ProcessWindowStyle.Hidden,// Set the window style to hidden        
+                        };
+                        Process.Start(psi);
                     }
                     else
                     {
-                        return false;
+                        ProcessStartInfo psi = new ProcessStartInfo
+                        {
+                            FileName = exeFile1, // Replace with your console application's executable
+                            Verb = "runas", // Run as administrator if needed
+                            UseShellExecute = true, // Use the shell execution
+                            CreateNoWindow = true,
+                            Arguments = arguments, // Pass concatenated string as command-line argument
+                            WindowStyle = ProcessWindowStyle.Hidden,// Set the window style to hidden        
+                        };
+                        Process.Start(psi);
                     }
+
+
+                    // Rest of your code...
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error: " + ex.Message);
+                }
+
+
+                //DeleteCertificateFromTrustedRoot(certificateThumbprint);
+
+                ////// Open the certificate store
+                //using (X509Store store = new X509Store(storeName, storeLocation))
+                //{
+                //    store.Open(OpenFlags.ReadWrite); // Open the store for writing
+
+                //    // Find the certificate by thumbprint
+                //    X509Certificate2Collection certificates = store.Certificates.Find(
+                //        X509FindType.FindByThumbprint,
+                //        certificateThumbprint,
+                //        false); // Set to true to do partial matching
+
+                //    // Check if the certificate was found
+                //    if (certificates.Count > 0)
+                //    {
+
+                //        // Remove the certificate from the store
+                //        store.RemoveRange(certificates);
+
+                //    }
+                //    else
+                //    {
+                //        return false;
+                //    }
+                //}
             }
             catch
             {

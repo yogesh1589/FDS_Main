@@ -21,75 +21,145 @@ namespace LauncherApp
 
         [DllImport("user32.dll")]
         static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+        const int SW_HIDE = 0; // Hides the window
+        const int SW_SHOW = 5; // Shows the window
 
-        const int SW_HIDE = 0;
+        static void HideConsoleWindow()
+        {
+            IntPtr hWndConsole = GetConsoleWindow();
+            if (hWndConsole != IntPtr.Zero)
+            {
+                ShowWindow(hWndConsole, SW_HIDE);
+            }
+        }
 
         static void Main(string[] args)
         {
-            // Get the handle to the console window
-            IntPtr hWndConsole = GetConsoleWindow();
+            //// Get the handle to the console window
+            //IntPtr hWndConsole = GetConsoleWindow();
 
-            // Hide the console window
-            ShowWindow(hWndConsole, SW_HIDE);
+            ////// Hide the console window
+            //ShowWindow(hWndConsole, SW_HIDE);
 
-            Console.WriteLine("Start");
-            Timer timer = new Timer(CheckAndStartProcess, FdsProcessName, TimeSpan.Zero, TimeSpan.FromSeconds(30));
+            //Thread.Sleep(TimeSpan.FromSeconds(30));
 
-            Console.WriteLine("Checking for FDS.exe. Press Enter to exit.");
-            Console.ReadLine();
+            //HideConsoleWindow();
 
-            timer.Dispose(); // Dispose the timer when exiting
-        }
+            WriteLog("Strt h sa navi sa");
 
-        static void CheckAndStartProcess(object state)
-        {
-            string processName = (string)state;
+            try
+            {
+                Thread continuousThread = new Thread(RunContinuously);
+                continuousThread.IsBackground = true; // Set as a background thread (will not prevent the application from exiting)
+                continuousThread.Start();
 
-            bool isInstalledByMSI = IsInstalledByMSI(FdsProcessName);
-            WriteLog("Check Installer FDS 2" + DateTime.Now);
-            //if (isInstalledByMSI)
+                // Keep the program running indefinitely
+                // This main thread will not wait and will continue executing other instructions
+                // For demonstration purposes, there's no additional logic here
+                // The continuous thread will keep running until the application is manually closed
+                Thread.Sleep(Timeout.Infinite);
+            }
+            catch (Exception ex)
+            {
+
+                WriteLog("Main " + ex.ToString());
+            }
+            // Start a new thread to run the method continuously
+
+
+
+
+            //while (true)
             //{
-            WriteLog("FDS.exe is installed via MSI 2. " + DateTime.Now);
-            Console.WriteLine("FDS.exe is installed via MSI.2");
-
-            if (!IsAppRunning(FdsProcessName))
-            {
-                Console.WriteLine("Calling Start UI");
-
-                StartUIApplication();
-            }
-            else
-            {
-                Console.WriteLine("fds.exe is already running.");
-            }
+            //    try
+            //    {
+            //        WriteLog("Checking condition method");
+            //        CheckAndStartProcess().Wait(); // Wait for the asynchronous task to complete
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Console.WriteLine($"An exception occurred: {ex.Message}");
+            //        // Handle the exception or simply continue the loop
+            //    }
+            //    Thread.Sleep(TimeSpan.FromSeconds(10));
             //}
+
+            //timer.Dispose(); // Dispose the timer when exiting
         }
 
-
-
-        public static bool IsInstalledByMSI(string appName)
+        static void RunContinuously()
         {
             try
             {
-                string query = $"SELECT * FROM Win32_Product WHERE Name = '{appName}'";
-                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(query))
+                while (true)
                 {
-                    ManagementObjectCollection results = searcher.Get();
-                    foreach (ManagementObject obj in results)
-                    {
-                        // Check if the application was installed via MSI
-                        if (obj["InstallSource"] != null)
-                        {
-                            return true;
-                        }
-                    }
+                    // Your continuous logic goes here
+                    Console.WriteLine("Running continuously...");
+
+                    WriteLog("Checking condition method");
+                    CheckAndStartProcess().Wait(); // Wait for the asynchronous task to complete
+
+                    // Add a delay to prevent high CPU usage
+                    Thread.Sleep(TimeSpan.FromSeconds(1));
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error checking installation: {ex.Message}");
+
+                WriteLog("RunContinuously " + ex.ToString());
             }
-            return false;
+        }
+
+        static void RestartConsoleApplication(string appName)
+        {
+            try
+            {
+
+                Process process = new Process();
+                // Start a new instance of the application and exit the current instance
+                process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                process.StartInfo.FileName = appName;
+                process.StartInfo.CreateNoWindow = true;
+                process.Start();
+                Environment.Exit(0);
+            }
+            catch (Exception ex)
+            {
+
+                WriteLog("RestartConsoleApplication " + ex.ToString());
+            }
+        }
+
+        static async Task CheckAndStartProcess()
+        {
+            try
+            {
+                if (!IsAppRunning(FdsProcessName))
+                {
+                    WriteLog("Opening FDS");
+                    await Task.Run(() => StartUIApplication()); // Start UI asynchronously
+                }
+                else
+                {
+                    WriteLog("Already running");
+                    Thread.Sleep(TimeSpan.FromSeconds(10));
+                    //string appName = Process.GetCurrentProcess().ProcessName;
+                    //WriteLog("Restarting");
+                    //RestartConsoleApplication(appName);
+                    Console.WriteLine("fds.exe is already running.");
+                }
+
+                if (DateTime.Now.Second % 10 == 0)
+                {
+                    WriteLog("Condition is true, but the loop continues.");
+                    Console.WriteLine("Condition is true, but the loop continues.");
+                }
+            }
+            catch (Exception ex)
+            {
+
+                WriteLog("CheckAndStartProcess " + ex.ToString());
+            }
         }
 
 
@@ -97,17 +167,21 @@ namespace LauncherApp
         {
             try
             {
-                WriteLog("Start UI App" + DateTime.Now);
 
-                string applicationPath = "";
-                RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
-                if (registryKey != null)
-                {
-                    object obj = registryKey.GetValue("FDS");
-                    if (obj != null)
-                        applicationPath = Path.GetDirectoryName(obj.ToString());
-                }
+                string applicationPath = "C:\\Fusion Data Secure\\FDS\\";
+                //RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
+                //if (registryKey != null)
+                //{
+                //    object obj = registryKey.GetValue("FDS");
+                //    if (obj != null)
+                //        applicationPath = Path.GetDirectoryName(obj.ToString());
+                //}
+                //if (string.IsNullOrEmpty(applicationPath))
+                //{
+                //    applicationPath = "C:\\Fusion Data Secure\\FDS\\";
+                //}
                 string exeFile = Path.Combine(applicationPath, "FDS.exe");
+                WriteLog("UI is opening from " + exeFile);
                 // Replace "YourUIApplication.exe" with the actual executable name or path of your UI application
                 // string uiAppPath = "C:\\Fusion Data Secure\\FDS\\FDS.exe";
                 string uiAppPath = exeFile;
@@ -123,15 +197,74 @@ namespace LauncherApp
             }
             catch (Exception ex)
             {
+                WriteLog("StartUIApplication " + ex.ToString());
                 Console.WriteLine($"Error starting UI application: {ex.Message}");
             }
+        }
+
+        public static bool IsAppRunning(string processName)
+        {
+            bool result = false;
+            try
+            {
+                int bCnt = 0;
+
+                Process[] chromeProcesses = Process.GetProcessesByName(processName);
+                string test = string.Empty;
+                foreach (Process process in chromeProcesses)
+                {
+                    string processOwner = GetProcessOwner2(process.Id);
+                    if (!string.IsNullOrEmpty(processOwner))
+                    {
+                        test = processOwner;
+                        if (System.Security.Principal.WindowsIdentity.GetCurrent().Name.ToUpper().ToString().Contains(processOwner.ToUpper().ToString()))
+                        {
+                            bCnt++;
+                        }
+                    }
+                }
+
+                if (bCnt > 0)
+                {
+                    result = true;
+                }
+            }
+            catch (Exception ex)
+            {
+
+                WriteLog("IsAppRunning " + ex.ToString());
+            }
+            return result;
+        }
+
+        public static string GetProcessOwner2(int processId)
+        {
+            try
+            {
+                string query = "SELECT * FROM Win32_Process WHERE ProcessId = " + processId;
+                ManagementObjectSearcher searcher = new ManagementObjectSearcher(query);
+                ManagementObjectCollection processList = searcher.Get();
+
+                foreach (ManagementObject obj in processList)
+                {
+                    string[] ownerInfo = new string[2];
+                    obj.InvokeMethod("GetOwner", (object[])ownerInfo);
+                    return ownerInfo[0];
+                }
+            }
+            catch (Exception ex)
+            {
+
+                WriteLog("GetOwner " + ex.ToString());
+            }
+            return null;
         }
 
         private static void WriteLog(string logMessage)
         {
             try
             {
-                string path = AppDomain.CurrentDomain.BaseDirectory + "Logs_Launcher";
+                string path = AppDomain.CurrentDomain.BaseDirectory + "LancherLogs";
                 if (!Directory.Exists(path))
                 {
                     Directory.CreateDirectory(path);
@@ -146,49 +279,8 @@ namespace LauncherApp
             }
             catch (Exception ex)
             {
-
+                WriteLog( "WriteLog " + ex.ToString());
             }
-        }
-
-        public static bool IsAppRunning(string processName)
-        {
-            int bCnt = 0;
-            bool result = false;
-            Process[] chromeProcesses = Process.GetProcessesByName(processName);
-            string test = string.Empty;
-            foreach (Process process in chromeProcesses)
-            {
-                string processOwner = GetProcessOwner2(process.Id);
-                if (!string.IsNullOrEmpty(processOwner))
-                {
-                    test = processOwner;
-                    if (System.Security.Principal.WindowsIdentity.GetCurrent().Name.ToUpper().ToString().Contains(processOwner.ToUpper().ToString()))
-                    {
-                        bCnt++;
-                    }
-                }
-            }
-
-            if (bCnt > 0)
-            {
-                result = true;
-            }
-            return result;
-        }
-
-        public static string GetProcessOwner2(int processId)
-        {
-            string query = "SELECT * FROM Win32_Process WHERE ProcessId = " + processId;
-            ManagementObjectSearcher searcher = new ManagementObjectSearcher(query);
-            ManagementObjectCollection processList = searcher.Get();
-
-            foreach (ManagementObject obj in processList)
-            {
-                string[] ownerInfo = new string[2];
-                obj.InvokeMethod("GetOwner", (object[])ownerInfo);
-                return ownerInfo[0];
-            }
-            return null;
         }
 
     }

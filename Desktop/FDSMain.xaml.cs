@@ -7,6 +7,7 @@ using FDS.Logging;
 using FDS.Models;
 using FDS.Runners;
 using FDS.SingleTon;
+using Microsoft.Bot.Streaming.Transport.NamedPipes;
 using Microsoft.Win32;
 using NCrontab;
 using Newtonsoft.Json;
@@ -25,6 +26,8 @@ using System.IO.Pipes;
 using System.Linq;
 using System.Management;
 using System.Management.Automation;
+using System.Management.Automation.Language;
+using System.Messaging;
 using System.Net;
 using System.Net.Http;
 using System.Net.NetworkInformation;
@@ -33,6 +36,7 @@ using System.Runtime.InteropServices;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Principal;
+using System.ServiceProcess;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -143,6 +147,8 @@ namespace FDS
 
         public string proxyAddress = string.Empty;
         public string proxyPort = string.Empty;
+        public bool loadFDS = false;
+
 
         public FDSMain()
         {
@@ -239,31 +245,29 @@ namespace FDS
 
 
 
+
+
         public void LoadFDS()
         {
             try
             {
-                              
+                //Generic.StopRemoveStartupApplication();            
+
+                 
+                loadFDS = true;
 
 
-                //Generic.UninstallFDS();
-
-                string AutoStartBaseDir = Generic.GetApplicationpath();
-
-                string exeFile = Path.Combine(AutoStartBaseDir, "LauncherApp.exe");
-
-                MessageBox.Show("launcher path " + exeFile);
-
-                if (Generic.IsAppRunning(exeFile))
-                {
-                    MessageBox.Show("Stop running launcher");
-                    Generic.StopRemoveStartupApplication();
-
-                }                
-                Generic.AutoStartLauncherApp(exeFile);
+                //string AutoStartBaseDir = Generic.GetApplicationpath();
+                //string exeFile = Path.Combine(AutoStartBaseDir, "LauncherApp.exe");
 
 
-                //   Generic.CreateBackup();
+                //if (!Generic.IsAppRunning(exeFile))
+                //{
+                //    Generic.AutoStartLauncherApp(exeFile);
+                //}
+
+
+                //Generic.CreateBackup();
 
                 //// -------Actual Code --------------------------------
                 encryptOutPutFile = basePathEncryption + @"\Main";
@@ -279,12 +283,26 @@ namespace FDS
 
                 if (!CheckAllKeys())
                 {
-                    Generic.AutoRestart();
-                    if (strScreenVals == string.Empty)
-                    {
-                        LoadMenu(Screens.GetStart);
-                    }
+                    #region Auto start on startup done by Installer
 
+                    string applicationPath = "";
+                    RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
+                    if (registryKey != null)
+                    {
+                        object obj = registryKey.GetValue("FDS");
+                        if (obj != null)
+                            applicationPath = Path.GetDirectoryName(obj.ToString());
+                    }
+                    //if (Generic.IsUserAdministrator())
+                    //{
+                    RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+                    string AutoStartBaseDir = applicationPath;
+                    string exeFile = Path.Combine(AutoStartBaseDir, "FDS.exe");
+                    key.SetValue("FDS", exeFile + " --opened-at-login --minimize");
+                    //}
+                    #endregion
+
+                    LoadMenu(Screens.GetStart);
                 }
                 else
                 {
@@ -301,7 +319,7 @@ namespace FDS
                     }
                     catch
                     {
-                        MessageBox.Show("error");
+                        //MessageBox.Show("error");
                     }
 
                     LoadMenu(Screens.Landing);
@@ -719,6 +737,7 @@ namespace FDS
             }
             catch (Exception ex)
             {
+
                 LoadMenu(Screens.GetStart);
                 MessageBox.Show("Your device has some issue contact to Admin", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 deviceDeletedFlag = true;
@@ -727,6 +746,7 @@ namespace FDS
                 encryptOutPutFile = basePathEncryption + @"\Main";
                 if (File.Exists(encryptOutPutFile))
                 {
+
                     File.Delete(encryptOutPutFile);
                     ConfigDataClear();
                 }
@@ -1121,7 +1141,7 @@ namespace FDS
 
                         string[] myTokens = lstConfig.ToArray();
                         File.WriteAllLines(filePath, myTokens);
-
+                        //MessageBox.Show("Del6");
                         Common.EncryptionDecryption.EncryptFile(filePath, encryptOutPutFile);
                         if (File.Exists(encryptOutPutFile))
                         {
@@ -1197,6 +1217,7 @@ namespace FDS
             }
             else
             {
+
                 timerLastUpdate.IsEnabled = false;
                 btnGetStarted_Click(btnGetStarted, null);
                 if (showMessageBoxes == true)
@@ -1318,6 +1339,7 @@ namespace FDS
 
                 if (apiResponse.Success == true)
                 {
+                    loadFDS = false;
                     timerLastUpdate.IsEnabled = true;
                     var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
                     int idx = plainText.LastIndexOf('}');
@@ -1355,11 +1377,10 @@ namespace FDS
                 }
                 else if (apiResponse.HttpStatusCode == HttpStatusCode.Unauthorized)
                 {
-                    MessageBox.Show("Checking Request " + isUninstallRequestRaised);
+
                     timerLastUpdate.IsEnabled = false;
                     if (isUninstallRequestRaised)
                     {
-                        MessageBox.Show("Start Checking Request " + isUninstallRequestRaised);
                         UninstallProgram();
                     }
                     else
@@ -1371,18 +1392,9 @@ namespace FDS
                         }
 
                     }
+
                     //btnGetStarted_Click(btnGetStarted, null);
-                    LoadMenu(Screens.GetStart);
-                    MessageBox.Show("Your device has been deleted", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                    deviceDeletedFlag = true;
-                    lstCron.Clear();
-                    lstCronEvent.Clear();
-                    encryptOutPutFile = basePathEncryption + @"\Main";
-                    if (File.Exists(encryptOutPutFile))
-                    {
-                        File.Delete(encryptOutPutFile);
-                        ConfigDataClear();
-                    }
+                    StartForUnauthorized();
                     //this.Close();
                 }
                 else
@@ -1410,6 +1422,26 @@ namespace FDS
                 DeviceDeactive.EndInit();
                 imgCompliant.Source = DeviceDeactive;
 
+            }
+        }
+
+        private void StartForUnauthorized()
+        {
+            LoadMenu(Screens.GetStart);
+            if (!loadFDS)
+            {
+                MessageBox.Show("Your device has been deleted", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            deviceDeletedFlag = true;
+            lstCron.Clear();
+            lstCronEvent.Clear();
+            encryptOutPutFile = basePathEncryption + @"\Main";
+
+            if (File.Exists(encryptOutPutFile))
+            {
+
+                File.Delete(encryptOutPutFile);
+                ConfigDataClear();
             }
         }
 
@@ -1496,6 +1528,7 @@ namespace FDS
             }
             else
             {
+
                 timerLastUpdate.IsEnabled = false;
                 btnGetStarted_Click(btnGetStarted, null);
                 if (showMessageBoxes == true)
@@ -2036,7 +2069,6 @@ namespace FDS
             {
                 MessageBox.Show("Uninstall request has been raised successfully!", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 isUninstallRequestRaised = true;
-                MessageBox.Show("Change flag to true" + isUninstallRequestRaised);
                 btnUninstall.ToolTip = "Your uninstall request is pending.";
                 btnUninstall.Foreground = System.Windows.Media.Brushes.Gold;
                 UninstallResponseTimer.Start();
@@ -2097,6 +2129,7 @@ namespace FDS
                         encryptOutPutFile = basePathEncryption + @"\Main";
                         if (File.Exists(encryptOutPutFile))
                         {
+
                             File.Delete(encryptOutPutFile);
                             ConfigDataClear();
                         }
@@ -2156,6 +2189,7 @@ namespace FDS
             encryptOutPutFile = basePathEncryption + @"\Main";
             if (File.Exists(encryptOutPutFile))
             {
+
                 File.Delete(encryptOutPutFile);
             }
 
@@ -2245,7 +2279,7 @@ namespace FDS
                             if (TryCloseRunningProcess("AutoUpdate"))
                             {
 
-                                File.Copy(tempPath1, TempPath + "AutoUpdate.exe", true);
+                                File.Copy(tempPath2, TempPath + "AutoUpdate.exe", true);
                                 //MessageBox.Show("File Copy Done");
                             }
                         }

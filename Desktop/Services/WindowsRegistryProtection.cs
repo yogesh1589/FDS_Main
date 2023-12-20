@@ -1,81 +1,90 @@
-﻿using FDS.DTO.Responses;
+﻿using FDS.Common;
+using FDS.DTO.Responses;
 using FDS.Logging;
 using FDS.Services.Interface;
 using Microsoft.Win32;
 using System;
+using System.Diagnostics;
+using System.IO;
 using System.Security.AccessControl;
+using System.Security.Principal;
+using System.Windows;
 
 namespace FDS.Services
 {
     public class WindowsRegistryProtection : IService, ILogger
     {
-        public bool RunService(SubservicesData subservices,string serviceTypeDetails)
+        public bool RunService(SubservicesData subservices, string serviceTypeDetails)
         {
-            int totalCount = 0;
             try
             {
-                string user = Environment.UserDomainName + "\\" + Environment.UserName;
-                RegistrySecurity rs = new RegistrySecurity();
-                int CUCount = 0;
-                int LMCount = 0;
+                int totalCnt = 0;
+                int currentUserCnt = 0;
+                int localMachineCnt = 0;
 
-                // Allow the current user to read and delete the key.
-                rs.AddAccessRule(new RegistryAccessRule(user,
-                    RegistryRights.ReadKey | RegistryRights.WriteKey | RegistryRights.Delete,
-                    InheritanceFlags.None,
-                    PropagationFlags.None,
-                    AccessControlType.Allow));
+                //Delete Current Users Keys
+                currentUserCnt = DeleteCurrentUserCount();
 
-                RegistryKey localMachine = Environment.Is64BitProcess == true ? RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64) : Registry.LocalMachine;//Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Mozilla\Mozilla Firefox\", true);
+                //Delete LocalMachine Keys
+                Generic.SendCommandToService("WindowsRegistryProtection");
 
-                var key = localMachine.OpenSubKey(@"SOFTWARE", true);
-                key.SetAccessControl(rs);
-                // Scan all subkeys under the defined key
-                foreach (string subkeyName in key.GetSubKeyNames())
+                localMachineCnt = GetCurrentUserCnt();
+
+                totalCnt = currentUserCnt + localMachineCnt;
+
+                LogInformation(subservices.Sub_service_authorization_code, subservices.Sub_service_name, totalCnt, Convert.ToString(subservices.Id), subservices.Execute_now, serviceTypeDetails);
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+            return true;
+        }
+
+
+        public int DeleteCurrentUserCount()
+        {
+
+            int currentUserCount = 0;
+
+            try
+            {
+
+                RegistryKey currentUser = Registry.CurrentUser.OpenSubKey("SOFTWARE", true);
+
+                //RegistryKey CUkey = Registry.CurrentUser.OpenSubKey("SOFTWARE", true);
+
+                if (currentUser != null)
                 {
-                    RegistryKey subkey = key.OpenSubKey(subkeyName);
-
-                    //Check if the subkey contains any values
-                    if (subkey.ValueCount == 0 && subkey.SubKeyCount == 0)
-                    {
-                        // If the subkey does not contain any values, delete it
-                        key.DeleteSubKeyTree(subkeyName);
-                        Console.WriteLine("Deleted empty subkey: " + subkeyName);
-                        LMCount++;
-                    }
-                    else
-                    {
-                        // If the subkey contains values, check if they are valid
-                        foreach (string valueName in subkey.GetValueNames())
-                        {
-                            object value = subkey.GetValue(valueName);
-
-                            // Check if the value is invalid or obsolete
-                            if (value == null || value.ToString().Contains("[obsolete]"))
-                            {
-                                // If the value is invalid or obsolete, delete it
-                                subkey.DeleteValue(valueName);
-                                Console.WriteLine("Deleted invalid value: " + valueName);
-                                LMCount++;
-                            }
-                        }
-                    }
+                    currentUserCount = TotalCountDeleted(currentUser);
+                }
+                else
+                {
+                    Console.WriteLine("Registry key not found.");
                 }
 
-                RegistryKey CUkey = Registry.CurrentUser.OpenSubKey("SOFTWARE", true);
-                CUkey.SetAccessControl(rs);
-                // Scan all subkeys under the defined key
+                Console.WriteLine("Total LM Count: " + currentUserCount);
+
+            }
+            catch { }
+            return currentUserCount;
+        }
+
+        public int TotalCountDeleted(RegistryKey CUkey)
+        {
+            int cntDeleted = 0;
+
+            try
+            {
                 foreach (string subkeyName in CUkey.GetSubKeyNames())
                 {
                     RegistryKey subkey = CUkey.OpenSubKey(subkeyName);
-
-                    // Check if the subkey contains any values
                     if (subkey.ValueCount == 0 && subkey.SubKeyCount == 0)
                     {
                         // If the subkey does not contain any values, delete it
                         CUkey.DeleteSubKeyTree(subkeyName);
-                        Console.WriteLine("Deleted empty subkey: " + subkeyName);
-                        CUCount++;
+                        cntDeleted++;
                     }
                     else
                     {
@@ -83,32 +92,52 @@ namespace FDS.Services
                         foreach (string valueName in subkey.GetValueNames())
                         {
                             object value = subkey.GetValue(valueName);
-
                             // Check if the value is invalid or obsolete
                             if (value == null || value.ToString().Contains("[obsolete]"))
                             {
-                                // If the value is invalid or obsolete, delete it
                                 subkey.DeleteValue(valueName);
-                                Console.WriteLine("Deleted invalid value: " + valueName);
-                                CUCount++;
+                                cntDeleted++;
                             }
                         }
                     }
                 }
-
-                Console.WriteLine("Total Regitry cleaned from current user", CUCount);
-                Console.WriteLine("Total Regitry cleaned from current user", LMCount);
-                totalCount = CUCount + LMCount;
-
-                LogInformation(subservices.Sub_service_authorization_code, subservices.Sub_service_name, totalCount, Convert.ToString(subservices.Id), subservices.Execute_now, serviceTypeDetails);
-
             }
-            catch (Exception exp)
-            {
-                exp.ToString();
-            }
-            return true;
+            catch
+            { }
+
+            return cntDeleted;
         }
+
+
+
+        public int GetCurrentUserCnt()
+        {
+            string AutoStartBaseDir = Generic.GetApplicationpath();
+
+            try
+            {
+                string resultFilePath = Path.Combine(AutoStartBaseDir, "result.txt");
+                if (File.Exists(resultFilePath))
+                {
+                    string result = File.ReadAllText(resultFilePath);
+                    Console.WriteLine("Result from console application: " + result);
+
+                    // Delete the file after reading its content
+                    File.Delete(resultFilePath);
+
+                    return string.IsNullOrEmpty(result) ? 0 : int.TryParse(result, out int parsedValue) ? parsedValue : 0;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                return 0;
+            }
+        }
+
 
         public void LogInformation(string authorizationCode, string subServiceName, long FileProcessed, string ServiceId, bool IsManualExecution, string serviceTypeDetails)
         {

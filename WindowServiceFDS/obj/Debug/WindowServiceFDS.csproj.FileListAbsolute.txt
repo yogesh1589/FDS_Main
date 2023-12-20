@@ -1,0 +1,9 @@
+F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe.config
+F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.pdb
+F:\Fusion\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.csproj.AssemblyReference.cache
+F:\Fusion\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.ProjectInstaller.resources
+F:\Fusion\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.csproj.GenerateResource.cache
+F:\Fusion\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.csproj.CoreCompileInputs.cache
+F:\Fusion\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.exe
+F:\Fusion\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.pdb

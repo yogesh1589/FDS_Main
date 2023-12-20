@@ -1,34 +1,26 @@
-﻿using FDS.DTO.Responses;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 using QRCoder;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Configuration.Install;
 using System.Diagnostics;
 using System.DirectoryServices.AccountManagement;
 using System.Drawing;
 using System.IO;
-using System.Linq;
+using System.IO.Pipes;
 using System.Management;
-using System.Management.Automation;
 using System.Net.NetworkInformation;
 using System.Security.Cryptography;
-using System.ServiceProcess;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Windows.Devices.Usb;
-using Windows.Security.Cryptography.Certificates;
 
 namespace FDS.Common
 {
     static class Generic
     {
+        public static string pipName = @"\\.\pipe\AdminPipes";
         public static string certificateData = string.Empty;
         public static string BaseDir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
         static bool showMessageBoxes = true;
@@ -182,51 +174,51 @@ namespace FDS.Common
         }
 
 
-        public static bool DeleteDirecUninstall()
-        {
-            MessageBox.Show("Deleting 1");
-            string installationPath = string.Empty;
-            RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
-            if (registryKey != null)
-            {
-                object obj = registryKey.GetValue("FDS");
-                if (obj != null)
-                    installationPath = Path.GetDirectoryName(obj.ToString());
-                MessageBox.Show(installationPath);
-            }
-            DeleteDirectoryContents(installationPath + "\\");
-            return true;
+        //public static bool DeleteDirecUninstall()
+        //{
 
-        }
+        //    string installationPath = string.Empty;
+        //    RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
+        //    if (registryKey != null)
+        //    {
+        //        object obj = registryKey.GetValue("FDS");
+        //        if (obj != null)
+        //            installationPath = Path.GetDirectoryName(obj.ToString());
+        //        MessageBox.Show(installationPath);
+        //    }
+        //    DeleteDirectoryContents(installationPath + "\\");
+        //    return true;
 
-        public static void DeleteDirectoryContents(string directoryPath)
-        {
-            if (Directory.Exists(directoryPath))
-            {
+        //}
 
-                DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
-                foreach (FileInfo file in directoryInfo.GetFiles())
-                {
-                    Thread.Sleep(10);
-                    MessageBox.Show(file.ToString());
-                    if (!file.ToString().Contains("FDS.exe"))
-                    {
-                        file.Delete();
-                    }
-                    //Console.WriteLine(file+ " Files Deleted from installation path");
+        //public static void DeleteDirectoryContents(string directoryPath)
+        //{
+        //    if (Directory.Exists(directoryPath))
+        //    {
 
-                }
-                foreach (DirectoryInfo dir in directoryInfo.GetDirectories())
-                {
+        //        DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
+        //        foreach (FileInfo file in directoryInfo.GetFiles())
+        //        {
+        //            Thread.Sleep(10);
 
-                    dir.Delete(true);
+        //            if (!file.ToString().Contains("FDS.exe"))
+        //            {
+        //                file.Delete();
+        //            }
+        //            //Console.WriteLine(file+ " Files Deleted from installation path");
 
-                }
-                //MessageBox.Show(directoryPath);
-                //// Delete the directory and its contents recursively.
-                //Directory.Delete(directoryPath, true);               
-            }
-        }
+        //        }
+        //        foreach (DirectoryInfo dir in directoryInfo.GetDirectories())
+        //        {
+
+        //            dir.Delete(true);
+
+        //        }
+        //        //MessageBox.Show(directoryPath);
+        //        //// Delete the directory and its contents recursively.
+        //        //Directory.Delete(directoryPath, true);               
+        //    }
+        //}
 
         public static void CreateBackup()
         {
@@ -304,7 +296,7 @@ namespace FDS.Common
             }
             catch
             {
-                MessageBox.Show("Error in AutoRestart");
+                //MessageBox.Show("Error in AutoRestart");
             }
             //}
             #endregion
@@ -322,47 +314,45 @@ namespace FDS.Common
             //{
             try
             {
-                MessageBox.Show("Starting AutoLauncher");
-
                 RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
-
-                 
                 key.SetValue("LauncherApp", applicationPath + " --opened-at-login --minimize");
 
-                MessageBox.Show("value set for AutoLauncher = " + applicationPath);
                 if (File.Exists(applicationPath))
                 {
-                    MessageBox.Show("File exists for AutoLauncher");
+                    MessageBox.Show(applicationPath);
+                    Process process = new Process();
+                    process.StartInfo.FileName = applicationPath;
+                    process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
 
-                    ProcessStartInfo startInfo = new ProcessStartInfo();
-                    startInfo.FileName = applicationPath;
-                    startInfo.WindowStyle = ProcessWindowStyle.Hidden; // Set the window style to hidden                                                                       //startInfo.Verb = "runas";
-                    Process.Start(startInfo);
+                    //process.StartInfo.UseShellExecute = false;
+
+                    process.StartInfo.CreateNoWindow = true;
+                    process.Start();
                 }
-
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error in AutoLauncher" + ex.ToString());
+                MessageBox.Show("Error");
+                // MessageBox.Show("Error in AutoLauncher" + ex.ToString());
             }
         }
 
         public static string GetApplicationpath()
         {
-            string applicationPath = "";
-            RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
-            if (registryKey != null)
-            {
-                object obj = registryKey.GetValue("FDS");
-                if (obj != null)
-                    return Path.GetDirectoryName(obj.ToString());
-            }
+            string applicationPath = "C:\\Fusion Data Secure\\FDS\\";
+            //RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
+            //if (registryKey != null)
+            //{
+            //    object obj = registryKey.GetValue("FDS");
+            //    if (obj != null)
+            //        return Path.GetDirectoryName(obj.ToString());
+            //}
 
-            if (string.IsNullOrEmpty(applicationPath))
-            {
-                string currentPath = System.Reflection.Assembly.GetEntryAssembly()?.Location;
-                applicationPath = Path.GetDirectoryName(currentPath);
-            }
+            //if (string.IsNullOrEmpty(applicationPath))
+            //{
+            //    string currentPath = System.Reflection.Assembly.GetEntryAssembly()?.Location;
+            //    applicationPath = Path.GetDirectoryName(currentPath);
+            //}
             return applicationPath;
         }
 
@@ -477,35 +467,12 @@ namespace FDS.Common
                 startInfo.Arguments = $"/x {productCode} /qn /norestart";
                 startInfo.WindowStyle = ProcessWindowStyle.Hidden; // Set the window style to hidden
                 startInfo.Verb = "runas"; // Run with elevated privileges
+                startInfo.UseShellExecute = true;
                 using (Process uninstallProcess = Process.Start(startInfo))
                 {
-                    
-                    uninstallProcess.WaitForExit();                     
+
+                    uninstallProcess.WaitForExit();
                     Console.WriteLine("Uninstallation completed.");
-                }
-            }
-            catch (Exception ex)
-            {                
-                Console.WriteLine("Error: " + ex.Message);
-            }
-        }
-
-
-        static void RunPowerShellScriptWithElevation(string scriptPath)
-        {
-            try
-            {
-                ProcessStartInfo startInfo = new ProcessStartInfo();
-                startInfo.FileName = "powershell.exe";
-                startInfo.Arguments = $"-ExecutionPolicy Bypass -File \"{scriptPath}\"";
-                startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                startInfo.UseShellExecute = true;
-                startInfo.Verb = "runas"; // Run with elevated privileges
-
-                using (Process process = Process.Start(startInfo))
-                {
-                    process.WaitForExit();
-                    Console.WriteLine("PowerShell script executed.");
                 }
             }
             catch (Exception ex)
@@ -513,33 +480,6 @@ namespace FDS.Common
                 Console.WriteLine("Error: " + ex.Message);
             }
         }
-
-        public static void UninstallPowerShell()
-        {
-            using (PowerShell PowerShellInstance = PowerShell.Create())
-            {
-                // Add the PowerShell command
-                PowerShellInstance.AddScript("Start-Process msiexec.exe -ArgumentList '/x {356B70FD-9D52-4400-A5C3-D1C6F6F7FBEE} /qn /norestart' -NoNewWindow -Wait");
-
-                // Execute the PowerShell command
-                var result = PowerShellInstance.Invoke();
-
-                // Check for errors
-                if (PowerShellInstance.HadErrors)
-                {
-                    foreach (var errorRecord in PowerShellInstance.Streams.Error)
-                    {
-                        Console.WriteLine("Error: " + errorRecord.ToString());
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Uninstallation completed.");
-                }
-            }
-        }
-
-
 
         static bool CheckUninstallKey(RegistryKey key, string applicationName)
         {
@@ -557,17 +497,17 @@ namespace FDS.Common
                                 object displayNameValue = subKey.GetValue("DisplayName");
 
                                 if (displayNameValue != null && displayNameValue.ToString().Contains(applicationName))
-                                {                                     
+                                {
                                     string uninstallString = subKey.GetValue("UninstallString").ToString();
                                     string productCode = uninstallString;
 
                                     try
                                     {
 
-                                        string productCode1 = uninstallString.Replace("/I", "").Replace("MsiExec.exe", "").Trim();                                         
+                                        string productCode1 = uninstallString.Replace("/I", "").Replace("MsiExec.exe", "").Trim();
                                         UninstallMSIProduct(productCode1);
 
-                                        return true;
+
                                     }
                                     catch (Exception ex)
                                     {
@@ -584,6 +524,7 @@ namespace FDS.Common
 
                         }
                     }
+                    return true;
                 }
             }
             catch
@@ -597,15 +538,15 @@ namespace FDS.Common
         {
             string applicationName = "FDS";
             bool uninstallURL = false;
-             
+
             RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\");
             uninstallURL = CheckUninstallKey(key, applicationName);
 
-            if(!uninstallURL)
-            {                 
+            if (!uninstallURL)
+            {
                 RegistryKey key1 = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\");
                 uninstallURL = CheckUninstallKey(key1, applicationName);
-            }            
+            }
 
             Process[] processes = Process.GetProcessesByName(applicationName);
 
@@ -654,7 +595,34 @@ namespace FDS.Common
             }
         }
 
+        public static void SendCommandToService(string command)
+        {
 
-        
+            string AutoStartBaseDir = Generic.GetApplicationpath();
+            string exeFile1 = Path.Combine(AutoStartBaseDir, "FDS_Administrator.exe");
+
+            ProcessStartInfo psi = new ProcessStartInfo
+            {
+                FileName = exeFile1, // Replace with your console application's executable
+                Verb = "runas", // Run as administrator if needed
+                UseShellExecute = true, // Use the shell execution
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden,// Set the window style to hidden        
+            };
+
+
+            try
+            {
+                Process.Start(psi);
+            }
+            catch (System.ComponentModel.Win32Exception)
+            {
+                // Handle any exception due to user declining the UAC prompt
+                Console.WriteLine("User declined UAC prompt or didn't have necessary privileges.");
+            }
+        }
+
+
+
     }
 }

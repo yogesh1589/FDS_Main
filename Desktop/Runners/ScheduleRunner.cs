@@ -1,4 +1,5 @@
-﻿using FDS.DTO.Responses;
+﻿using FDS.Common;
+using FDS.DTO.Responses;
 using FDS.Factories;
 using FDS.Logging;
 using FDS.Services;
@@ -22,7 +23,7 @@ namespace FDS.Runners
         public async Task<List<BaseService>> ServiceToRun(Dictionary<string, SubservicesData> dicEventServices, string serviceTypeDetails)
         {
 
-            
+
 
             List<BaseService> resultService = new List<BaseService>();
 
@@ -43,7 +44,7 @@ namespace FDS.Runners
                     switch (serviceType)
                     {
                         case ServiceTypeName.WindowsRegistryProtection:
-                            if (IsAdmin)
+                            if (Generic.IsUserAdministrator())
                             {
                                 service = serviceFactory.CreateService(ServiceTypeName.WindowsRegistryProtection);
                                 tasks.Add(Task.Run(() => service.RunService(subservices, serviceTypeDetails)));
@@ -69,7 +70,7 @@ namespace FDS.Runners
                             service = serviceFactory.CreateService(ServiceTypeName.SystemNetworkMonitoringProtection);
                             tasks.Add(Task.Run(() => service.RunService(subservices, serviceTypeDetails)));
                             await Task.WhenAll(tasks);
-                            break;                         
+                            break;
                         case ServiceTypeName.WebSessionProtection:
                             resultService.Add(new WebSessionProtection());
                             break;
@@ -78,16 +79,16 @@ namespace FDS.Runners
                             break;
                         case ServiceTypeName.WebCacheProtection:
                             resultService.Add(new WebCacheProtection());
-                            break;                       
+                            break;
                     }
-                    
+
                 }
             }
 
             return (resultService);
         }
 
-        
+
         public async Task<bool> RunAll(Dictionary<string, SubservicesData> dicScheduleServices, string serviceRunType, List<string> whitelistedDomain)
         {
             List<BaseService> resultService = await ServiceToRun(dicScheduleServices, serviceRunType);
