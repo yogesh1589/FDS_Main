@@ -245,27 +245,92 @@ namespace FDS
 
 
 
+        private void ConnectToService()
+        {
+            try
+            {
+                //using (NamedPipeClientStream pipeClient = new NamedPipeClientStream(".", "MyPipe", PipeDirection.InOut))
+                //{
+                //    pipeClient.Connect();
 
+                //    Console.WriteLine("Connected to service.");
+
+                //    // Send a request to the service to start UI
+                //    using (StreamWriter writer = new StreamWriter(pipeClient))
+                //    {
+                //        writer.WriteLine("Start UI");
+                //        writer.Flush();
+                //    }
+
+                //    // Receive response from the service (if needed)
+                //    using (StreamReader reader = new StreamReader(pipeClient))
+                //    {
+                //        string response = reader.ReadLine();
+                //        Console.WriteLine("Received response from service: " + response);
+                //    }
+                //}
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error communicating with service: " + ex.Message);
+            }
+        }
+
+
+        static void RunBatchFile()
+        {
+            try
+            {
+                string batchFile = @"F:\MSI_FDS\RunMyConsoleApp.bat"; // Replace with the actual path to your batch file
+
+                ProcessStartInfo processInfo = new ProcessStartInfo();
+                processInfo.FileName = "cmd.exe";
+                processInfo.Arguments = "/c " + batchFile;
+                processInfo.RedirectStandardOutput = true;
+                processInfo.UseShellExecute = false;
+                processInfo.CreateNoWindow = true;
+
+                using (Process process = new Process())
+                {
+                    process.StartInfo = processInfo;
+                    process.Start();
+                    process.WaitForExit(1000);
+
+                    // Optionally, read the output of the batch file
+                    string output = process.StandardOutput.ReadToEnd();
+                    Console.WriteLine(output);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message);
+            }
+        }
 
         public void LoadFDS()
         {
             try
             {
-                //Generic.StopRemoveStartupApplication();            
-
-                 
                 loadFDS = true;
 
+                //Generic.CreateTaskS();
+
+                //Generic.StopRemoveStartupApplication();
+
+                //RunBatchFile();
 
                 //string AutoStartBaseDir = Generic.GetApplicationpath();
-                //string exeFile = Path.Combine(AutoStartBaseDir, "LauncherApp.exe");
+                //string appPath = Path.Combine(AutoStartBaseDir, "LauncherApp.exe");
 
 
-                //if (!Generic.IsAppRunning(exeFile))
+                //if (!Generic.IsAppRunning(appPath))
                 //{
-                //    Generic.AutoStartLauncherApp(exeFile);
+                //    Generic.AutoStartLauncherApp(appPath);
                 //}
 
+                //ConnectToService();
 
                 //Generic.CreateBackup();
 
@@ -285,20 +350,43 @@ namespace FDS
                 {
                     #region Auto start on startup done by Installer
 
-                    string applicationPath = "";
-                    RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
-                    if (registryKey != null)
-                    {
-                        object obj = registryKey.GetValue("FDS");
-                        if (obj != null)
-                            applicationPath = Path.GetDirectoryName(obj.ToString());
-                    }
+                    //string applicationPath = "";
+                    //RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
+                    //if (registryKey != null)
+                    //{
+                    //    object obj = registryKey.GetValue("FDS");
+                    //    if (obj != null)
+                    //        applicationPath = Path.GetDirectoryName(obj.ToString());
+                    //}
                     //if (Generic.IsUserAdministrator())
                     //{
-                    RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
-                    string AutoStartBaseDir = applicationPath;
-                    string exeFile = Path.Combine(AutoStartBaseDir, "FDS.exe");
-                    key.SetValue("FDS", exeFile + " --opened-at-login --minimize");
+                    //using (RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true))
+                    //{
+                    //    if (key != null)
+                    //    {
+                    //        string exeFile = Path.Combine(applicationPath, "LauncherApp.exe");
+
+                    //        // Check if the application is already in startup
+                    //        if (key.GetValue("LauncherApp1") == null)
+                    //        {
+                    //            // If not, add it to startup
+                    //            key.SetValue("LauncherApp1", $"\"{exeFile}\" --opened-at-login --minimize");
+                    //            Console.WriteLine("Application added to startup successfully.");
+                    //        }
+                    //        else
+                    //        {
+                    //            Console.WriteLine("Application already set to start on login.");
+                    //        }
+
+                    //        // Start the application
+                    //        Process.Start(exeFile);
+                    //        Console.WriteLine("Application started.");
+                    //    }
+                    //    else
+                    //    {
+                    //        Console.WriteLine("Registry key not found.");
+                    //    }
+                    //}
                     //}
                     #endregion
 
@@ -308,7 +396,7 @@ namespace FDS
                 {
                     try
                     {
-                        Generic.AutoRestart();
+                        //Generic.AutoRestart();
                         if (File.Exists(TempPath + "AutoUpdate.exe"))
                         {
                             if (TryCloseRunningProcess("AutoUpdate"))
@@ -383,6 +471,9 @@ namespace FDS
                         imgDesktop.Visibility = Visibility.Hidden;
                         cntGetStart.Visibility = Visibility.Visible;
                         btnUninstall.Visibility = Visibility.Hidden;
+                        AuthenticationStep1.Visibility = Visibility.Hidden;
+                        AuthenticationStep2.Visibility = Visibility.Hidden;
+                        AuthenticationStep3.Visibility = Visibility.Hidden;
                         break;
                     case Screens.AuthenticationMethods2:
                         strScreenVals = "AuthenticationMethods2";

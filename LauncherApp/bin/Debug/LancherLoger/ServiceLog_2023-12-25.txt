@@ -1,0 +1,19 @@
+25-12-2023 20:10:53 - Start Lauancher1
+25-12-2023 20:10:53 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 20:10:53 - Checking App is running1
+25-12-2023 20:10:53 - App is running1
+25-12-2023 20:10:53 - App Restarted
+25-12-2023 20:11:43 - Checking App is running1
+25-12-2023 20:11:44 - App is running1
+25-12-2023 20:11:44 - App Restarted
+25-12-2023 20:12:56 - Start Lauancher1
+25-12-2023 20:12:56 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 20:12:56 - Checking App is running1
+25-12-2023 20:12:56 - App is running1
+25-12-2023 20:12:56 - App Restarted
+25-12-2023 20:14:00 - Checking App is running1
+25-12-2023 20:14:00 - App is running1
+25-12-2023 20:14:01 - App Restarted
+25-12-2023 20:14:50 - Checking App is running1
+25-12-2023 20:14:50 - App is running1
+25-12-2023 20:14:51 - App Restarted

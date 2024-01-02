@@ -1,0 +1,65 @@
+26-12-2023 11:26:11 - Start Lauancher1
+26-12-2023 11:26:11 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+26-12-2023 11:26:11 - Checking App is running1
+26-12-2023 11:26:11 - App is running1
+26-12-2023 11:26:12 - App Restarted
+26-12-2023 11:33:01 - Start Lauancher1
+26-12-2023 11:33:01 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+26-12-2023 11:33:01 - Checking App is running1
+26-12-2023 11:33:01 - App is running1
+26-12-2023 11:33:01 - App Restarted
+26-12-2023 11:35:00 - Start Lauancher1
+26-12-2023 11:35:00 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+26-12-2023 11:35:00 - Checking App is running1
+26-12-2023 11:35:00 - App is running1
+26-12-2023 11:35:00 - App Restarted
+26-12-2023 11:37:00 - Start Lauancher1
+26-12-2023 11:37:01 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+26-12-2023 11:37:01 - Checking App is running1
+26-12-2023 11:37:01 - App is running1
+26-12-2023 11:37:01 - App Restarted
+26-12-2023 11:37:58 - Checking App is running1
+26-12-2023 11:37:58 - App is running1
+26-12-2023 11:37:58 - App Restarted
+26-12-2023 11:39:00 - Start Lauancher1
+26-12-2023 11:39:00 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+26-12-2023 11:39:00 - Checking App is running1
+26-12-2023 11:39:00 - App is running1
+26-12-2023 11:39:00 - App Restarted
+26-12-2023 11:39:23 - Checking App is running1
+26-12-2023 11:39:23 - App is running1
+26-12-2023 11:39:24 - App Restarted
+26-12-2023 11:44:17 - Start Lauancher1
+26-12-2023 11:44:17 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+26-12-2023 11:44:17 - Checking App is running1
+26-12-2023 11:44:17 - App is running1
+26-12-2023 11:44:18 - App Restarted
+26-12-2023 11:51:01 - Start Lauancher1
+26-12-2023 11:51:01 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+26-12-2023 11:51:01 - Checking App is running1
+26-12-2023 11:51:01 - App is running1
+26-12-2023 11:51:02 - App Restarted
+26-12-2023 11:52:21 - Checking App is running1
+26-12-2023 11:52:21 - App is running1
+26-12-2023 11:52:21 - App Restarted
+26-12-2023 11:54:06 - Checking App is running1
+26-12-2023 11:54:06 - App is running1
+26-12-2023 11:54:06 - App Restarted
+26-12-2023 11:54:53 - Checking App is running1
+26-12-2023 11:55:03 - Checking App is running1
+26-12-2023 11:55:13 - Checking App is running1
+26-12-2023 11:55:24 - Checking App is running1
+26-12-2023 11:55:34 - Checking App is running1
+26-12-2023 11:55:44 - Checking App is running1
+26-12-2023 11:55:54 - Checking App is running1
+26-12-2023 11:55:54 - App is running1
+26-12-2023 11:55:55 - App Restarted
+26-12-2023 14:19:20 - Checking App is running1
+26-12-2023 14:19:20 - App is running1
+26-12-2023 14:19:20 - App Restarted
+26-12-2023 14:20:12 - Checking App is running1
+26-12-2023 14:20:12 - App is running1
+26-12-2023 14:20:13 - App Restarted
+26-12-2023 14:21:32 - Checking App is running1
+26-12-2023 14:21:32 - App is running1
+26-12-2023 14:21:32 - App Restarted

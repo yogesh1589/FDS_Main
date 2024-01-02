@@ -475,6 +475,9 @@
     <PackageReference Include="System.Text.Json">
       <Version>7.0.3</Version>
     </PackageReference>
+    <PackageReference Include="TaskScheduler">
+      <Version>2.10.1</Version>
+    </PackageReference>
     <PackageReference Include="WpfAnimatedGif">
       <Version>2.0.2</Version>
     </PackageReference>

@@ -55,10 +55,10 @@ namespace WindowServiceFDS
 
         private void CheckAndRunProcessLauncher()
         {
-            //WriteLog("Checking Launcher App");
+            WriteLog("Checking Launcher App");
             if (!IsProcessRunningForCurrentUser(processName))
             {
-                //WriteLog($"{processName} is not running for the current user. Starting {processName}...");
+                WriteLog($"{processName} is not running for the current user. Starting {processName}...");
 
                 // Start the process
                 StartProcess(processName);
@@ -94,10 +94,10 @@ namespace WindowServiceFDS
                 }
                 catch (Exception ex)
                 {
-                    //WriteLog($"Error getting process owner: {ex.Message}");
+                    WriteLog($"Error getting process owner: {ex.Message}");
                 }
             }
-            //WriteLog("Count = " + bCnt);
+            WriteLog("Count = " + bCnt);
             if (bCnt > 0)
             {
                 return true;
@@ -130,7 +130,7 @@ namespace WindowServiceFDS
         {
             try
             {
-                //WriteLog(processName);
+                WriteLog(processName);
                 Process process = new Process();
                 process.StartInfo.FileName = processName;
                 // Set environment variables if necessary
@@ -144,7 +144,7 @@ namespace WindowServiceFDS
             }
             catch (Exception ex)
             {
-                //WriteLog($"Error starting process: {ex.Message}");
+                WriteLog($"Error starting process: {ex.Message}");
             }
         }
 
@@ -321,27 +321,27 @@ namespace WindowServiceFDS
             pipeServer?.Dispose();
         }
 
-        //private void WriteLog(string logMessage)
-        //{
-        //    try
-        //    {
-        //        string path = AppDomain.CurrentDomain.BaseDirectory + "LogsWindows";
-        //        if (!Directory.Exists(path))
-        //        {
-        //            Directory.CreateDirectory(path);
-        //        }
+        private void WriteLog(string logMessage)
+        {
+            try
+            {
+                string path = AppDomain.CurrentDomain.BaseDirectory + "LogsWindows";
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
 
-        //        string filePath = Path.Combine(path, "ServiceLog_" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt");
+                string filePath = Path.Combine(path, "ServiceLog_" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt");
 
-        //        using (StreamWriter streamWriter = File.AppendText(filePath))
-        //        {
-        //            streamWriter.WriteLine($"{DateTime.Now} - {logMessage}");
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
+                using (StreamWriter streamWriter = File.AppendText(filePath))
+                {
+                    streamWriter.WriteLine($"{DateTime.Now} - {logMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
 
-        //    }
-        //}
+            }
+        }
     }
 }

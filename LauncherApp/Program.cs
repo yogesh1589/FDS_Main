@@ -1,8 +1,10 @@
 ﻿using Microsoft.Win32;
+using Microsoft.Win32.TaskScheduler;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Pipes;
 using System.Linq;
 using System.Management;
 using System.Runtime.InteropServices;
@@ -17,12 +19,13 @@ namespace LauncherApp
         private const string FdsProcessName = "FDS";
 
         [DllImport("kernel32.dll")]
-        static extern IntPtr GetConsoleWindow();
+        public static extern IntPtr GetConsoleWindow();
 
         [DllImport("user32.dll")]
-        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-        const int SW_HIDE = 0; // Hides the window
-        const int SW_SHOW = 5; // Shows the window
+        public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        const int SW_HIDE = 0;  // Hides the window
+        const int SW_SHOW = 5;  // Shows the window
 
         static void HideConsoleWindow()
         {
@@ -35,172 +38,159 @@ namespace LauncherApp
 
         static void Main(string[] args)
         {
-            //// Get the handle to the console window
-            //IntPtr hWndConsole = GetConsoleWindow();
-
-            ////// Hide the console window
-            //ShowWindow(hWndConsole, SW_HIDE);
-
-            //Thread.Sleep(TimeSpan.FromSeconds(30));
-
-            //HideConsoleWindow();
-
-            WriteLog("Strt h sa navi sa");
+            HideConsoleWindow();
+            int cnt = 0;
 
             try
             {
-                Thread continuousThread = new Thread(RunContinuously);
-                continuousThread.IsBackground = true; // Set as a background thread (will not prevent the application from exiting)
-                continuousThread.Start();
+                string basePathEncryption = String.Format("{0}Tempfolder", "C:\\Fusion Data Secure\\FDS\\");
 
-                // Keep the program running indefinitely
-                // This main thread will not wait and will continue executing other instructions
-                // For demonstration purposes, there's no additional logic here
-                // The continuous thread will keep running until the application is manually closed
-                Thread.Sleep(Timeout.Infinite);
-            }
-            catch (Exception ex)
-            {
-
-                WriteLog("Main " + ex.ToString());
-            }
-            // Start a new thread to run the method continuously
+                string encryptOutPutFile = basePathEncryption + @"\Main";
 
 
+                string applicationPath = ReturnApplicationPath();
 
+                string exePath = Path.Combine(applicationPath, "FDS.exe");
 
-            //while (true)
-            //{
-            //    try
-            //    {
-            //        WriteLog("Checking condition method");
-            //        CheckAndStartProcess().Wait(); // Wait for the asynchronous task to complete
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        Console.WriteLine($"An exception occurred: {ex.Message}");
-            //        // Handle the exception or simply continue the loop
-            //    }
-            //    Thread.Sleep(TimeSpan.FromSeconds(10));
-            //}
-
-            //timer.Dispose(); // Dispose the timer when exiting
-        }
-
-        static void RunContinuously()
-        {
-            try
-            {
-                while (true)
+                if (!string.IsNullOrEmpty(exePath))
                 {
-                    // Your continuous logic goes here
-                    Console.WriteLine("Running continuously...");
+                    SetStartupApp(applicationPath);
 
-                    WriteLog("Checking condition method");
-                    CheckAndStartProcess().Wait(); // Wait for the asynchronous task to complete
+                    while (true)
+                    {
+                        if ((!IsAppRunning(FdsProcessName)) && ((File.Exists(encryptOutPutFile)) || (cnt == 0)))
+                        {
+                            //WriteLog("App is running1");
+                            // Start your WPF application
+                            ProcessStartInfo startInfo = new ProcessStartInfo
+                            {
+                                FileName = exePath,
+                                UseShellExecute = false,
+                                CreateNoWindow = true,
+                                WindowStyle = ProcessWindowStyle.Hidden
+                            };
 
-                    // Add a delay to prevent high CPU usage
-                    Thread.Sleep(TimeSpan.FromSeconds(1));
+                            Process wpfApp = Process.Start(startInfo);
+
+                            IntPtr mainWindowHandle = wpfApp.MainWindowHandle;
+
+                            if (mainWindowHandle != IntPtr.Zero)
+                            {
+                                // Hide the window of the launched process
+                                ShowWindow(mainWindowHandle, SW_HIDE);
+                            }
+
+                            cnt++;
+                            // Monitor the WPF application
+                            while (!wpfApp.HasExited)
+                            {
+                                //WriteLog("App Restarted");
+                                wpfApp.WaitForExit(1000);
+                            }
+                            // Restart the application if it's closed
+                            Console.WriteLine("Application closed. Restarting...");
+                            Thread.Sleep(1000); // Wait for a moment before restarting
+                            wpfApp.Dispose(); // Clean up the process                           
+                        }
+                        Thread.Sleep(TimeSpan.FromSeconds(10));
+                    }
                 }
+
+
             }
             catch (Exception ex)
             {
-
-                WriteLog("RunContinuously " + ex.ToString());
+                ex.ToString();
             }
         }
 
-        static void RestartConsoleApplication(string appName)
+
+        public static void SetStartupApp(string applicationPath)
         {
             try
             {
 
-                Process process = new Process();
-                // Start a new instance of the application and exit the current instance
-                process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                process.StartInfo.FileName = appName;
-                process.StartInfo.CreateNoWindow = true;
-                process.Start();
-                Environment.Exit(0);
+                // applicationPath =  Path.Combine(applicationPath, "LauncherApp.exe");
+
+                RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
+                if (registryKey != null)
+                {
+                    object obj = registryKey.GetValue("LauncherApp1");
+                    if (obj != null)
+                        applicationPath = Path.GetDirectoryName(obj.ToString());
+                }
+
+                using (RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true))
+                {
+                    if (key != null)
+                    {
+                        string exeFile = Path.Combine(applicationPath, "LauncherApp.exe");
+
+                        // Check if the application is already in startup
+                        if (key.GetValue("LauncherApp1") == null)
+                        {
+                            // If not, add it to startup
+                            key.SetValue("LauncherApp1", $"\"{exeFile}\" --opened-at-login --minimize");
+                            Console.WriteLine("Application added to startup successfully.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Application already set to start on login.");
+                        }
+
+                        // Start the application
+                        Process.Start(exeFile);
+                        Console.WriteLine("Application started.");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Registry key not found.");
+                    }
+                }
             }
             catch (Exception ex)
             {
-
-                WriteLog("RestartConsoleApplication " + ex.ToString());
+                Console.WriteLine("Error: " + ex.Message);
             }
         }
-
-        static async Task CheckAndStartProcess()
+        static string ReturnApplicationPath()
         {
+            string applicationPath = "C:\\Fusion Data Secure\\FDS\\";
             try
             {
-                if (!IsAppRunning(FdsProcessName))
+                RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall");
+                if (registryKey != null)
                 {
-                    WriteLog("Opening FDS");
-                    await Task.Run(() => StartUIApplication()); // Start UI asynchronously
+                    object obj = registryKey.GetValue("FDS");
+                    if (obj != null)
+                        applicationPath = Path.GetDirectoryName(obj.ToString());
                 }
-                else
+                if (string.IsNullOrEmpty(applicationPath))
                 {
-                    WriteLog("Already running");
-                    Thread.Sleep(TimeSpan.FromSeconds(10));
-                    //string appName = Process.GetCurrentProcess().ProcessName;
-                    //WriteLog("Restarting");
-                    //RestartConsoleApplication(appName);
-                    Console.WriteLine("fds.exe is already running.");
+                    // Get the current directory where the console app is running
+                    string currentDirectory = Environment.CurrentDirectory;
+
+                    // Navigate to the desired path from the current directory
+                    string desiredPath = Path.Combine(currentDirectory, @"..\Desktop");
+                    string originalPath = Path.GetFullPath(desiredPath);
+
+                    string desiredPath1 = Path.Combine(Path.GetDirectoryName(originalPath), "..\\..\\Desktop\\bin\\Debug\\");
+                    string fullPath = Path.GetFullPath(desiredPath1);
+
+                    applicationPath = fullPath;
                 }
 
-                if (DateTime.Now.Second % 10 == 0)
-                {
-                    WriteLog("Condition is true, but the loop continues.");
-                    Console.WriteLine("Condition is true, but the loop continues.");
-                }
+
+                //string AutoStartBaseDir = applicationPath;
+
             }
-            catch (Exception ex)
+            catch
             {
 
-                WriteLog("CheckAndStartProcess " + ex.ToString());
             }
+            return applicationPath;
         }
 
-
-        private static void StartUIApplication()
-        {
-            try
-            {
-
-                string applicationPath = "C:\\Fusion Data Secure\\FDS\\";
-                //RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
-                //if (registryKey != null)
-                //{
-                //    object obj = registryKey.GetValue("FDS");
-                //    if (obj != null)
-                //        applicationPath = Path.GetDirectoryName(obj.ToString());
-                //}
-                //if (string.IsNullOrEmpty(applicationPath))
-                //{
-                //    applicationPath = "C:\\Fusion Data Secure\\FDS\\";
-                //}
-                string exeFile = Path.Combine(applicationPath, "FDS.exe");
-                WriteLog("UI is opening from " + exeFile);
-                // Replace "YourUIApplication.exe" with the actual executable name or path of your UI application
-                // string uiAppPath = "C:\\Fusion Data Secure\\FDS\\FDS.exe";
-                string uiAppPath = exeFile;
-
-                // Start the UI application process
-                ProcessStartInfo startInfo = new ProcessStartInfo
-                {
-                    FileName = uiAppPath,
-                    // Additional settings or parameters as needed
-                };
-
-                Process.Start(startInfo);
-            }
-            catch (Exception ex)
-            {
-                WriteLog("StartUIApplication " + ex.ToString());
-                Console.WriteLine($"Error starting UI application: {ex.Message}");
-            }
-        }
 
         public static bool IsAppRunning(string processName)
         {
@@ -264,7 +254,7 @@ namespace LauncherApp
         {
             try
             {
-                string path = AppDomain.CurrentDomain.BaseDirectory + "LancherLogs";
+                string path = AppDomain.CurrentDomain.BaseDirectory + "LancherLoger";
                 if (!Directory.Exists(path))
                 {
                     Directory.CreateDirectory(path);
@@ -279,7 +269,7 @@ namespace LauncherApp
             }
             catch (Exception ex)
             {
-                WriteLog( "WriteLog " + ex.ToString());
+                WriteLog("WriteLog " + ex.ToString());
             }
         }
 

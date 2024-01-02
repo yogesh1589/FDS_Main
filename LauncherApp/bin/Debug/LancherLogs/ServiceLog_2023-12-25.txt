@@ -1,0 +1,151 @@
+25-12-2023 12:46:53 - Create Task Starts
+25-12-2023 12:48:08 - System.ArgumentOutOfRangeException: Specified argument was out of the range of valid values.
+Parameter name: Interval
+   at Microsoft.Win32.TaskScheduler.RepetitionPattern.set_Interval(TimeSpan value)
+   at LauncherApp.Program.CreateTaskS()
+25-12-2023 12:48:17 - Create Task Starts
+25-12-2023 12:48:22 - Create Task Ends
+25-12-2023 13:20:01 - Start Lauancher1
+25-12-2023 13:20:01 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 13:20:01 - Checking App is running1
+25-12-2023 13:20:01 - App is running1
+25-12-2023 13:20:02 - App Restarted
+25-12-2023 13:23:13 - System.UnauthorizedAccessException: Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))
+   at Microsoft.Win32.TaskScheduler.V2Interop.ITaskFolder.RegisterTaskDefinition(String Path, ITaskDefinition pDefinition, Int32 flags, Object UserId, Object password, TaskLogonType LogonType, Object sddl)
+   at Microsoft.Win32.TaskScheduler.TaskFolder.RegisterTaskDefinition(String path, TaskDefinition definition, TaskCreation createType, String userId, String password, TaskLogonType logonType, String sddl)
+   at Microsoft.Win32.TaskScheduler.TaskFolder.RegisterTaskDefinition(String path, TaskDefinition definition)
+   at LauncherApp.Program.CreateTaskS() in F:\Fusion\FDS\windowsapp\LauncherApp\Program.cs:line 329
+25-12-2023 13:23:13 - Start Lauancher1
+25-12-2023 13:23:13 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 13:23:13 - Checking App is running1
+25-12-2023 13:23:24 - Checking App is running1
+25-12-2023 13:23:35 - Checking App is running1
+25-12-2023 13:23:49 - Checking App is running1
+25-12-2023 13:27:02 - System.UnauthorizedAccessException: Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))
+   at Microsoft.Win32.TaskScheduler.V2Interop.ITaskFolder.RegisterTaskDefinition(String Path, ITaskDefinition pDefinition, Int32 flags, Object UserId, Object password, TaskLogonType LogonType, Object sddl)
+   at Microsoft.Win32.TaskScheduler.TaskFolder.RegisterTaskDefinition(String path, TaskDefinition definition, TaskCreation createType, String userId, String password, TaskLogonType logonType, String sddl)
+   at Microsoft.Win32.TaskScheduler.TaskFolder.RegisterTaskDefinition(String path, TaskDefinition definition)
+   at LauncherApp.Program.CreateTaskS() in F:\Fusion\FDS\windowsapp\LauncherApp\Program.cs:line 329
+25-12-2023 13:27:02 - Start Lauancher1
+25-12-2023 13:27:02 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 13:27:02 - Checking App is running1
+25-12-2023 13:27:02 - App is running1
+25-12-2023 13:27:02 - App Restarted
+25-12-2023 13:44:55 - Checking App is running1
+25-12-2023 13:44:56 - App is running1
+25-12-2023 13:44:56 - App Restarted
+25-12-2023 13:46:02 - System.UnauthorizedAccessException: Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))
+   at Microsoft.Win32.TaskScheduler.V2Interop.ITaskFolder.RegisterTaskDefinition(String Path, ITaskDefinition pDefinition, Int32 flags, Object UserId, Object password, TaskLogonType LogonType, Object sddl)
+   at Microsoft.Win32.TaskScheduler.TaskFolder.RegisterTaskDefinition(String path, TaskDefinition definition, TaskCreation createType, String userId, String password, TaskLogonType logonType, String sddl)
+   at Microsoft.Win32.TaskScheduler.TaskFolder.RegisterTaskDefinition(String path, TaskDefinition definition)
+   at LauncherApp.Program.CreateTaskS() in F:\Fusion\FDS\windowsapp\LauncherApp\Program.cs:line 329
+25-12-2023 13:46:02 - Start Lauancher1
+25-12-2023 13:46:02 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 13:46:02 - Checking App is running1
+25-12-2023 13:46:02 - App is running1
+25-12-2023 13:46:02 - App Restarted
+25-12-2023 13:48:01 - Start Lauancher1
+25-12-2023 13:48:02 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 13:48:02 - Checking App is running1
+25-12-2023 13:48:02 - App is running1
+25-12-2023 13:48:02 - App Restarted
+25-12-2023 13:51:09 - Checking App is running1
+25-12-2023 13:51:09 - App is running1
+25-12-2023 13:51:09 - App Restarted
+25-12-2023 13:51:55 - Checking App is running1
+25-12-2023 13:51:55 - App is running1
+25-12-2023 13:51:55 - App Restarted
+25-12-2023 13:53:45 - Checking App is running1
+25-12-2023 13:53:45 - App is running1
+25-12-2023 13:53:45 - App Restarted
+25-12-2023 13:54:01 - Start Lauancher1
+25-12-2023 13:54:01 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 13:54:01 - Checking App is running1
+25-12-2023 13:54:12 - Checking App is running1
+25-12-2023 13:54:22 - Checking App is running1
+25-12-2023 13:54:32 - Checking App is running1
+25-12-2023 13:54:42 - Checking App is running1
+25-12-2023 13:54:52 - Checking App is running1
+25-12-2023 13:55:02 - Checking App is running1
+25-12-2023 13:55:13 - Checking App is running1
+25-12-2023 13:55:23 - Checking App is running1
+25-12-2023 13:55:33 - Checking App is running1
+25-12-2023 14:23:58 - Start Lauancher1
+25-12-2023 14:23:59 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 14:23:59 - Checking App is running1
+25-12-2023 14:23:59 - App is running1
+25-12-2023 14:23:59 - App Restarted
+25-12-2023 14:30:34 - Checking App is running1
+25-12-2023 14:30:34 - App is running1
+25-12-2023 14:30:34 - App Restarted
+25-12-2023 14:31:26 - Checking App is running1
+25-12-2023 14:31:26 - App is running1
+25-12-2023 14:31:26 - App Restarted
+25-12-2023 15:21:04 - Start Lauancher1
+25-12-2023 15:21:12 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 15:24:57 - Start Lauancher1
+25-12-2023 15:25:15 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 15:25:16 - Checking App is running1
+25-12-2023 15:25:19 - App is running1
+25-12-2023 15:25:21 - App Restarted
+25-12-2023 15:30:23 - Start Lauancher1
+25-12-2023 15:30:23 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 15:30:23 - Checking App is running1
+25-12-2023 15:30:25 - App is running1
+25-12-2023 15:30:25 - App Restarted
+25-12-2023 15:31:17 - Checking App is running1
+25-12-2023 15:31:20 - App is running1
+25-12-2023 15:31:20 - App Restarted
+25-12-2023 15:32:53 - Checking App is running1
+25-12-2023 15:32:56 - App is running1
+25-12-2023 15:32:56 - App Restarted
+25-12-2023 15:37:12 - Start Lauancher1
+25-12-2023 15:37:13 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 15:37:14 - Checking App is running1
+25-12-2023 15:37:14 - App is running1
+25-12-2023 15:37:20 - App Restarted
+25-12-2023 15:37:52 - App Restarted
+25-12-2023 15:38:47 - Start Lauancher1
+25-12-2023 15:38:47 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 15:38:47 - Checking App is running1
+25-12-2023 15:38:49 - App is running1
+25-12-2023 15:38:50 - App Restarted
+25-12-2023 15:39:42 - App Restarted
+25-12-2023 15:40:18 - Start Lauancher1
+25-12-2023 15:40:19 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 15:40:20 - Checking App is running1
+25-12-2023 15:40:20 - App is running1
+25-12-2023 15:40:21 - App Restarted
+25-12-2023 15:41:25 - App Restarted
+25-12-2023 15:42:11 - Start Lauancher1
+25-12-2023 15:42:11 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 15:42:12 - Checking App is running1
+25-12-2023 15:42:13 - App is running1
+25-12-2023 15:42:14 - App Restarted
+25-12-2023 15:42:54 - App Restarted
+25-12-2023 15:42:56 - App Restarted
+25-12-2023 15:42:57 - App Restarted
+25-12-2023 15:42:58 - App Restarted
+25-12-2023 15:42:58 - App Restarted
+25-12-2023 15:43:48 - Checking App is running1
+25-12-2023 15:43:52 - App is running1
+25-12-2023 15:43:54 - App Restarted
+25-12-2023 15:44:58 - Checking App is running1
+25-12-2023 15:45:27 - Start Lauancher1
+25-12-2023 15:45:27 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 15:45:28 - Checking App is running1
+25-12-2023 15:45:28 - App is running1
+25-12-2023 15:45:28 - App Restarted
+25-12-2023 15:46:19 - Checking App is running1
+25-12-2023 15:46:19 - App is running1
+25-12-2023 15:46:19 - App Restarted
+25-12-2023 18:39:34 - Start Lauancher1
+25-12-2023 18:39:36 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 18:39:36 - Checking App is running1
+25-12-2023 18:39:36 - App is running1
+25-12-2023 18:39:36 - App Restarted
+25-12-2023 18:45:31 - Start Lauancher1
+25-12-2023 18:45:32 - Application path1 = C:\Fusion Data Secure\FDS\FDS.exe
+25-12-2023 18:45:32 - Checking App is running1
+25-12-2023 18:45:32 - App is running1
+25-12-2023 18:45:32 - App Restarted

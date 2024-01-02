@@ -1,0 +1,17 @@
+22-12-2023 12:42:40 - Start Lauancher
+22-12-2023 12:42:41 - Application path = F:\Fusion\FDS\windowsapp\Desktop\bin\Debug\
+22-12-2023 12:42:45 - Checking App is running
+22-12-2023 12:42:47 - App is running
+22-12-2023 12:43:33 - Start Lauancher
+22-12-2023 12:43:33 - Application path = F:\Fusion\FDS\windowsapp\Desktop\bin\Debug\
+22-12-2023 12:43:33 - Checking App is running
+22-12-2023 12:43:39 - App is running
+22-12-2023 12:45:50 - Application path = F:\Fusion\FDS\windowsapp\Desktop\bin\Debug\FDS.exe
+22-12-2023 12:46:52 - Start Lauancher
+22-12-2023 12:46:56 - Application path = F:\Fusion\FDS\windowsapp\Desktop\bin\Debug\FDS.exe
+22-12-2023 12:46:56 - Checking App is running
+22-12-2023 12:46:58 - App is running
+22-12-2023 13:03:32 - Start Lauancher
+22-12-2023 13:04:58 - Application path = F:\Fusion\FDS\windowsapp\Desktop\bin\Debug\FDS.exe
+22-12-2023 13:04:59 - Checking App is running
+22-12-2023 13:05:00 - App is running

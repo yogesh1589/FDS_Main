@@ -1,4 +1,6 @@
-﻿using Microsoft.Win32;
+﻿using FDS.Services.AbstractClass;
+using Microsoft.Win32;
+using Microsoft.Win32.TaskScheduler;
 using QRCoder;
 using System;
 using System.Diagnostics;
@@ -8,6 +10,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Management;
 using System.Net.NetworkInformation;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -15,6 +18,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Windows.ApplicationModel.Background;
 
 namespace FDS.Common
 {
@@ -27,6 +31,14 @@ namespace FDS.Common
         private const string GoogleHost = "www.google.com";
         public static RSACryptoServiceProvider RSADevice { get; set; }
         public static RSACryptoServiceProvider RSAServer { get; set; }
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern IntPtr CreateJobObject(IntPtr lpJobAttributes, string lpName);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern bool SetInformationJobObject(IntPtr hJob, int infoType, IntPtr lpJobObjectInfo, uint cbJobObjectInfoLength);
+
+        const int JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x2000;
 
         public static bool CheckInternetConnection()
         {
@@ -290,7 +302,7 @@ namespace FDS.Common
                     string currentPath = System.Reflection.Assembly.GetEntryAssembly()?.Location;
                     AutoStartBaseDir = Path.GetDirectoryName(currentPath);
                 }
-                string exeFile = Path.Combine(AutoStartBaseDir, "FDS.exe");
+                string exeFile = Path.Combine(AutoStartBaseDir, "LauncherApp.exe");
                 key.SetValue("FDS", exeFile + " --opened-at-login --minimize");
 
             }
@@ -306,28 +318,60 @@ namespace FDS.Common
         }
 
 
-        public static void AutoStartLauncherApp(string applicationPath)
-        {
-            //string applicationPath = GetApplicationpath();
-
-            //if (IsAdmin)
-            //{
+        public static void AutoStartLauncherApp(string appPath)
+        {             
             try
             {
-                RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
-                key.SetValue("LauncherApp", applicationPath + " --opened-at-login --minimize");
+                //string AutoStartBaseDir = GetApplicationpath();
+                //string exeFile = Path.Combine(AutoStartBaseDir, "LauncherApp.exe");
 
-                if (File.Exists(applicationPath))
+
+                // Add the executable to the registry for startup
+                using (RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true))
                 {
-                    MessageBox.Show(applicationPath);
-                    Process process = new Process();
-                    process.StartInfo.FileName = applicationPath;
-                    process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    key.SetValue("LaunchApp", appPath);
+                }
 
-                    //process.StartInfo.UseShellExecute = false;
 
-                    process.StartInfo.CreateNoWindow = true;
-                    process.Start();
+                using (RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true))
+                {
+                    string appPath1 = key.GetValue("LaunchApp") as string;
+
+                    if (!string.IsNullOrEmpty(appPath1))
+                    {
+                        try
+                        {
+                            ProcessStartInfo startInfo = new ProcessStartInfo();
+                            startInfo.FileName = appPath1; // Replace with your console app's executable path
+                            startInfo.UseShellExecute = false;
+                            startInfo.RedirectStandardOutput = true;
+                            startInfo.RedirectStandardError = true;
+                            startInfo.CreateNoWindow = true;
+                            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+
+                            using (Process process = new Process())
+                            {
+                                process.StartInfo = startInfo;
+                                process.OutputDataReceived += (sender, e) => Console.WriteLine("Output: " + e.Data);
+                                process.ErrorDataReceived += (sender, e) => Console.WriteLine("Error: " + e.Data);
+
+                                process.Start();
+                                process.BeginOutputReadLine();
+                                process.BeginErrorReadLine();
+                                process.WaitForExit(1000);
+                            }
+
+
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Error starting the application: " + ex.Message);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Application path not found in registry.");
+                    }
                 }
             }
             catch (Exception ex)
@@ -336,6 +380,9 @@ namespace FDS.Common
                 // MessageBox.Show("Error in AutoLauncher" + ex.ToString());
             }
         }
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern bool AssignProcessToJobObject(IntPtr hJob, IntPtr hProcess);
 
         public static string GetApplicationpath()
         {
@@ -622,6 +669,48 @@ namespace FDS.Common
             }
         }
 
+
+        public static void CreateTaskS()
+        {
+            try
+            {
+                string taskName = "WpfSDE";
+
+                using (TaskService taskService = new TaskService())
+                {
+                    if (taskService.GetTask(taskName) != null)
+                    {
+                        Console.WriteLine("Task already exists. No need to create.");
+                    }
+                    else
+                    {
+
+                        // Create a new task
+                        TaskDefinition taskDefinition = taskService.NewTask();
+                        taskDefinition.RegistrationInfo.Description = "Launch WPF App Task";
+
+                        // Set the action to start a program
+                        taskDefinition.Actions.Add(new ExecAction("C:\\Fusion Data Secure\\FDS\\LauncherApp.exe", "", null));
+
+                        // Set the trigger to run the task every 1 minute
+                        Microsoft.Win32.TaskScheduler.TimeTrigger timeTrigger = new Microsoft.Win32.TaskScheduler.TimeTrigger();
+                        timeTrigger.Repetition.Interval = TimeSpan.FromMinutes(1); // Set interval to 1 minute
+                        timeTrigger.StartBoundary = DateTime.Now; // Start now
+                        timeTrigger.EndBoundary = DateTime.MaxValue; // Runs indefinitely
+                        taskDefinition.Triggers.Add(timeTrigger);
+
+                        // Register the task in the Windows Task Scheduler
+                        taskService.RootFolder.RegisterTaskDefinition(taskName, taskDefinition);
+
+                        Console.WriteLine("Task created in Task Scheduler to launch the WPF app every 1 minute, starting now.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ex.ToString();
+            }
+        }
 
 
     }
