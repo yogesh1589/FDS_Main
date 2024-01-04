@@ -31,13 +31,17 @@ namespace FDS.Services
 
                 System.Threading.Thread.Sleep(5000);
 
-                totalCnt = GetCurrentUserCnt();
+                string AutoStartBaseDir = Generic.GetApplicationpath();
+                string resultFilePath = Path.Combine(AutoStartBaseDir, "result.txt");
 
-                if (totalCnt == 0)
+                totalCnt = GetCurrentUserCnt(resultFilePath);
+
+                totalCnt = GetCurrentUserCnt(resultFilePath);
+
+                if (File.Exists(resultFilePath))
                 {
-                    totalCnt = GetCurrentUserCnt();
-                }          
-
+                    File.Delete(resultFilePath);
+                }
 
                 LogInformation(subservices.Sub_service_authorization_code, subservices.Sub_service_name, totalCnt, Convert.ToString(subservices.Id), subservices.Execute_now, serviceTypeDetails);
 
@@ -115,21 +119,19 @@ namespace FDS.Services
             return cntDeleted;
         }
 
-        public int GetCurrentUserCnt()
+        public int GetCurrentUserCnt(string resultFilePath)
         {
-            string AutoStartBaseDir = Generic.GetApplicationpath();
+
 
             try
             {
                 System.Threading.Thread.Sleep(5000);
-                string resultFilePath = Path.Combine(AutoStartBaseDir, "result.txt");
+
                 if (File.Exists(resultFilePath))
                 {
                     string result = File.ReadAllText(resultFilePath);
                     Console.WriteLine("Result from console application: " + result);
-
-                    // Delete the file after reading its content
-                    File.Delete(resultFilePath);
+                    // Delete the file after reading its content                 
 
                     return string.IsNullOrEmpty(result) ? 0 : int.TryParse(result, out int parsedValue) ? parsedValue : 0;
                 }
