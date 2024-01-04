@@ -319,7 +319,7 @@ namespace FDS.Common
 
 
         public static void AutoStartLauncherApp(string appPath)
-        {             
+        {
             try
             {
                 //string AutoStartBaseDir = GetApplicationpath();
@@ -386,20 +386,21 @@ namespace FDS.Common
 
         public static string GetApplicationpath()
         {
-            string applicationPath = "C:\\Fusion Data Secure\\FDS\\";
-            //RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
-            //if (registryKey != null)
-            //{
-            //    object obj = registryKey.GetValue("FDS");
-            //    if (obj != null)
-            //        return Path.GetDirectoryName(obj.ToString());
-            //}
+            //string applicationPath = "C:\\Fusion Data Secure\\FDS\\";
+            string applicationPath = string.Empty;
+            RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
+            if (registryKey != null)
+            {
+                object obj = registryKey.GetValue("FDS");
+                if (obj != null)
+                    return Path.GetDirectoryName(obj.ToString());
+            }
 
-            //if (string.IsNullOrEmpty(applicationPath))
-            //{
-            //    string currentPath = System.Reflection.Assembly.GetEntryAssembly()?.Location;
-            //    applicationPath = Path.GetDirectoryName(currentPath);
-            //}
+            if (string.IsNullOrEmpty(applicationPath))
+            {
+                string currentPath = System.Reflection.Assembly.GetEntryAssembly()?.Location;
+                applicationPath = Path.GetDirectoryName(currentPath);
+            }
             return applicationPath;
         }
 
@@ -452,17 +453,20 @@ namespace FDS.Common
 
             string applicationName = "LauncherApp.exe";
             string applicationPath = GetApplicationpath();
+            
             string exeFile = Path.Combine(applicationPath, applicationName);
 
             if (File.Exists(exeFile))
             {
                 if (IsAppRunning(applicationName))
                 {
+                    MessageBox.Show("Application stopped");
                     StopApplication(applicationName);
                     //Console.WriteLine("Application stopped.");
                 }
                 else
                 {
+                    MessageBox.Show("Application is not running.");
                     //Console.WriteLine("Application is not running.");
                 }
 
@@ -645,16 +649,19 @@ namespace FDS.Common
         public static void SendCommandToService(string command)
         {
 
-            string AutoStartBaseDir = Generic.GetApplicationpath();
+            string AutoStartBaseDir = GetApplicationpath();
             string exeFile1 = Path.Combine(AutoStartBaseDir, "FDS_Administrator.exe");
+
+            string arguments = command; // Replace this with your desired arguments
 
             ProcessStartInfo psi = new ProcessStartInfo
             {
-                FileName = exeFile1, // Replace with your console application's executable
+                FileName = exeFile1,
                 Verb = "runas", // Run as administrator if needed
-                UseShellExecute = true, // Use the shell execution
+                UseShellExecute = true,
                 CreateNoWindow = true,
-                WindowStyle = ProcessWindowStyle.Hidden,// Set the window style to hidden        
+                WindowStyle = ProcessWindowStyle.Hidden,
+                Arguments = arguments // Pass arguments here
             };
 
 
@@ -662,7 +669,7 @@ namespace FDS.Common
             {
                 Process.Start(psi);
             }
-            catch (System.ComponentModel.Win32Exception)
+            catch
             {
                 // Handle any exception due to user declining the UAC prompt
                 Console.WriteLine("User declined UAC prompt or didn't have necessary privileges.");

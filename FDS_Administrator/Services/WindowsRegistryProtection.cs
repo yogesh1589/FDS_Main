@@ -18,12 +18,19 @@ namespace FDS_Administrator
             {
 
                 int localMachineCount = DeleteLocalMachineCount();
+
+                WriteLog("localMachineCount = " + localMachineCount.ToString());
+
                 int currentMachineCount = DeleteCurrentUserCount();
+
+                WriteLog("currentMachineCount = " + currentMachineCount.ToString());
 
                 string AutoStartBaseDir = Generic.GetApplicationpath();
                 string resultFilePath = Path.Combine(AutoStartBaseDir, "result.txt");
 
                 int totalCount = localMachineCount + currentMachineCount;
+
+                WriteLog("totalCount = " + totalCount.ToString());
 
                 File.WriteAllText(resultFilePath, totalCount.ToString());
             }
@@ -159,5 +166,28 @@ namespace FDS_Administrator
             return currentUserCount;
         }
 
+
+        private static void WriteLog(string logMessage)
+        {
+            try
+            {
+                string path = AppDomain.CurrentDomain.BaseDirectory + "AdminAppLogs";
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+
+                string filePath = Path.Combine(path, "AdminLogs_" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt");
+
+                using (StreamWriter streamWriter = File.AppendText(filePath))
+                {
+                    streamWriter.WriteLine($"{DateTime.Now} - {logMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLog("WriteLog " + ex.ToString());
+            }
+        }
     }
 }

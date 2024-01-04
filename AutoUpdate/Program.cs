@@ -5,10 +5,12 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Management;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.ServiceProcess;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -48,29 +50,39 @@ namespace AutoUpdate
                     installationPath = Path.GetDirectoryName(obj.ToString());
             }
             Array.ForEach(Process.GetProcessesByName("FDS"), x => x.Kill());
+            if (IsProcessOpen("LauncherApp"))
+            {
+                Array.ForEach(Process.GetProcessesByName("LauncherApp"), x => x.Kill());
+            }
             DeleteDirectoryContents(TempFDSPath, installationPath + "\\");
         }
+
+
+        static bool IsProcessOpen(string processName)
+        {
+            Process[] processes = Process.GetProcessesByName(processName);
+            return processes.Length > 0;
+        }       
+
         public static void DeleteDirectoryContents(string sourcePath, string directoryPath)
         {
             try
             {
-
-
                 // Get the directory info
                 DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
-
+               
                 // Delete all files within the directory
                 foreach (FileInfo file in directoryInfo.GetFiles())
                 {
                     Thread.Sleep(10);
-                    //Console.WriteLine(file+ " Files Deleted from installation path");
+                    //Console.WriteLine(file + " Files Deleted from installation path");
                     file.Delete();
                 }
 
                 // Delete all subdirectories and their contents
                 foreach (DirectoryInfo subdirectory in directoryInfo.GetDirectories())
                 {
-                    if(!subdirectory.Name.Contains(baseTempFileDir))
+                    if (!subdirectory.Name.Contains(baseTempFileDir))
                     {
                         subdirectory.Delete(true);
                     }
@@ -84,12 +96,27 @@ namespace AutoUpdate
                 }
                 //Console.WriteLine("Files Deleted from installation path");
                 //Thread.Sleep(2000);
-                //Console.WriteLine("Start Files Extracted to installation path");
+
+                Console.WriteLine("Start Files Extracted to installation path");
                 ExtractMSIContent(sourcePath + "FDS.msi", directoryPath);
+
                 //Thread.Sleep(2000);
                 //Console.WriteLine("Files Extracted to installation path");
-                string AutoUpdateExePath = directoryPath + "FDS.exe";
+
+                string AutoUpdateExePath = string.Empty;
+                if (File.Exists(directoryPath + "LauncherApp.exe"))
+                {
+                    AutoUpdateExePath = directoryPath + "LauncherApp.exe";
+                }
+                else
+                {
+                    AutoUpdateExePath = directoryPath + "FDS.exe";
+                }
+
+                //StartService("FDSWatchDog");
+                //StopRemoveStartupApplication(directoryPath, "LauncherApp.exe");
                 //Console.WriteLine("start FDS from " + AutoUpdateExePath);
+
                 Process.Start(AutoUpdateExePath);
 
 
@@ -97,8 +124,10 @@ namespace AutoUpdate
             catch (Exception ex)
             {
                 Console.WriteLine("An error occurred while deleting directory contents: " + ex.Message);
+                Console.ReadLine();
             }
         }
+
         public static void ExtractMSIContent(string msiFilePath, string outputDirectory)
         {
             //Hide the console window

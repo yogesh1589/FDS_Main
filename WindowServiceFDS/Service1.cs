@@ -224,7 +224,7 @@ namespace WindowServiceFDS
 
         public static string GetApplicationpath()
         {
-            string applicationPath = "";
+            string applicationPath = "C:\\Fusion Data Secure\\FDS\\";
             RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
             if (registryKey != null)
             {

@@ -313,6 +313,7 @@ namespace FDS
         {
             try
             {
+               
                 loadFDS = true;
 
                 //Generic.CreateTaskS();
@@ -2287,6 +2288,7 @@ namespace FDS
         }
         private async void AutoUpdate()
         {
+            
             var apiResponse = await apiService.AutoUpdateAsync();
             if (apiResponse == null)
             {
@@ -2323,6 +2325,7 @@ namespace FDS
         {
             try
             {
+                 
                 return await DownloadEXEAsync(url, temporaryMSIPath);
 
             }
@@ -2337,16 +2340,15 @@ namespace FDS
         }
         private async Task<bool> DownloadEXEAsync(string downloadUrl, string temporaryMSIPath)
         {
-
+            
             bool result = await apiService.DownloadURLAsync(downloadUrl, temporaryMSIPath);
-
+            
             if (result != true)
-            {
+            {                
                 return false;
             }
             try
-            {
-
+            {                
                 if (File.Exists(TempPath + "FDS.msi"))
                 {
                     //string sourcePath = Directory.GetCurrentDirectory() + "\\AutoUpdate.exe";
@@ -2368,12 +2370,11 @@ namespace FDS
                         else if (File.Exists(tempPath2))
                         {
                             if (TryCloseRunningProcess("AutoUpdate"))
-                            {
-
+                            {                                
                                 File.Copy(tempPath2, TempPath + "AutoUpdate.exe", true);
                                 //MessageBox.Show("File Copy Done");
                             }
-                        }
+                        }                       
                     }
                     catch (Exception e)
                     {
@@ -2381,8 +2382,7 @@ namespace FDS
                         {
                             MessageBox.Show("Path not found for updated exe " + e.Message);
                         }
-                    }
-
+                    }                    
                     string AutoUpdateExePath = TempPath + "AutoUpdate.exe";
                     Process.Start(AutoUpdateExePath);
                 }

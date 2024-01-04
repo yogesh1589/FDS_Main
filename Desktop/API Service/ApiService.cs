@@ -9,11 +9,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Messaging;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace FDS.API_Service
 {
@@ -878,7 +880,7 @@ namespace FDS.API_Service
 
         public async Task<bool> DownloadURLAsync(string downloadUrl, string temporaryMSIPath)
         {
-
+           
             var handler = new HttpClientHandler
             {
                 UseProxy = false // Disable using the system proxy
@@ -890,6 +892,7 @@ namespace FDS.API_Service
                 var response = await client1.GetAsync(downloadUrl);
                 if (response.IsSuccessStatusCode)
                 {
+                     
                     using (var fileStream = System.IO.File.Create(temporaryMSIPath))
                     {
                         await response.Content.CopyToAsync(fileStream);
@@ -897,6 +900,7 @@ namespace FDS.API_Service
                 }
                 else
                 {
+                     
                     return false;
                 }
             }

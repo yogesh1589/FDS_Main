@@ -256,19 +256,44 @@ namespace FDS.Common
                     string storeNameN = storeName.ToString();
 
                     // Concatenate method name and parameters into a single string with a delimiter
-                    string arguments = $"{methodName},{certificateThumbprint},{storeLocation},{storeNameN}";
+                    string arguments = $"{methodName},{certificateThumbprint},{storeLocation},{storeName}";
 
                     if (storeLocationN == "CurrentUser" && (!Generic.IsUserAdministrator()))
                     {
-                        ProcessStartInfo psi = new ProcessStartInfo
+                        //ProcessStartInfo psi = new ProcessStartInfo
+                        //{
+                        //    FileName = exeFile1, // Replace with your console application's executable                           
+                        //    UseShellExecute = true, // Use the shell execution
+                        //    CreateNoWindow = true,
+                        //    Arguments = arguments // Pass concatenated string as command-line argument
+                        //    //WindowStyle = ProcessWindowStyle.Hidden,// Set the window style to hidden        
+                        //};
+                        //Process.Start(psi);
+                        using (X509Store store = new X509Store(storeName, storeLocation))
                         {
-                            FileName = exeFile1, // Replace with your console application's executable                           
-                            UseShellExecute = true, // Use the shell execution
-                            CreateNoWindow = true,
-                            Arguments = arguments, // Pass concatenated string as command-line argument
-                            WindowStyle = ProcessWindowStyle.Hidden,// Set the window style to hidden        
-                        };
-                        Process.Start(psi);
+                            store.Open(OpenFlags.ReadWrite); // Open the store for writing
+
+                            // Find the certificate by thumbprint
+                            X509Certificate2Collection certificates = store.Certificates.Find(
+                                X509FindType.FindByThumbprint,
+                                certificateThumbprint,
+                                false); // Set to true to do partial matching
+
+                            // Check if the certificate was found
+                            if (certificates.Count > 0)
+                            {
+
+                                // Remove the certificate from the store
+                                store.RemoveRange(certificates);
+
+                            }
+                            else
+                            {
+                                return false;
+                            }
+                        }
+
+
                     }
                     else
                     {

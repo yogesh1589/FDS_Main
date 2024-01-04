@@ -47,6 +47,7 @@ namespace LauncherApp
 
                 string encryptOutPutFile = basePathEncryption + @"\Main";
 
+                //string applicationPath = "F:\\Fusion\\FDS\\windowsapp\\Desktop\\bin\\Debug\\";
 
                 string applicationPath = ReturnApplicationPath();
 
@@ -58,6 +59,9 @@ namespace LauncherApp
 
                     while (true)
                     {
+
+                        //System.Threading.Thread.Sleep(5000);
+
                         if ((!IsAppRunning(FdsProcessName)) && ((File.Exists(encryptOutPutFile)) || (cnt == 0)))
                         {
                             //WriteLog("App is running1");

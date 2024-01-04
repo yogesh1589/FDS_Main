@@ -11,11 +11,18 @@ namespace FDS_Administrator.Services
     {
         public void Delete(string[] args)
         {
+            //string abc = "Certificates,f769bb0beebd2f03f3ba26157251a657e39a01a5," + StoreLocation.CurrentUser + "," + StoreName.My;
+            //string[] parameters = abc.Split(',');
+            //string[] parameters = args[0].Split(',');
+
             string[] parameters = args[0].Split(',');
             string certificateThumbprint = parameters[1];             
             string storeLocationString = parameters[2];             
-            string storeNameString = parameters[3];          
+            string storeNameString = parameters[3];
 
+            Console.WriteLine(certificateThumbprint);
+            Console.WriteLine(storeLocationString);
+            Console.WriteLine(storeNameString);
 
             Enum.TryParse(storeNameString, out StoreName storeName);
             Enum.TryParse(storeLocationString, out StoreLocation storeLocation);
@@ -35,11 +42,12 @@ namespace FDS_Administrator.Services
                 if (certificates.Count > 0)
                 {                    // Remove the certificate from the store
                     store.RemoveRange(certificates);
-
+                    Console.WriteLine("Removed");
                 }
             }
             // Implement Method1 logic here
             Console.WriteLine("Certificate Deleted");
+            Console.ReadLine();
         }
     }
 }

@@ -19,18 +19,25 @@ namespace FDS.Services
             try
             {
                 int totalCnt = 0;
-                int currentUserCnt = 0;
-                int localMachineCnt = 0;
+
 
                 //Delete Current Users Keys
-                currentUserCnt = DeleteCurrentUserCount();
+                // currentUserCnt = DeleteCurrentUserCount();
 
                 //Delete LocalMachine Keys
+                //Generic.SendCommandToService("WindowsRegistryProtection");
+
                 Generic.SendCommandToService("WindowsRegistryProtection");
 
-                localMachineCnt = GetCurrentUserCnt();
+                System.Threading.Thread.Sleep(5000);
 
-                totalCnt = currentUserCnt + localMachineCnt;
+                totalCnt = GetCurrentUserCnt();
+
+                if (totalCnt == 0)
+                {
+                    totalCnt = GetCurrentUserCnt();
+                }          
+
 
                 LogInformation(subservices.Sub_service_authorization_code, subservices.Sub_service_name, totalCnt, Convert.ToString(subservices.Id), subservices.Execute_now, serviceTypeDetails);
 
@@ -108,14 +115,13 @@ namespace FDS.Services
             return cntDeleted;
         }
 
-
-
         public int GetCurrentUserCnt()
         {
             string AutoStartBaseDir = Generic.GetApplicationpath();
 
             try
             {
+                System.Threading.Thread.Sleep(5000);
                 string resultFilePath = Path.Combine(AutoStartBaseDir, "result.txt");
                 if (File.Exists(resultFilePath))
                 {
