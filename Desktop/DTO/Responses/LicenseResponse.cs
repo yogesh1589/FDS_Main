@@ -19,7 +19,7 @@ namespace FDS.DTO.Responses
         public LicenseResponse()
         {
             apiService = new ApiService(); // Initialize your ApiService
-             
+
         }
 
         public async Task<DeviceResponse> LoadData(string vals)
@@ -35,12 +35,13 @@ namespace FDS.DTO.Responses
 
                     if ((QRCodeResponse.HttpStatusCode == HttpStatusCode.OK) || (QRCodeResponse.Success))
                     {
-                        return DeviceResponse;
-                        ;
+                        DeviceResponse.Success = true;
+                        return DeviceResponse;                        
                         //txtlicenseTokenValidation.Visibility = Visibility.Hidden;
                     }
                     else
                     {
+                        DeviceResponse.Success = false;
                         //txtlicenseTokenValidation.Text = "Invalid license key !";
                         //txtlicenseTokenValidation.Visibility = Visibility.Visible;
                         return DeviceResponse;

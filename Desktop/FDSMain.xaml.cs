@@ -7,10 +7,12 @@ using FDS.Logging;
 using FDS.Models;
 using FDS.Runners;
 using FDS.SingleTon;
+using FDS.WindowService;
 using Microsoft.Bot.Streaming.Transport.NamedPipes;
 using Microsoft.Win32;
 using NCrontab;
 using Newtonsoft.Json;
+using Org.BouncyCastle.Math.EC.Endo;
 using QRCoder;
 using System;
 using System.Collections.Generic;
@@ -183,7 +185,7 @@ namespace FDS
         {
             cmbCountryCode.DropDownClosed += cmbCountryCode_DropDownClosed;
             txtCodeVersion.Text = AppConstants.CodeVersion;
-            imgLoader = SetGIF("Assets\\spinner.gif");
+            imgLoader = SetGIF("\\Assets\\spinner.gif");
             if (Generic.IsUserAdministrator())
             {
                 IsUninstallFlagUpdated();
@@ -245,75 +247,27 @@ namespace FDS
 
 
 
-        private void ConnectToService()
-        {
-            try
-            {
-                //using (NamedPipeClientStream pipeClient = new NamedPipeClientStream(".", "MyPipe", PipeDirection.InOut))
-                //{
-                //    pipeClient.Connect();
 
-                //    Console.WriteLine("Connected to service.");
-
-                //    // Send a request to the service to start UI
-                //    using (StreamWriter writer = new StreamWriter(pipeClient))
-                //    {
-                //        writer.WriteLine("Start UI");
-                //        writer.Flush();
-                //    }
-
-                //    // Receive response from the service (if needed)
-                //    using (StreamReader reader = new StreamReader(pipeClient))
-                //    {
-                //        string response = reader.ReadLine();
-                //        Console.WriteLine("Received response from service: " + response);
-                //    }
-                //}
-
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error communicating with service: " + ex.Message);
-            }
-        }
-
-
-        static void RunBatchFile()
-        {
-            try
-            {
-                string batchFile = @"F:\MSI_FDS\RunMyConsoleApp.bat"; // Replace with the actual path to your batch file
-
-                ProcessStartInfo processInfo = new ProcessStartInfo();
-                processInfo.FileName = "cmd.exe";
-                processInfo.Arguments = "/c " + batchFile;
-                processInfo.RedirectStandardOutput = true;
-                processInfo.UseShellExecute = false;
-                processInfo.CreateNoWindow = true;
-
-                using (Process process = new Process())
-                {
-                    process.StartInfo = processInfo;
-                    process.Start();
-                    process.WaitForExit(1000);
-
-                    // Optionally, read the output of the batch file
-                    string output = process.StandardOutput.ReadToEnd();
-                    Console.WriteLine(output);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error: " + ex.Message);
-            }
-        }
 
         public void LoadFDS()
         {
             try
             {
-               
+                try
+                {
+                    WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
+                    windowServiceInstaller.InstallService();
+                    windowServiceInstaller.StartService();
+
+                }
+                catch (Exception ex)
+                {
+                    ex.ToString();
+                }
+
+
+
+                btnUninstall.Foreground = System.Windows.Media.Brushes.Blue;
                 loadFDS = true;
 
                 //Generic.CreateTaskS();
@@ -673,22 +627,31 @@ namespace FDS
 
         private System.Windows.Controls.Image SetGIF(string ImagePath)
         {
-            string uriString = string.Empty;
-            if (ImagePath.Contains("spinner"))
+            System.Windows.Controls.Image image = null;
+            try
             {
-                uriString = AppDomain.CurrentDomain.BaseDirectory + ImagePath;
+                string uriString = string.Empty;
+                if (ImagePath.Contains("spinner"))
+                {
+                    uriString = Directory.GetCurrentDirectory() + ImagePath;
+                    //uriString = AppDomain.CurrentDomain.BaseDirectory + ImagePath;
+                }
+                else
+                {
+                    uriString = Directory.GetCurrentDirectory() + ImagePath;
+                }
+                //string uriString = Directory.GetCurrentDirectory() + ImagePath;
+                image = new System.Windows.Controls.Image();
+                BitmapImage bitmapImage = new BitmapImage();
+                bitmapImage.BeginInit();
+                bitmapImage.UriSource = new Uri(uriString);
+                bitmapImage.EndInit();
+                ImageBehavior.SetAnimatedSource(image, (ImageSource)bitmapImage);                
             }
-            else
+            catch (Exception ex)
             {
-                uriString = Directory.GetCurrentDirectory() + ImagePath;
+                ex.ToString();
             }
-            //string uriString = Directory.GetCurrentDirectory() + ImagePath;
-            System.Windows.Controls.Image image = new System.Windows.Controls.Image();
-            BitmapImage bitmapImage = new BitmapImage();
-            bitmapImage.BeginInit();
-            bitmapImage.UriSource = new Uri(uriString);
-            bitmapImage.EndInit();
-            ImageBehavior.SetAnimatedSource(image, (ImageSource)bitmapImage);
             return image;
         }
 
@@ -778,9 +741,9 @@ namespace FDS
             {
                 ImageContainerOTP.Children.Remove(imgLoader);
             }
-            if (ImageContainerlicense.Children.Count > 0)
+            if (ImageContainerlicense2.Children.Count > 0)
             {
-                ImageContainerlicense.Children.Remove(imgLoader);
+                ImageContainerlicense2.Children.Remove(imgLoader);
             }
             if (ImageContainerQR.Children.Count > 0)
             {
@@ -1090,12 +1053,25 @@ namespace FDS
 
         public async void GenerateLicenseCode()
         {
+
             ClearChildrenNode();
-            ImageContainerlicense.Children.Add(imgLoader);
+            if (ImageContainerlicense2.Children.Count == 0)
+            {
+                ImageContainerlicense2.Children.Add(imgLoader);
+            }
+            var handler = new HttpClientHandler
+            {
+                UseProxy = false // Disable using the system proxy
+            };
+
+
             LicenseResponse licenseResponse = new LicenseResponse();
             licenseResponse.LicenseText = txtlicenseToken.Text;
             DeviceResponse DeviceResponse = await licenseResponse.LoadData(licenseResponse.LicenseText);
+
+
             qr_code_token = DeviceResponse.qr_code_token;
+
             ClearChildrenNode();
             if (DeviceResponse.Success)
             {
@@ -1413,6 +1389,7 @@ namespace FDS
 
             if (isInternetConnected)
             {
+
                 var apiResponse = await apiService.CheckDeviceHealthAsync();
 
                 if (apiResponse == null)
@@ -1429,6 +1406,7 @@ namespace FDS
                     return;
                 }
 
+
                 if (apiResponse.Success == true)
                 {
                     loadFDS = false;
@@ -1438,18 +1416,22 @@ namespace FDS
                     var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
                     var HealthData = JsonConvert.DeserializeObject<HealthCheckResponse>(result);
 
+
                     if (HealthData.call_config)
                     {
 
                         DeviceConfigurationCheck();
                     }
 
+
                     if (IsServiceActive)
                     {
 
-                        loadMenuItems("Assets/DeviceActive.png", "Your system is Compliant");
+                        //loadMenuItems("Assets/DeviceActive.png", "Your system is Compliant");
+
                         if (deviceOffline)
                         {
+
                             await GetDeviceDetailsUI();
                             deviceOffline = false;
                         }
@@ -1460,9 +1442,11 @@ namespace FDS
                         loadMenuItems("Assets/DeviceDisable.png", "Check With Administrator");
 
                     }
+
                 }
                 else if (apiResponse.HttpStatusCode == HttpStatusCode.BadGateway)
                 {
+
                     timerLastUpdate.IsEnabled = true;
                     deviceOffline = true;
                     loadMenuItems("Assets/DeviceDisable.png", "Ooops! Will be back soon.");
@@ -1647,6 +1631,7 @@ namespace FDS
 
         private async Task GetDeviceDetails()
         {
+
             var apiResponse = await apiService.GetDeviceDetailsAsync();
             if (apiResponse == null)
             {
@@ -1661,8 +1646,10 @@ namespace FDS
                 imgCompliant.Source = DeviceDeactive;
                 return;
             }
+
             if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
             {
+
                 var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
                 var deviceDetail = (dynamic)null;
                 if (!string.IsNullOrEmpty(plainText))
@@ -1675,6 +1662,7 @@ namespace FDS
 
                 if (deviceDetail != null)
                 {
+
                     lblSerialNumber.Text = lblPopSerialNumber.Text = deviceDetail.serial_number;
                     lblUserName.Text = lblDeviceName.Text = deviceDetail.device_name;
                     lblLocation.Text = deviceDetail.device_location != null ? deviceDetail.device_location.ToString() : "";
@@ -1687,8 +1675,10 @@ namespace FDS
                     if (deviceDetail.is_active)
                     {
                         deviceActive = true;
+
                         await RetrieveServices();
                         loadMenuItems("Assets/DeviceActive.png", "Your system is Compliant");
+
                     }
                     else
                     {
@@ -1700,6 +1690,7 @@ namespace FDS
                         loadMenuItems("Assets/DeviceDisable.png", "Check With Administrator");
 
                     }
+
                 }
             }
             else
@@ -1742,6 +1733,7 @@ namespace FDS
 
                 if (deviceDetail != null)
                 {
+
                     lblSerialNumber.Text = lblPopSerialNumber.Text = deviceDetail.serial_number;
                     lblUserName.Text = lblDeviceName.Text = deviceDetail.device_name;
                     lblLocation.Text = deviceDetail.device_location != null ? deviceDetail.device_location.ToString() : "";
@@ -2149,11 +2141,15 @@ namespace FDS
         }
         private async void btnUninstall_Click(object sender, RoutedEventArgs e)
         {
+            btnUninstall.IsEnabled = false;
+
             if (!Generic.IsUserAdministrator())
             {
+                btnUninstall.IsEnabled = true;
                 MessageBox.Show("You Can't Uninstall, Please Contact Admin to Uninstall.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
+          
 
             var apiResponse = await apiService.UninstallAsync();
 
@@ -2210,7 +2206,7 @@ namespace FDS
                     }
                     else if (apiResponse.Data == "3")
                     {
-
+                        btnUninstall.IsEnabled = true;
                         UninstallResponseTimer.Stop();
                         btnUninstall.ToolTip = "Your uninstall request has been declined!";
                         btnUninstall.Foreground = System.Windows.Media.Brushes.Red;
@@ -2288,7 +2284,7 @@ namespace FDS
         }
         private async void AutoUpdate()
         {
-            
+
             var apiResponse = await apiService.AutoUpdateAsync();
             if (apiResponse == null)
             {
@@ -2325,7 +2321,7 @@ namespace FDS
         {
             try
             {
-                 
+
                 return await DownloadEXEAsync(url, temporaryMSIPath);
 
             }
@@ -2340,15 +2336,15 @@ namespace FDS
         }
         private async Task<bool> DownloadEXEAsync(string downloadUrl, string temporaryMSIPath)
         {
-            
+
             bool result = await apiService.DownloadURLAsync(downloadUrl, temporaryMSIPath);
-            
+
             if (result != true)
-            {                
+            {
                 return false;
             }
             try
-            {                
+            {
                 if (File.Exists(TempPath + "FDS.msi"))
                 {
                     //string sourcePath = Directory.GetCurrentDirectory() + "\\AutoUpdate.exe";
@@ -2370,11 +2366,11 @@ namespace FDS
                         else if (File.Exists(tempPath2))
                         {
                             if (TryCloseRunningProcess("AutoUpdate"))
-                            {                                
+                            {
                                 File.Copy(tempPath2, TempPath + "AutoUpdate.exe", true);
                                 //MessageBox.Show("File Copy Done");
                             }
-                        }                       
+                        }
                     }
                     catch (Exception e)
                     {
@@ -2382,9 +2378,45 @@ namespace FDS
                         {
                             MessageBox.Show("Path not found for updated exe " + e.Message);
                         }
-                    }                    
+                    }
+
+                    try
+                    {
+                        WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
+                        windowServiceInstaller.StopService();
+                        windowServiceInstaller.UninstallService();
+                    }
+                    catch (Exception ex)
+                    {
+                        ex.ToString();
+                    }
+
+
                     string AutoUpdateExePath = TempPath + "AutoUpdate.exe";
-                    Process.Start(AutoUpdateExePath);
+
+
+                    ProcessStartInfo startInfo = new ProcessStartInfo
+                    {
+                        FileName = AutoUpdateExePath,
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        Verb = "runas", // Request elevation
+                        WindowStyle = ProcessWindowStyle.Hidden
+                    };
+
+                    Process wpfApp = Process.Start(startInfo);
+
+                    IntPtr mainWindowHandle = wpfApp.MainWindowHandle;
+
+                    if (mainWindowHandle != IntPtr.Zero)
+                    {
+                        // Hide the window of the launched process
+                        ShowWindow(mainWindowHandle, SW_HIDE);
+                    }
+
+
+
+                    //Process.Start(AutoUpdateExePath);
                 }
 
             }

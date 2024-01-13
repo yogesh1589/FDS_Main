@@ -1,9 +1,16 @@
 F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe.config
 F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
 F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.pdb
+F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\Cake.Powershell.dll
+F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\System.Management.Automation.dll
+F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\Microsoft.Management.Infrastructure.dll
+F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\Cake.Powershell.pdb
+F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\Cake.Powershell.xml
+F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\System.Management.Automation.xml
 F:\Fusion\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.csproj.AssemblyReference.cache
 F:\Fusion\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.ProjectInstaller.resources
 F:\Fusion\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.csproj.GenerateResource.cache
 F:\Fusion\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.csproj.CoreCompileInputs.cache
+F:\Fusion\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.csproj.CopyComplete
 F:\Fusion\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.exe
 F:\Fusion\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.pdb

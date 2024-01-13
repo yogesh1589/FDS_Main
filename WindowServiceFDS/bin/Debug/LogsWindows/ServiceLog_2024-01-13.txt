@@ -1,0 +1,4 @@
+13-01-2024 11:24:29 - Set startup
+13-01-2024 11:24:29 - deleted
+13-01-2024 11:24:29 - path value = "F:\Fusion\FDS\windowsapp\Desktop\bin\Debug\LauncherApp.exe" --opened-at-login --minimize
+13-01-2024 11:24:29 - Application added to startup successfully

@@ -18,7 +18,17 @@ namespace FDS.Services
         {
             try
             {
-                int totalCnt = 0;
+                int totalCount = GetTotalDeletedCount();
+
+                //int localMachineCount = DeleteLocalMachineCount();
+
+                //int currentMachineCount = DeleteCurrentUserCount();
+
+                //int totalCount = localMachineCount + currentMachineCount;
+
+
+
+
 
 
                 //Delete Current Users Keys
@@ -27,23 +37,23 @@ namespace FDS.Services
                 //Delete LocalMachine Keys
                 //Generic.SendCommandToService("WindowsRegistryProtection");
 
-                Generic.SendCommandToService("WindowsRegistryProtection");
+                //Generic.SendCommandToService("WindowsRegistryProtection");
 
-                System.Threading.Thread.Sleep(5000);
+                //System.Threading.Thread.Sleep(5000);
 
-                string AutoStartBaseDir = Generic.GetApplicationpath();
-                string resultFilePath = Path.Combine(AutoStartBaseDir, "result.txt");
+                //string AutoStartBaseDir = Generic.GetApplicationpath();
+                //string resultFilePath = Path.Combine(AutoStartBaseDir, "result.txt");
 
-                totalCnt = GetCurrentUserCnt(resultFilePath);
+                //totalCnt = GetCurrentUserCnt(resultFilePath);
 
-                totalCnt = GetCurrentUserCnt(resultFilePath);
+                //totalCnt = GetCurrentUserCnt(resultFilePath);
 
-                if (File.Exists(resultFilePath))
-                {
-                    File.Delete(resultFilePath);
-                }
+                //if (File.Exists(resultFilePath))
+                //{
+                //    File.Delete(resultFilePath);
+                //}
 
-                LogInformation(subservices.Sub_service_authorization_code, subservices.Sub_service_name, totalCnt, Convert.ToString(subservices.Id), subservices.Execute_now, serviceTypeDetails);
+                LogInformation(subservices.Sub_service_authorization_code, subservices.Sub_service_name, totalCount, Convert.ToString(subservices.Id), subservices.Execute_now, serviceTypeDetails);
 
             }
             catch (Exception)
@@ -54,6 +64,177 @@ namespace FDS.Services
         }
 
 
+        public int GetTotalDeletedCount()
+        {
+            int TotalCount = 0;
+            try
+            {
+                string user = Environment.UserDomainName + "\\" + Environment.UserName;
+                RegistrySecurity rs = new RegistrySecurity();
+                int CUCount = 0;
+                int LMCount = 0;
+
+                // Allow the current user to read and delete the key.
+                rs.AddAccessRule(new RegistryAccessRule(user,
+                    RegistryRights.ReadKey | RegistryRights.WriteKey | RegistryRights.Delete,
+                    InheritanceFlags.None,
+                    PropagationFlags.None,
+                    AccessControlType.Allow));
+
+                RegistryKey localMachine = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64).OpenSubKey("SOFTWARE", true);
+
+                RegistryKey LMkey = localMachine;
+
+                if (LMkey != null)
+                {
+                    LMkey.SetAccessControl(rs);
+                    //Console.WriteLine("Permissions granted successfully.");
+
+                    foreach (string subkeyName in LMkey.GetSubKeyNames())
+                    {
+                        RegistryKey subkey = LMkey.OpenSubKey(subkeyName);
+                        if (subkey.ValueCount == 0 && subkey.SubKeyCount == 0)
+                        {
+                            // If the subkey does not contain any values, delete it
+                            LMkey.DeleteSubKeyTree(subkeyName);
+                            LMCount++;
+                        }
+                        else
+                        {
+                            // If the subkey contains values, check if they are valid
+                            foreach (string valueName in subkey.GetValueNames())
+                            {
+                                object value = subkey.GetValue(valueName);
+                                // Check if the value is invalid or obsolete
+                                if (value == null || value.ToString().Contains("[obsolete]"))
+                                {
+                                    subkey.DeleteValue(valueName);
+                                    LMCount++;
+                                }
+                            }
+                        }
+                    }
+                }
+
+
+                RegistryKey CUkey = Registry.CurrentUser.OpenSubKey("SOFTWARE", true);
+                CUkey.SetAccessControl(rs);
+                // Scan all subkeys under the defined key
+                foreach (string subkeyName in CUkey.GetSubKeyNames())
+                {
+                    RegistryKey subkey = CUkey.OpenSubKey(subkeyName);
+
+                    // Check if the subkey contains any values
+                    if (subkey.ValueCount == 0 && subkey.SubKeyCount == 0)
+                    {
+                        // If the subkey does not contain any values, delete it
+                        CUkey.DeleteSubKeyTree(subkeyName);
+                        Console.WriteLine("Deleted empty subkey: " + subkeyName);
+                        CUCount++;
+                    }
+                    else
+                    {
+                        // If the subkey contains values, check if they are valid
+                        foreach (string valueName in subkey.GetValueNames())
+                        {
+                            object value = subkey.GetValue(valueName);
+
+                            // Check if the value is invalid or obsolete
+                            if (value == null || value.ToString().Contains("[obsolete]"))
+                            {
+                                // If the value is invalid or obsolete, delete it
+                                subkey.DeleteValue(valueName);
+                                Console.WriteLine("Deleted invalid value: " + valueName);
+                                CUCount++;
+                            }
+                        }
+                    }
+                }
+
+                Console.WriteLine("Total Regitry cleaned from current user", CUCount);
+                Console.WriteLine("Total Regitry cleaned from current user", LMCount);
+                TotalCount = CUCount + LMCount;
+
+            }
+            catch
+            {
+
+            }
+            return TotalCount;
+        }
+
+
+
+        public int DeleteLocalMachineCount()
+        {
+            int localMachineCount = 0;
+
+            string user = Environment.UserDomainName + "\\" + Environment.UserName;
+            RegistrySecurity rs = new RegistrySecurity();
+
+            // Allow the current user to read, write, and delete the key.
+            rs.AddAccessRule(new RegistryAccessRule(user,
+                RegistryRights.ReadKey | RegistryRights.WriteKey | RegistryRights.Delete,
+                InheritanceFlags.None,
+                PropagationFlags.None,
+                AccessControlType.Allow));
+
+
+
+            try
+            {
+
+                RegistryKey localMachine = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64).OpenSubKey("SOFTWARE", true);
+
+                RegistryKey CUkey = localMachine;
+
+                if (CUkey != null)
+                {
+                    CUkey.SetAccessControl(rs);
+                    //Console.WriteLine("Permissions granted successfully.");
+
+                    foreach (string subkeyName in CUkey.GetSubKeyNames())
+                    {
+                        RegistryKey subkey = CUkey.OpenSubKey(subkeyName);
+                        if (subkey.ValueCount == 0 && subkey.SubKeyCount == 0)
+                        {
+                            // If the subkey does not contain any values, delete it
+                            CUkey.DeleteSubKeyTree(subkeyName);
+                            localMachineCount++;
+                        }
+                        else
+                        {
+                            // If the subkey contains values, check if they are valid
+                            foreach (string valueName in subkey.GetValueNames())
+                            {
+                                object value = subkey.GetValue(valueName);
+                                // Check if the value is invalid or obsolete
+                                if (value == null || value.ToString().Contains("[obsolete]"))
+                                {
+                                    subkey.DeleteValue(valueName);
+                                    localMachineCount++;
+                                }
+                            }
+                        }
+                    }
+
+                }
+                else
+                {
+                    Console.WriteLine("Registry key not found.");
+                }
+
+                Console.WriteLine("Total LM Count: " + localMachineCount);
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message);
+            }
+
+            return localMachineCount;
+        }
+
         public int DeleteCurrentUserCount()
         {
 
@@ -61,21 +242,50 @@ namespace FDS.Services
 
             try
             {
+                string user = Environment.UserDomainName + "\\" + Environment.UserName;
+                RegistrySecurity rs = new RegistrySecurity();
 
-                RegistryKey currentUser = Registry.CurrentUser.OpenSubKey("SOFTWARE", true);
+                // Allow the current user to read, write, and delete the key.
+                rs.AddAccessRule(new RegistryAccessRule(user,
+                    RegistryRights.ReadKey | RegistryRights.WriteKey | RegistryRights.Delete,
+                    InheritanceFlags.None,
+                    PropagationFlags.None,
+                    AccessControlType.Allow));
 
-                //RegistryKey CUkey = Registry.CurrentUser.OpenSubKey("SOFTWARE", true);
 
-                if (currentUser != null)
+                RegistryKey CUkey = Registry.CurrentUser.OpenSubKey("SOFTWARE", true);
+                CUkey.SetAccessControl(rs);
+                // Scan all subkeys under the defined key
+                foreach (string subkeyName in CUkey.GetSubKeyNames())
                 {
-                    currentUserCount = TotalCountDeleted(currentUser);
-                }
-                else
-                {
-                    Console.WriteLine("Registry key not found.");
-                }
+                    RegistryKey subkey = CUkey.OpenSubKey(subkeyName);
 
-                Console.WriteLine("Total LM Count: " + currentUserCount);
+                    // Check if the subkey contains any values
+                    if (subkey.ValueCount == 0 && subkey.SubKeyCount == 0)
+                    {
+                        // If the subkey does not contain any values, delete it
+                        CUkey.DeleteSubKeyTree(subkeyName);
+                        Console.WriteLine("Deleted empty subkey: " + subkeyName);
+                        currentUserCount++;
+                    }
+                    else
+                    {
+                        // If the subkey contains values, check if they are valid
+                        foreach (string valueName in subkey.GetValueNames())
+                        {
+                            object value = subkey.GetValue(valueName);
+
+                            // Check if the value is invalid or obsolete
+                            if (value == null || value.ToString().Contains("[obsolete]"))
+                            {
+                                // If the value is invalid or obsolete, delete it
+                                subkey.DeleteValue(valueName);
+                                Console.WriteLine("Deleted invalid value: " + valueName);
+                                currentUserCount++;
+                            }
+                        }
+                    }
+                }
 
             }
             catch { }

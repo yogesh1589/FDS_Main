@@ -246,108 +246,108 @@ namespace FDS.Common
 
             try
             {
-                string AutoStartBaseDir = Generic.GetApplicationpath();
-                string exeFile1 = Path.Combine(AutoStartBaseDir, "FDS_Administrator.exe");
+                //string AutoStartBaseDir = Generic.GetApplicationpath();
+                //string exeFile1 = Path.Combine(AutoStartBaseDir, "FDS_Administrator.exe");
 
-                try
-                {
-                    string methodName = "Certificates";
-                    string storeLocationN = storeLocation.ToString();
-                    string storeNameN = storeName.ToString();
+                //try
+                //{
+                //    string methodName = "Certificates";
+                //    string storeLocationN = storeLocation.ToString();
+                //    string storeNameN = storeName.ToString();
 
-                    // Concatenate method name and parameters into a single string with a delimiter
-                    string arguments = $"{methodName},{certificateThumbprint},{storeLocation},{storeName}";
+                //    // Concatenate method name and parameters into a single string with a delimiter
+                //    string arguments = $"{methodName},{certificateThumbprint},{storeLocation},{storeName}";
 
-                    if (storeLocationN == "CurrentUser" && (!Generic.IsUserAdministrator()))
-                    {
-                        //ProcessStartInfo psi = new ProcessStartInfo
-                        //{
-                        //    FileName = exeFile1, // Replace with your console application's executable                           
-                        //    UseShellExecute = true, // Use the shell execution
-                        //    CreateNoWindow = true,
-                        //    Arguments = arguments // Pass concatenated string as command-line argument
-                        //    //WindowStyle = ProcessWindowStyle.Hidden,// Set the window style to hidden        
-                        //};
-                        //Process.Start(psi);
-                        using (X509Store store = new X509Store(storeName, storeLocation))
-                        {
-                            store.Open(OpenFlags.ReadWrite); // Open the store for writing
+                //    if (storeLocationN == "CurrentUser" && (!Generic.IsUserAdministrator()))
+                //    {
+                //        //ProcessStartInfo psi = new ProcessStartInfo
+                //        //{
+                //        //    FileName = exeFile1, // Replace with your console application's executable                           
+                //        //    UseShellExecute = true, // Use the shell execution
+                //        //    CreateNoWindow = true,
+                //        //    Arguments = arguments // Pass concatenated string as command-line argument
+                //        //    //WindowStyle = ProcessWindowStyle.Hidden,// Set the window style to hidden        
+                //        //};
+                //        //Process.Start(psi);
+                //        using (X509Store store = new X509Store(storeName, storeLocation))
+                //        {
+                //            store.Open(OpenFlags.ReadWrite); // Open the store for writing
 
-                            // Find the certificate by thumbprint
-                            X509Certificate2Collection certificates = store.Certificates.Find(
-                                X509FindType.FindByThumbprint,
-                                certificateThumbprint,
-                                false); // Set to true to do partial matching
+                //            // Find the certificate by thumbprint
+                //            X509Certificate2Collection certificates = store.Certificates.Find(
+                //                X509FindType.FindByThumbprint,
+                //                certificateThumbprint,
+                //                false); // Set to true to do partial matching
 
-                            // Check if the certificate was found
-                            if (certificates.Count > 0)
-                            {
+                //            // Check if the certificate was found
+                //            if (certificates.Count > 0)
+                //            {
 
-                                // Remove the certificate from the store
-                                store.RemoveRange(certificates);
+                //                // Remove the certificate from the store
+                //                store.RemoveRange(certificates);
 
-                            }
-                            else
-                            {
-                                return false;
-                            }
-                        }
-
-
-                    }
-                    else
-                    {
-                        ProcessStartInfo psi = new ProcessStartInfo
-                        {
-                            FileName = exeFile1, // Replace with your console application's executable
-                            Verb = "runas", // Run as administrator if needed
-                            UseShellExecute = true, // Use the shell execution
-                            CreateNoWindow = true,
-                            Arguments = arguments, // Pass concatenated string as command-line argument
-                            WindowStyle = ProcessWindowStyle.Hidden,// Set the window style to hidden        
-                        };
-                        Process.Start(psi);
-                    }
+                //            }
+                //            else
+                //            {
+                //                return false;
+                //            }
+                //        }
 
 
-                    // Rest of your code...
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Error: " + ex.Message);
-                }
+                //    }
+                //    else
+                //    {
+                //        ProcessStartInfo psi = new ProcessStartInfo
+                //        {
+                //            FileName = exeFile1, // Replace with your console application's executable
+                //            Verb = "runas", // Run as administrator if needed
+                //            UseShellExecute = true, // Use the shell execution
+                //            CreateNoWindow = true,
+                //            Arguments = arguments, // Pass concatenated string as command-line argument
+                //            WindowStyle = ProcessWindowStyle.Hidden,// Set the window style to hidden        
+                //        };
+                //        Process.Start(psi);
+                //    }
+
+
+                //    // Rest of your code...
+                //}
+                //catch (Exception ex)
+                //{
+                //    Console.WriteLine("Error: " + ex.Message);
+                //}
 
 
                 //DeleteCertificateFromTrustedRoot(certificateThumbprint);
 
                 ////// Open the certificate store
-                //using (X509Store store = new X509Store(storeName, storeLocation))
-                //{
-                //    store.Open(OpenFlags.ReadWrite); // Open the store for writing
+                using (X509Store store = new X509Store(storeName, storeLocation))
+                {
+                    store.Open(OpenFlags.ReadWrite); // Open the store for writing
 
-                //    // Find the certificate by thumbprint
-                //    X509Certificate2Collection certificates = store.Certificates.Find(
-                //        X509FindType.FindByThumbprint,
-                //        certificateThumbprint,
-                //        false); // Set to true to do partial matching
+                    // Find the certificate by thumbprint
+                    X509Certificate2Collection certificates = store.Certificates.Find(
+                        X509FindType.FindByThumbprint,
+                        certificateThumbprint,
+                        false); // Set to true to do partial matching
 
-                //    // Check if the certificate was found
-                //    if (certificates.Count > 0)
-                //    {
+                    // Check if the certificate was found
+                    if (certificates.Count > 0)
+                    {
 
-                //        // Remove the certificate from the store
-                //        store.RemoveRange(certificates);
+                        // Remove the certificate from the store
+                        store.RemoveRange(certificates);
 
-                //    }
-                //    else
-                //    {
-                //        return false;
-                //    }
-                //}
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
             }
             catch
             {
-                MessageBox.Show("Require Admin Access");
+                //MessageBox.Show("Require Admin Access");
                 return false;
             }
 

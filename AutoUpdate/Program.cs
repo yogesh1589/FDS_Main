@@ -40,20 +40,26 @@ namespace AutoUpdate
 
             string TempFDSPath = "C:\\web\\Temp\\FDS\\";
             Console.WriteLine("Hi! you are about to update your FDS application");
-            string installationPath = string.Empty;
+            string installationPath = "C:\\Fusion Data Secure\\FDS";
             //string installationPath2 = AppDomain.CurrentDomain.BaseDirectory.TrimEnd(new[] { '\\' }).ToString();
             RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
             if (registryKey != null)
             {
                 object obj = registryKey.GetValue("FDS");
                 if (obj != null)
-                    installationPath = Path.GetDirectoryName(obj.ToString());
+                    installationPath = Path.GetDirectoryName(obj.ToString());                
             }
+            
             Array.ForEach(Process.GetProcessesByName("FDS"), x => x.Kill());
+
+            
+
             if (IsProcessOpen("LauncherApp"))
             {
+                 
                 Array.ForEach(Process.GetProcessesByName("LauncherApp"), x => x.Kill());
             }
+
             DeleteDirectoryContents(TempFDSPath, installationPath + "\\");
         }
 
@@ -68,6 +74,8 @@ namespace AutoUpdate
         {
             try
             {
+
+                 
                 // Get the directory info
                 DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
                
@@ -79,6 +87,7 @@ namespace AutoUpdate
                     file.Delete();
                 }
 
+                
                 // Delete all subdirectories and their contents
                 foreach (DirectoryInfo subdirectory in directoryInfo.GetDirectories())
                 {
@@ -88,6 +97,8 @@ namespace AutoUpdate
                     }
 
                 }
+
+
                 //Hide the console window
                 IntPtr hWnd = GetConsoleWindow();
                 if (hWnd != IntPtr.Zero)
@@ -161,5 +172,7 @@ namespace AutoUpdate
 
             }
         }
+
+       
     }
 }

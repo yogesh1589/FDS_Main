@@ -36,13 +36,17 @@ namespace LauncherApp
             }
         }
 
+
         static void Main(string[] args)
         {
+
             HideConsoleWindow();
             int cnt = 0;
 
             try
             {
+
+               
                 string basePathEncryption = String.Format("{0}Tempfolder", "C:\\Fusion Data Secure\\FDS\\");
 
                 string encryptOutPutFile = basePathEncryption + @"\Main";
@@ -55,22 +59,25 @@ namespace LauncherApp
 
                 if (!string.IsNullOrEmpty(exePath))
                 {
-                    SetStartupApp(applicationPath);
+                    //DisableStartupEntry("FDS");
+                    //DisableStartupEntry("LauncherApp");
+                    //SetStartupApp(applicationPath);
 
                     while (true)
                     {
 
                         //System.Threading.Thread.Sleep(5000);
+                        Thread.Sleep(TimeSpan.FromSeconds(10));
 
-                        if ((!IsAppRunning(FdsProcessName)) && ((File.Exists(encryptOutPutFile)) || (cnt == 0)))
+                        if ((!CheckAppRunning(FdsProcessName)) && ((File.Exists(encryptOutPutFile)) || (cnt == 0)))
                         {
-                            //WriteLog("App is running1");
                             // Start your WPF application
                             ProcessStartInfo startInfo = new ProcessStartInfo
                             {
                                 FileName = exePath,
                                 UseShellExecute = false,
                                 CreateNoWindow = true,
+                                Verb = "runas", // Request elevation
                                 WindowStyle = ProcessWindowStyle.Hidden
                             };
 
@@ -84,19 +91,23 @@ namespace LauncherApp
                                 ShowWindow(mainWindowHandle, SW_HIDE);
                             }
 
+
                             cnt++;
+
+                            Thread.Sleep(TimeSpan.FromSeconds(10));
+
                             // Monitor the WPF application
                             while (!wpfApp.HasExited)
                             {
-                                //WriteLog("App Restarted");
+
                                 wpfApp.WaitForExit(1000);
                             }
                             // Restart the application if it's closed
-                            Console.WriteLine("Application closed. Restarting...");
-                            Thread.Sleep(1000); // Wait for a moment before restarting
+
+                            // Wait for a moment before restarting
                             wpfApp.Dispose(); // Clean up the process                           
                         }
-                        Thread.Sleep(TimeSpan.FromSeconds(10));
+
                     }
                 }
 
@@ -104,72 +115,39 @@ namespace LauncherApp
             }
             catch (Exception ex)
             {
+                WriteLog("Error3 " + ex.ToString());
                 ex.ToString();
             }
         }
 
-
-        public static void SetStartupApp(string applicationPath)
+       
+        static bool IsAnotherProcessRunning(string processName)
         {
-            try
-            {
+            // Get all running processes with the specified name
+            Process[] processes = Process.GetProcessesByName(processName);
 
-                // applicationPath =  Path.Combine(applicationPath, "LauncherApp.exe");
+            // Exclude the current process from the list
+            Process currentProcess = Process.GetCurrentProcess();
+            processes = Array.FindAll(processes, p => p.Id != currentProcess.Id);
 
-                RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
-                if (registryKey != null)
-                {
-                    object obj = registryKey.GetValue("LauncherApp1");
-                    if (obj != null)
-                        applicationPath = Path.GetDirectoryName(obj.ToString());
-                }
-
-                using (RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true))
-                {
-                    if (key != null)
-                    {
-                        string exeFile = Path.Combine(applicationPath, "LauncherApp.exe");
-
-                        // Check if the application is already in startup
-                        if (key.GetValue("LauncherApp1") == null)
-                        {
-                            // If not, add it to startup
-                            key.SetValue("LauncherApp1", $"\"{exeFile}\" --opened-at-login --minimize");
-                            Console.WriteLine("Application added to startup successfully.");
-                        }
-                        else
-                        {
-                            Console.WriteLine("Application already set to start on login.");
-                        }
-
-                        // Start the application
-                        Process.Start(exeFile);
-                        Console.WriteLine("Application started.");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Registry key not found.");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error: " + ex.Message);
-            }
+            // Check if any other processes with the specified name are running
+            return processes.Length > 0;
         }
+
         static string ReturnApplicationPath()
         {
             string applicationPath = "C:\\Fusion Data Secure\\FDS\\";
             try
             {
-                RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall");
-                if (registryKey != null)
+
+                string appPath1 = AppDomain.CurrentDomain.BaseDirectory;
+                if (!string.IsNullOrEmpty(appPath1))
                 {
-                    object obj = registryKey.GetValue("FDS");
-                    if (obj != null)
-                        applicationPath = Path.GetDirectoryName(obj.ToString());
+                    applicationPath = appPath1;
                 }
-                if (string.IsNullOrEmpty(applicationPath))
+
+
+                if ((!string.IsNullOrEmpty(appPath1)) && (appPath1.Contains("LauncherApp")))
                 {
                     // Get the current directory where the console app is running
                     string currentDirectory = Environment.CurrentDirectory;
@@ -188,13 +166,19 @@ namespace LauncherApp
                 //string AutoStartBaseDir = applicationPath;
 
             }
-            catch
+            catch (Exception ex)
             {
-
+                WriteLog("Error4 " + ex.ToString());
             }
             return applicationPath;
         }
 
+
+        public static bool CheckAppRunning(string process)
+        {
+            var currentSessionID = Process.GetCurrentProcess().SessionId;
+            return Process.GetProcessesByName(process).Where(p => p.SessionId == currentSessionID).Any();
+        }
 
         public static bool IsAppRunning(string processName)
         {
@@ -225,9 +209,9 @@ namespace LauncherApp
             }
             catch (Exception ex)
             {
-
-                WriteLog("IsAppRunning " + ex.ToString());
+                WriteLog("IsAppRunning2 " + ex.ToString());
             }
+
             return result;
         }
 
@@ -264,7 +248,7 @@ namespace LauncherApp
                     Directory.CreateDirectory(path);
                 }
 
-                string filePath = Path.Combine(path, "ServiceLog_" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt");
+                string filePath = Path.Combine(path, "LancherLoger_" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt");
 
                 using (StreamWriter streamWriter = File.AppendText(filePath))
                 {

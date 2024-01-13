@@ -460,13 +460,13 @@ namespace FDS.Common
             {
                 if (IsAppRunning(applicationName))
                 {
-                    MessageBox.Show("Application stopped");
+                    //MessageBox.Show("Application stopped");
                     StopApplication(applicationName);
                     //Console.WriteLine("Application stopped.");
                 }
                 else
                 {
-                    MessageBox.Show("Application is not running.");
+                    //MessageBox.Show("Application is not running.");
                     //Console.WriteLine("Application is not running.");
                 }
 
@@ -718,6 +718,30 @@ namespace FDS.Common
                 ex.ToString();
             }
         }
+
+        //public static void WriteLog(string logMessage)
+        //{
+        //    try
+        //    {
+        //        string path = AppDomain.CurrentDomain.BaseDirectory + "MainAppLogs";
+        //        if (!Directory.Exists(path))
+        //        {
+        //            Directory.CreateDirectory(path);
+        //        }
+
+        //        string filePath = Path.Combine(path, "MainAppLogs_" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt");
+
+        //        using (StreamWriter streamWriter = File.AppendText(filePath))
+        //        {
+        //            streamWriter.WriteLine($"{DateTime.Now} - {logMessage}");
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        WriteLog("WriteLog " + ex.ToString());
+        //    }
+        //}
+
 
 
     }

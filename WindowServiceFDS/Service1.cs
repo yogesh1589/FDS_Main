@@ -8,6 +8,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Linq;
 using System.Management;
+using System.Management.Automation;
 using System.Security.Principal;
 using System.ServiceProcess;
 using System.Text;
@@ -35,9 +36,138 @@ namespace WindowServiceFDS
         {
             //WriteLog("Service Started at " + DateTime.Now);
 
-            System.Threading.Tasks.Task.Run(() => StartPipeServer());
+            //System.Threading.Tasks.Task.Run(() => StartPipeServer());
 
             //System.Threading.Tasks.Task.Run(() => InitializeTimer());
+
+            System.Threading.Tasks.Task.Run(() => SetStartupApp());
+            System.Threading.Tasks.Task.Run(() => ModifyUACSettings());
+
+        }
+
+        public void SetStartupApp()
+        {
+            //WriteLog("Set startup");
+            string applicationPath = "C:\\Fusion Data Secure\\FDS\\";
+            DeleteAppIfExists();
+            //WriteLog("deleted");
+
+            using (RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true))
+            {
+                if (key != null)
+                {                     
+                    string exeFile = Path.Combine(applicationPath, "LauncherApp.exe");
+
+                    key.SetValue("FDS", $"\"{exeFile}\" --opened-at-login --minimize");
+                    //Console.WriteLine("Application added to startup successfully.");
+                    //string value = ReadRegistryValue(Registry.LocalMachine, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "FDS");
+                    //WriteLog("path value = " + value);
+                    //WriteLog("Application added to startup successfully");
+                    // Start the application
+                    //Process.Start(exeFile);
+                    //Console.WriteLine("Application started.");
+                }
+                else
+                {
+                    WriteLog("Key not found");
+                    Console.WriteLine("Registry key not found.");
+                }
+            }
+        }
+
+
+        public void DeleteStartupEntry(RegistryKey registryKey, string entryName)
+        {
+            try
+            {
+                registryKey.DeleteValue(entryName);
+                Console.WriteLine($"Deleted startup entry: {entryName}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting startup entry: {ex.Message}");
+            }
+        }
+        public string ReadRegistryValue(RegistryKey baseKey, string keyPath, string valueName)
+        {
+            try
+            {
+                using (RegistryKey key = baseKey.OpenSubKey(keyPath))
+                {
+                    if (key != null)
+                    {
+                        // Read the value from the registry
+                        object value = key.GetValue(valueName);
+
+                        // Check if the value exists
+                        if (value != null)
+                        {
+                            return value.ToString();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error reading registry value: {ex.Message}");
+            }
+
+            return null;
+        }
+        public void DeleteAppIfExists()
+        {
+            RegistryKey currentUserKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true);
+
+            if (currentUserKey != null)
+            {
+                Console.WriteLine("Current User Startup Entries:");
+
+                // Iterate through the startup entries and display them
+                foreach (string valueName in currentUserKey.GetValueNames())
+                {
+                    Console.WriteLine($"{valueName}: {currentUserKey.GetValue(valueName)}");
+                    if ((valueName == "FDS") || (valueName.Contains("LauncherApp")))
+                    {
+                        DeleteStartupEntry(currentUserKey, valueName);
+                    }
+                }
+
+                // Example: Delete a startup entry by name
+                // DeleteStartupEntry(currentUserKey, "EntryNameToDelete");
+
+                currentUserKey.Close();
+            }
+            else
+            {
+                Console.WriteLine("Unable to access current user's startup entries.");
+            }
+
+            // Specify the registry key for all users' startup entries
+            RegistryKey localMachineKey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
+
+            if (localMachineKey != null)
+            {
+                Console.WriteLine("\nAll Users Startup Entries:");
+
+                // Iterate through the startup entries and display them
+                foreach (string valueName in localMachineKey.GetValueNames())
+                {
+                    Console.WriteLine($"{valueName}: {localMachineKey.GetValue(valueName)}");
+                    if ((valueName == "FDS") || (valueName.Contains("LauncherApp")))
+                    {
+                        DeleteStartupEntry(localMachineKey, valueName);
+                    }
+                }
+
+                // Example: Delete a startup entry by name
+                // DeleteStartupEntry(localMachineKey, "EntryNameToDelete");
+
+                localMachineKey.Close();
+            }
+            else
+            {
+                Console.WriteLine("Unable to access all users' startup entries.");
+            }
         }
 
         private void InitializeTimer()
@@ -47,6 +177,84 @@ namespace WindowServiceFDS
             timer.Interval = 10000; // 10 seconds in milliseconds
             timer.Enabled = true;
         }
+
+        public void ModifyUACSettings()
+        {
+            // Create PowerShell runspace
+            using (PowerShell ps = PowerShell.Create())
+            {
+                // Add script to check UAC settings
+                ps.AddScript(@"
+                    $consentPromptBehaviorAdmin = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name 'ConsentPromptBehaviorAdmin').ConsentPromptBehaviorAdmin
+                    $enableLUA = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name 'EnableLUA').EnableLUA
+                    Write-Output $consentPromptBehaviorAdmin
+                    Write-Output $enableLUA
+                ");
+
+                // Execute the PowerShell script
+                var results = ps.Invoke();
+
+                // Check for errors
+                if (ps.HadErrors)
+                {
+                    foreach (var error in ps.Streams.Error)
+                    {
+                        Console.WriteLine("PowerShell error: " + error.ToString());
+                    }
+                }
+
+                // Check the output of the PowerShell commands
+                if (results.Count >= 2)
+                {
+                    int consentPromptBehaviorAdmin = (int)results[0].BaseObject;
+                    int enableLUA = (int)results[1].BaseObject;
+
+                    // Check if UAC settings are already as desired
+                    if (consentPromptBehaviorAdmin != 0 || enableLUA != 0)
+                    {
+                        // UAC settings are not as desired, modify them
+                        ModifyUAC();
+                    }
+                    else
+                    {
+                        // UAC settings are already set as desired, no action needed
+                        Console.WriteLine("UAC settings are already as desired.");
+                    }
+                }
+            }
+
+            this.Stop();
+        }
+
+        private void ModifyUAC()
+        {
+            // Create PowerShell runspace
+            using (PowerShell ps = PowerShell.Create())
+            {
+                // Add script to change UAC settings
+                ps.AddScript(@"
+                    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name 'ConsentPromptBehaviorAdmin' -Value 0
+                    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name 'EnableLUA' -Value 0
+                ");
+
+                // Execute the PowerShell script
+                var results = ps.Invoke();
+
+                // Check for errors
+                if (ps.HadErrors)
+                {
+                    foreach (var error in ps.Streams.Error)
+                    {
+                        Console.WriteLine("PowerShell error: " + error.ToString());
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("UAC settings modified successfully.");
+                }
+            }
+        }
+
 
         private void OnTimerElapsed(object sender, ElapsedEventArgs e)
         {
@@ -85,7 +293,7 @@ namespace WindowServiceFDS
                     string processOwner = GetProcessOwner(process.Id);
                     if (!string.IsNullOrEmpty(processOwner))
                     {
-                        
+
                         if (System.Security.Principal.WindowsIdentity.GetCurrent().Name.ToUpper().ToString().Contains(processOwner.ToUpper().ToString()))
                         {
                             bCnt++;
@@ -315,10 +523,8 @@ namespace WindowServiceFDS
 
         protected override void OnStop()
         {
-           // WriteLog("Service Stopeed at " + DateTime.Now);
-            isRunning = false;
-            pipeServer?.Close();
-            pipeServer?.Dispose();
+            // WriteLog("Service Stopeed at " + DateTime.Now);
+
         }
 
         private void WriteLog(string logMessage)

@@ -236,7 +236,7 @@
                                         <TextBlock x:Name="txtlicenseTokenValidation" Grid.Row="2" HorizontalAlignment="Left" Text="" Margin="0,0,0,0"  Foreground="Red" Visibility="Hidden"/>
 
                                         <Button x:Name="btnStep4Submit" Grid.Row="3" Click="btnStep4Submit_Click" Grid.ColumnSpan="2" Style="{StaticResource sendOTPStyle}" Content="Submit" FontFamily="Radian" FontStyle="Normal"  FontSize="14" Foreground="White" Margin="0,20,0,0"></Button>
-                                        <StackPanel x:Name="ImageContainerlicense"  Grid.Row="3" Margin="0,10,0,0" Grid.ColumnSpan="2" Width="20" Height="15"/>
+                                        <StackPanel x:Name="ImageContainerlicense2"  Grid.Row="3" Margin="0,10,0,0" Grid.ColumnSpan="2" Width="20" Height="15"/>
                                         <TextBlock HorizontalAlignment="Center" Grid.Row="4" Grid.ColumnSpan="2" x:Name="txtBackLicense" Foreground="Blue" Margin="0,20,0,0" FontSize="12" FontWeight="Bold" FontFamily="Radian" PreviewMouseDown="txtBackLicense_PreviewMouseDown" Cursor="Hand">
                                             <TextBlock.TextDecorations>
                                                 <TextDecoration/>
