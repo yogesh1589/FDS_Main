@@ -14,6 +14,7 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -124,7 +125,7 @@ namespace FDS.API_Service
                             HttpStatusCode = response.StatusCode,
                             Success = false
 
-                    };
+                        };
                         return qRCodeResponse;
                     }
                 }
@@ -411,7 +412,7 @@ namespace FDS.API_Service
             {
 
                 // Get the latest txtlicense.Text value just before sending the request
-                string licenseText = vals; 
+                string licenseText = vals;
 
                 var formContent = new List<KeyValuePair<string, string>>
                 {
@@ -880,28 +881,47 @@ namespace FDS.API_Service
 
         public async Task<bool> DownloadURLAsync(string downloadUrl, string temporaryMSIPath)
         {
-           
+
             var handler = new HttpClientHandler
             {
                 UseProxy = false // Disable using the system proxy
             };
 
-            using (var client1 = new HttpClient(handler))
+
+            //using (var client1 = new HttpClient(handler))
+            //{
+            //    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+            //    HttpResponseMessage response = await client1.GetAsync(downloadUrl);
+            //    if (response.IsSuccessStatusCode)
+            //    {
+
+            //        using (var fileStream = System.IO.File.Create(temporaryMSIPath))
+            //        {
+            //            await response.Content.CopyToAsync(fileStream);
+            //        }
+            //    }
+            //    else
+            //    {
+
+            //        return false;
+            //    }
+            //}
+            WebRequest.DefaultWebProxy = null;
+
+            using (var client1 = new WebClient())
             {
-                client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
-                var response = await client1.GetAsync(downloadUrl);
-                if (response.IsSuccessStatusCode)
+                try
                 {
-                     
-                    using (var fileStream = System.IO.File.Create(temporaryMSIPath))
-                    {
-                        await response.Content.CopyToAsync(fileStream);
-                    }
+                    Console.WriteLine("Downloading...");
+
+                    // Download the file asynchronously
+                    await client1.DownloadFileTaskAsync(new Uri(downloadUrl), temporaryMSIPath);
+
+                    Console.WriteLine($"File downloaded to: {temporaryMSIPath}");
                 }
-                else
+                catch (Exception ex)
                 {
-                     
-                    return false;
+                    Console.WriteLine($"An error occurred: {ex.Message}");
                 }
             }
 

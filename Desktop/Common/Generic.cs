@@ -453,7 +453,7 @@ namespace FDS.Common
 
             string applicationName = "LauncherApp.exe";
             string applicationPath = GetApplicationpath();
-            
+
             string exeFile = Path.Combine(applicationPath, applicationName);
 
             if (File.Exists(exeFile))
@@ -585,7 +585,7 @@ namespace FDS.Common
             return false;
         }
 
-        public static void UninstallFDS()
+         public static void UninstallFDS()
         {
             string applicationName = "FDS";
             bool uninstallURL = false;
@@ -677,47 +677,7 @@ namespace FDS.Common
         }
 
 
-        public static void CreateTaskS()
-        {
-            try
-            {
-                string taskName = "WpfSDE";
 
-                using (TaskService taskService = new TaskService())
-                {
-                    if (taskService.GetTask(taskName) != null)
-                    {
-                        Console.WriteLine("Task already exists. No need to create.");
-                    }
-                    else
-                    {
-
-                        // Create a new task
-                        TaskDefinition taskDefinition = taskService.NewTask();
-                        taskDefinition.RegistrationInfo.Description = "Launch WPF App Task";
-
-                        // Set the action to start a program
-                        taskDefinition.Actions.Add(new ExecAction("C:\\Fusion Data Secure\\FDS\\LauncherApp.exe", "", null));
-
-                        // Set the trigger to run the task every 1 minute
-                        Microsoft.Win32.TaskScheduler.TimeTrigger timeTrigger = new Microsoft.Win32.TaskScheduler.TimeTrigger();
-                        timeTrigger.Repetition.Interval = TimeSpan.FromMinutes(1); // Set interval to 1 minute
-                        timeTrigger.StartBoundary = DateTime.Now; // Start now
-                        timeTrigger.EndBoundary = DateTime.MaxValue; // Runs indefinitely
-                        taskDefinition.Triggers.Add(timeTrigger);
-
-                        // Register the task in the Windows Task Scheduler
-                        taskService.RootFolder.RegisterTaskDefinition(taskName, taskDefinition);
-
-                        Console.WriteLine("Task created in Task Scheduler to launch the WPF app every 1 minute, starting now.");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                ex.ToString();
-            }
-        }
 
         //public static void WriteLog(string logMessage)
         //{

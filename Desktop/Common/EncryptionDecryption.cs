@@ -43,7 +43,7 @@ namespace FDS.Common
             }
             catch (CryptographicException ex)
             {
-                throw ex;
+                ex.ToString();
             }
         }
 
@@ -145,9 +145,9 @@ namespace FDS.Common
                 }
                 File.Delete(outputFile);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                ex.ToString();
             }
 
             //return lines;

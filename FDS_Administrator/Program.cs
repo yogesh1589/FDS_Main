@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace FDS_Administrator
@@ -75,7 +76,7 @@ namespace FDS_Administrator
                 // Determine which method to call based on the argument
                 switch (methodName)
                 {
-                    case "Certificates":
+                    case "AutoUpdate":
                         Method1(args); // Call Method1 and pass additional arguments
                         break;
                     case "WindowsRegistryProtection":
@@ -95,8 +96,38 @@ namespace FDS_Administrator
 
         static void Method1(string[] args)
         {
-            DeleteCertificates deleteCertificates = new DeleteCertificates();
-            deleteCertificates.Delete(args);
+            //DeleteCertificates deleteCertificates = new DeleteCertificates();
+            //deleteCertificates.Delete(args);
+            string msiFilePath = "C:\\web\\Temp\\FDS\\FDS.msi";
+
+            if (File.Exists(msiFilePath))
+            {
+
+                string outputDirectory = "C:\\Fusion Data Secure\\FDS\\";
+                Process process = new Process();
+                process.StartInfo.FileName = "msiexec";
+                process.StartInfo.Arguments = $"/a \"{msiFilePath}\" /qn TARGETDIR=\"{outputDirectory}\"";
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.CreateNoWindow = true;
+
+                try
+                {
+                    process.Start();
+                    Thread.Sleep(10000);
+                    //process.BeginOutputReadLine();
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("An error occurred: " + ex.Message);
+                }
+                finally
+                {
+                    process.Close();
+                }
+            }
         }
 
 

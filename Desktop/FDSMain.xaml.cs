@@ -1,59 +1,37 @@
 ﻿using FDS.API_Service;
 using FDS.Common;
-using FDS.DTO.Requests;
 using FDS.DTO.Responses;
 using FDS.Factories;
 using FDS.Logging;
-using FDS.Models;
 using FDS.Runners;
-using FDS.SingleTon;
 using FDS.WindowService;
-using Microsoft.Bot.Streaming.Transport.NamedPipes;
+ 
 using Microsoft.Win32;
 using NCrontab;
 using Newtonsoft.Json;
-using Org.BouncyCastle.Math.EC.Endo;
-using QRCoder;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
-using System.Data.Entity.Infrastructure;
 using System.Diagnostics;
-using System.DirectoryServices.AccountManagement;
-using System.Drawing;
 using System.Globalization;
 using System.IO;
-using System.IO.Pipes;
 using System.Linq;
-using System.Management;
-using System.Management.Automation;
-using System.Management.Automation.Language;
-using System.Messaging;
 using System.Net;
 using System.Net.Http;
-using System.Net.NetworkInformation;
-using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Security.Claims;
+using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Principal;
-using System.ServiceProcess;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Forms.Design;
 using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using Windows.Devices.Usb;
-using Windows.Media.Core;
 using WpfAnimatedGif;
-using Image = System.Drawing.Image;
 
 namespace FDS
 {
@@ -150,8 +128,7 @@ namespace FDS
         public string proxyAddress = string.Empty;
         public string proxyPort = string.Empty;
         public bool loadFDS = false;
-
-
+      
         public FDSMain()
         {
             try
@@ -168,6 +145,8 @@ namespace FDS
                 DataContext = new ViewModel();
                 thisWindow = GetWindow(this);
                 //client = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI };
+                // // Set the path to the directory you want to monitor
+          
 
             }
             catch (Exception ex)
@@ -244,10 +223,37 @@ namespace FDS
             timerNetworkMonitering.IsEnabled = false;
         }
 
+        public void SetShortCut(string LauncherAppPath)
+        {
+            try
+            {
+                 
+                // Destination path for the shortcut in the Startup folder
+                string startupFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup), "FDS.lnk");
 
+                // Check if the shortcut already exists in the Startup folder
+                if (!File.Exists(startupFolderPath))
+                {
+                    // Create a WshShell instance
+                    IWshRuntimeLibrary.WshShell wshShell = new IWshRuntimeLibrary.WshShell();
 
+                    // Create a shortcut
+                    IWshRuntimeLibrary.IWshShortcut shortcut = (IWshRuntimeLibrary.IWshShortcut)wshShell.CreateShortcut(startupFolderPath);
+                    shortcut.TargetPath = LauncherAppPath;
+                    shortcut.Save();
 
-
+                    Console.WriteLine("Shortcut created in the Startup folder successfully.");
+                }
+                else
+                {
+                    Console.WriteLine("Shortcut already exists in the Startup folder.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+        }
 
         public void LoadFDS()
         {
@@ -255,39 +261,26 @@ namespace FDS
             {
                 try
                 {
+                    string LauncherAppPath = String.Format("{0}LauncherApp.exe", AppDomain.CurrentDomain.BaseDirectory);                
+                    SetShortCut(LauncherAppPath);                     
                     WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
                     windowServiceInstaller.InstallService();
                     windowServiceInstaller.StartService();
 
+                    //string folder = @"C:\web\Temp\FDS";
+                    //RemoveAccessControl(folder);
+                    //SetAccessControl(folder);
+                    // SetAccessControl("C:\\Fusion Data Secure\\FDS");
                 }
                 catch (Exception ex)
                 {
                     ex.ToString();
                 }
 
-
+                
 
                 btnUninstall.Foreground = System.Windows.Media.Brushes.Blue;
-                loadFDS = true;
-
-                //Generic.CreateTaskS();
-
-                //Generic.StopRemoveStartupApplication();
-
-                //RunBatchFile();
-
-                //string AutoStartBaseDir = Generic.GetApplicationpath();
-                //string appPath = Path.Combine(AutoStartBaseDir, "LauncherApp.exe");
-
-
-                //if (!Generic.IsAppRunning(appPath))
-                //{
-                //    Generic.AutoStartLauncherApp(appPath);
-                //}
-
-                //ConnectToService();
-
-                //Generic.CreateBackup();
+                loadFDS = true;             
 
                 //// -------Actual Code --------------------------------
                 encryptOutPutFile = basePathEncryption + @"\Main";
@@ -380,8 +373,6 @@ namespace FDS
                 }
             }
         }
-
-
 
         public void FDSMain_Loaded(object sender, RoutedEventArgs e)
         {
@@ -589,6 +580,7 @@ namespace FDS
                         AuthenticationMethods.Visibility = Visibility.Hidden;
                         AuthenticationMethods2.Visibility = Visibility.Hidden;
                         btnUninstall.Visibility = Visibility.Visible;
+                        btnUninstall.Foreground = System.Windows.Media.Brushes.Blue;
                         break;
                     case Screens.ServiceClear:
                         //imgWires.Visibility = Visibility.Visible;
@@ -646,7 +638,7 @@ namespace FDS
                 bitmapImage.BeginInit();
                 bitmapImage.UriSource = new Uri(uriString);
                 bitmapImage.EndInit();
-                ImageBehavior.SetAnimatedSource(image, (ImageSource)bitmapImage);                
+                ImageBehavior.SetAnimatedSource(image, (ImageSource)bitmapImage);
             }
             catch (Exception ex)
             {
@@ -1503,21 +1495,33 @@ namespace FDS
 
         private void StartForUnauthorized()
         {
-            LoadMenu(Screens.GetStart);
-            if (!loadFDS)
+            try
             {
-                MessageBox.Show("Your device has been deleted", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                LoadMenu(Screens.GetStart);
+                if (!loadFDS)
+                {
+                    MessageBox.Show("Your device has been deleted", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                deviceDeletedFlag = true;
+                lstCron.Clear();
+                lstCronEvent.Clear();
+                encryptOutPutFile = basePathEncryption + @"\Main";
+
+                if (File.Exists(encryptOutPutFile))
+                {
+                    try { File.Delete(encryptOutPutFile); } catch { }                    
+                    ConfigDataClear();
+                }
+
             }
-            deviceDeletedFlag = true;
-            lstCron.Clear();
-            lstCronEvent.Clear();
-            encryptOutPutFile = basePathEncryption + @"\Main";
-
-            if (File.Exists(encryptOutPutFile))
+            catch (Exception ex)
             {
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("Device Deleted : " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
 
-                File.Delete(encryptOutPutFile);
-                ConfigDataClear();
             }
         }
 
@@ -2008,25 +2012,35 @@ namespace FDS
 
         private async void TimerNetworkMonitering_Tick(object sender, EventArgs e)
         {
-            if ((lstCronEvent.Count > 0) && (deviceActive == true))
+            try
             {
-                foreach (var key in lstCronEvent)
-                {
-                    SubservicesData SubservicesData = key.Key;
-                    string transformed = TransformString(SubservicesData.Sub_service_name);
-                    if ((SubservicesData.Sub_service_active) && ((transformed == ServiceTypeName.SystemNetworkMonitoringProtection.ToString())))
-                    {
 
-                        bool result = await RunServices("E", SubservicesData);
-                        if (result)
+                if ((lstCronEvent.Count > 0) && (deviceActive == true))
+                {
+                    foreach (var key in lstCronEvent)
+                    {
+                        SubservicesData SubservicesData = key.Key;
+                        string transformed = TransformString(SubservicesData.Sub_service_name);
+                        if ((SubservicesData.Sub_service_active) && ((transformed == ServiceTypeName.SystemNetworkMonitoringProtection.ToString())))
                         {
-                            DateTime localDate = DateTime.Now.ToLocalTime();
-                            txtUpdatedOn.Text = localDate.ToString();
+
+                            bool result = await RunServices("E", SubservicesData);
+                            if (result)
+                            {
+                                DateTime localDate = DateTime.Now.ToLocalTime();
+                                txtUpdatedOn.Text = localDate.ToString();
+                            }
                         }
                     }
                 }
-            }
 
+
+            }
+            catch (Exception ex)
+            {
+                ex.ToString();
+
+            }
         }
 
 
@@ -2146,10 +2160,10 @@ namespace FDS
             if (!Generic.IsUserAdministrator())
             {
                 btnUninstall.IsEnabled = true;
-                MessageBox.Show("You Can't Uninstall, Please Contact Admin to Uninstall.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("You can't uninstall, Please contact admin to uninstall.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
-          
+
 
             var apiResponse = await apiService.UninstallAsync();
 
@@ -2211,9 +2225,9 @@ namespace FDS
                         btnUninstall.ToolTip = "Your uninstall request has been declined!";
                         btnUninstall.Foreground = System.Windows.Media.Brushes.Red;
                     }
-                    else
+                    else if (apiResponse.Data == "2")
                     {
-
+                         
                         encryptOutPutFile = basePathEncryption + @"\Main";
                         if (File.Exists(encryptOutPutFile))
                         {
@@ -2277,8 +2291,11 @@ namespace FDS
             encryptOutPutFile = basePathEncryption + @"\Main";
             if (File.Exists(encryptOutPutFile))
             {
-
-                File.Delete(encryptOutPutFile);
+                try
+                {
+                    File.Delete(encryptOutPutFile);
+                }
+                catch { }
             }
 
         }
@@ -2327,6 +2344,7 @@ namespace FDS
             }
             catch (Exception ex)
             {
+                MessageBox.Show(ex.ToString());
                 if (showMessageBoxes == true)
                 {
                     return false;
@@ -2382,6 +2400,7 @@ namespace FDS
 
                     try
                     {
+                       
                         WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
                         windowServiceInstaller.StopService();
                         windowServiceInstaller.UninstallService();
@@ -2414,8 +2433,7 @@ namespace FDS
                         ShowWindow(mainWindowHandle, SW_HIDE);
                     }
 
-
-
+                    
                     //Process.Start(AutoUpdateExePath);
                 }
 
@@ -2431,6 +2449,9 @@ namespace FDS
 
             return true;
         }
+
+         
+
         private bool TryCloseRunningProcess(string processName)
         {
             try

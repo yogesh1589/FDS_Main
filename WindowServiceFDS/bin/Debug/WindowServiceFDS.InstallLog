@@ -379,3 +379,228 @@ Affected parameters are:
 Removing EventLog source Service_FDS.
 Service Service_FDS is being removed from the system...
 Service Service_FDS was successfully removed from the system.
+Uninstalling assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Removing EventLog source Service_FDS.
+Service Service_FDS is being removed from the system...
+Service Service_FDS was successfully removed from the system.
+Installing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Installing service Service_FDS...
+Service Service_FDS has been successfully installed.
+Creating EventLog source Service_FDS in log Application...
+Committing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Uninstalling assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Removing EventLog source Service_FDS.
+Service Service_FDS is being removed from the system...
+Service Service_FDS was successfully removed from the system.
+Attempt to stop service Service_FDS.
+Installing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Installing service Service_FDS...
+Service Service_FDS has been successfully installed.
+Creating EventLog source Service_FDS in log Application...
+Committing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Uninstalling assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Removing EventLog source Service_FDS.
+Service Service_FDS is being removed from the system...
+Service Service_FDS was successfully removed from the system.
+Attempt to stop service Service_FDS.
+Installing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Installing service Service_FDS...
+Service Service_FDS has been successfully installed.
+Creating EventLog source Service_FDS in log Application...
+Committing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Uninstalling assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Removing EventLog source Service_FDS.
+Service Service_FDS is being removed from the system...
+Service Service_FDS was successfully removed from the system.
+Attempt to stop service Service_FDS.
+Uninstalling assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Removing EventLog source Service_FDS.
+Service Service_FDS is being removed from the system...
+Service Service_FDS was successfully removed from the system.
+Installing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Installing service Service_FDS...
+Service Service_FDS has been successfully installed.
+Creating EventLog source Service_FDS in log Application...
+Committing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Uninstalling assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Removing EventLog source Service_FDS.
+Service Service_FDS is being removed from the system...
+Service Service_FDS was successfully removed from the system.
+Attempt to stop service Service_FDS.
+Installing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Installing service Service_FDS...
+Service Service_FDS has been successfully installed.
+Creating EventLog source Service_FDS in log Application...
+Committing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Uninstalling assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Removing EventLog source Service_FDS.
+Service Service_FDS is being removed from the system...
+Service Service_FDS was successfully removed from the system.
+Attempt to stop service Service_FDS.
+Installing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Installing service Service_FDS...
+Service Service_FDS has been successfully installed.
+Creating EventLog source Service_FDS in log Application...
+Committing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Uninstalling assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Removing EventLog source Service_FDS.
+Service Service_FDS is being removed from the system...
+Service Service_FDS was successfully removed from the system.
+Attempt to stop service Service_FDS.
+Installing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Installing service Service_FDS...
+Service Service_FDS has been successfully installed.
+Creating EventLog source Service_FDS in log Application...
+Committing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Uninstalling assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Removing EventLog source Service_FDS.
+Service Service_FDS is being removed from the system...
+Service Service_FDS was successfully removed from the system.
+Attempt to stop service Service_FDS.
+Installing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Installing service Service_FDS...
+Service Service_FDS has been successfully installed.
+Creating EventLog source Service_FDS in log Application...
+Committing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Uninstalling assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Removing EventLog source Service_FDS.
+Service Service_FDS is being removed from the system...
+Service Service_FDS was successfully removed from the system.
+Installing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Installing service Service_FDS...
+Service Service_FDS has been successfully installed.
+Creating EventLog source Service_FDS in log Application...
+Committing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Uninstalling assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Removing EventLog source Service_FDS.
+Service Service_FDS is being removed from the system...
+Service Service_FDS was successfully removed from the system.
+Installing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
+Installing service Service_FDS...
+Service Service_FDS has been successfully installed.
+Creating EventLog source Service_FDS in log Application...
+Committing assembly 'F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe'.
+Affected parameters are:
+   logtoconsole = 
+   assemblypath = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+   logfile = F:\Fusion\FDS\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.InstallLog
