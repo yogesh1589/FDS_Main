@@ -33,3 +33,15 @@ F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.CoreCompileInp
 F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.CopyComplete
 F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.exe
 F:\Fusion\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.pdb
+F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\Cake.Powershell.dll
+F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\FDS_Administrator.exe
+F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\Microsoft.Deployment.Compression.Cab.dll
+F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\Microsoft.Deployment.Compression.dll
+F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\Microsoft.Deployment.WindowsInstaller.dll
+F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\System.Management.Automation.dll
+F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\Microsoft.Management.Infrastructure.dll
+F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\FDS_Administrator.pdb
+F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\FDS_Administrator.exe.config
+F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\Cake.Powershell.pdb
+F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\Cake.Powershell.xml
+F:\Fusion\FDS\windowsapp\AutoUpdate\bin\Release\System.Management.Automation.xml

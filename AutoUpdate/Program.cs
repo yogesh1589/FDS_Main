@@ -220,32 +220,35 @@ namespace AutoUpdate
                 ShowWindow(hWnd, SW_HIDE);
             }
 
-            SendCommandToService("AutoUpdate");
+            //SendCommandToService("AutoUpdate");
 
-            //Process process = new Process();
-            //process.StartInfo.FileName = "msiexec";
-            //process.StartInfo.Arguments = $"/a \"{msiFilePath}\" /qn TARGETDIR=\"{outputDirectory}\"";
-            //process.StartInfo.UseShellExecute = false;
-            //process.StartInfo.RedirectStandardOutput = true;
-            //process.StartInfo.RedirectStandardError = true;
-            //process.StartInfo.CreateNoWindow = true;
 
-            //try
-            //{
-            //    process.Start();
-            //    Thread.Sleep(5000);
-            //    //process.BeginOutputReadLine();
+            Process process = new Process();
+            process.StartInfo.FileName = "msiexec";
+            process.StartInfo.Verb = "runas";
+            process.StartInfo.Arguments = $"/a \"{msiFilePath}\" /qn TARGETDIR=\"{outputDirectory}\"";
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.CreateNoWindow = true;
 
-            //}
-            //catch (Exception ex)
-            //{
-            //    Console.WriteLine("An error occurred: " + ex.Message);
-            //}
-            //finally
-            //{
-            //    process.Close();
+            try
+            {
+                process.Start();
+                process.WaitForExit(); // Wait for the process to complete before moving files
 
-            //}
+                // Move or copy files from tempDirectory to outputDirectory
+                // Example: Directory.Move(tempDirectory, outputDirectory);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred: " + ex.Message);
+            }
+            finally
+            {
+                // Cleanup: Delete temporary directory after moving files
+
+            }
         }
 
 

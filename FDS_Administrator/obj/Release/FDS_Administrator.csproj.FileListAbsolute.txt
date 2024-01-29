@@ -1,0 +1,7 @@
+F:\Fusion\FDS\windowsapp\FDS_Administrator\bin\Release\FDS_Administrator.exe.config
+F:\Fusion\FDS\windowsapp\FDS_Administrator\bin\Release\FDS_Administrator.exe
+F:\Fusion\FDS\windowsapp\FDS_Administrator\bin\Release\FDS_Administrator.pdb
+F:\Fusion\FDS\windowsapp\FDS_Administrator\obj\Release\FDS_Administrator.csproj.AssemblyReference.cache
+F:\Fusion\FDS\windowsapp\FDS_Administrator\obj\Release\FDS_Administrator.csproj.CoreCompileInputs.cache
+F:\Fusion\FDS\windowsapp\FDS_Administrator\obj\Release\FDS_Administrator.exe
+F:\Fusion\FDS\windowsapp\FDS_Administrator\obj\Release\FDS_Administrator.pdb

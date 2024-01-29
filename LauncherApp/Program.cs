@@ -382,7 +382,7 @@ uint nLength, out uint lpnLengthNeeded);
                     string desiredPath = Path.Combine(currentDirectory, @"..\Desktop");
                     string originalPath = Path.GetFullPath(desiredPath);
 
-                    string desiredPath1 = Path.Combine(Path.GetDirectoryName(originalPath), "..\\..\\Desktop\\bin\\Debug\\");
+                    string desiredPath1 = Path.Combine(Path.GetDirectoryName(originalPath), "..\\..\\Desktop\\bin\\Release\\");
                     string fullPath = Path.GetFullPath(desiredPath1);
 
                     applicationPath = fullPath;
