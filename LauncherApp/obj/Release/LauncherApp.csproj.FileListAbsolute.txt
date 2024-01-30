@@ -1,10 +1,6 @@
 F:\Fusion\FDS\windowsapp\LauncherApp\bin\Release\LauncherApp.exe.config
 F:\Fusion\FDS\windowsapp\LauncherApp\bin\Release\LauncherApp.exe
 F:\Fusion\FDS\windowsapp\LauncherApp\bin\Release\LauncherApp.pdb
-F:\Fusion\FDS\windowsapp\LauncherApp\obj\Release\LauncherApp.csproj.AssemblyReference.cache
-F:\Fusion\FDS\windowsapp\LauncherApp\obj\Release\LauncherApp.csproj.CoreCompileInputs.cache
-F:\Fusion\FDS\windowsapp\LauncherApp\obj\Release\LauncherApp.exe
-F:\Fusion\FDS\windowsapp\LauncherApp\obj\Release\LauncherApp.pdb
 F:\Fusion\FDS\windowsapp\LauncherApp\bin\Release\Microsoft.Win32.TaskScheduler.dll
 F:\Fusion\FDS\windowsapp\LauncherApp\bin\Release\Microsoft.Win32.TaskScheduler.xml
 F:\Fusion\FDS\windowsapp\LauncherApp\bin\Release\de\Microsoft.Win32.TaskScheduler.resources.dll
@@ -15,4 +11,8 @@ F:\Fusion\FDS\windowsapp\LauncherApp\bin\Release\pl\Microsoft.Win32.TaskSchedule
 F:\Fusion\FDS\windowsapp\LauncherApp\bin\Release\ru\Microsoft.Win32.TaskScheduler.resources.dll
 F:\Fusion\FDS\windowsapp\LauncherApp\bin\Release\zh-CN\Microsoft.Win32.TaskScheduler.resources.dll
 F:\Fusion\FDS\windowsapp\LauncherApp\bin\Release\zh-Hant\Microsoft.Win32.TaskScheduler.resources.dll
+F:\Fusion\FDS\windowsapp\LauncherApp\obj\Release\LauncherApp.csproj.AssemblyReference.cache
+F:\Fusion\FDS\windowsapp\LauncherApp\obj\Release\LauncherApp.csproj.CoreCompileInputs.cache
 F:\Fusion\FDS\windowsapp\LauncherApp\obj\Release\LauncherApp.csproj.CopyComplete
+F:\Fusion\FDS\windowsapp\LauncherApp\obj\Release\LauncherApp.exe
+F:\Fusion\FDS\windowsapp\LauncherApp\obj\Release\LauncherApp.pdb

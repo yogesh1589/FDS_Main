@@ -147,7 +147,7 @@ uint nLength, out uint lpnLengthNeeded);
                     {
 
                         //System.Threading.Thread.Sleep(5000);
-                        Thread.Sleep(TimeSpan.FromSeconds(30));
+                        Thread.Sleep(TimeSpan.FromSeconds(50));
 
                         if ((!CheckAppRunning(FdsProcessName)) && ((File.Exists(encryptOutPutFile)) || (cnt == 0)))
                         {

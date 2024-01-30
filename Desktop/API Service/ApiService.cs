@@ -887,43 +887,49 @@ namespace FDS.API_Service
                 UseProxy = false // Disable using the system proxy
             };
 
-
-            //using (var client1 = new HttpClient(handler))
-            //{
-            //    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
-            //    HttpResponseMessage response = await client1.GetAsync(downloadUrl);
-            //    if (response.IsSuccessStatusCode)
-            //    {
-
-            //        using (var fileStream = System.IO.File.Create(temporaryMSIPath))
-            //        {
-            //            await response.Content.CopyToAsync(fileStream);
-            //        }
-            //    }
-            //    else
-            //    {
-
-            //        return false;
-            //    }
-            //}
-            WebRequest.DefaultWebProxy = null;
-
-            using (var client1 = new WebClient())
+            try
             {
-                try
+                using (var client1 = new HttpClient(handler))
                 {
-                    Console.WriteLine("Downloading...");
-
-                    // Download the file asynchronously
-                    await client1.DownloadFileTaskAsync(new Uri(downloadUrl), temporaryMSIPath);
-
-                    Console.WriteLine($"File downloaded to: {temporaryMSIPath}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"An error occurred: {ex.Message}");
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    HttpResponseMessage response = await client1.GetAsync(downloadUrl);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        using (var fileStream = System.IO.File.Create(temporaryMSIPath))
+                        {
+                            await response.Content.CopyToAsync(fileStream);
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
                 }
             }
+            catch { return false; }
+            //WebRequest.DefaultWebProxy = null;
+
+            //using (var client1 = new WebClient())
+            //{
+            //    int maxRetries = 3;
+            //    int retryCount = 0;
+
+            //    while (retryCount < maxRetries)
+            //    {
+            //        try
+            //        {
+            //            // Download logic here
+            //            await client1.DownloadFileTaskAsync(new Uri(downloadUrl), temporaryMSIPath);
+            //            Console.WriteLine($"File downloaded to: {temporaryMSIPath}");
+            //            break; // Break out of the loop if download is successful
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            Console.WriteLine($"Attempt {retryCount + 1} failed. Retrying... Error: {ex.Message}");
+            //            retryCount++;
+            //        }
+            //    }
+            //}
 
             return true;
         }

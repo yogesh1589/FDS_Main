@@ -40,11 +40,11 @@ namespace AutoUpdate
         public static void Main(string[] args)
         {
             //Hide the console window
-            IntPtr hWnd = GetConsoleWindow();
-            if (hWnd != IntPtr.Zero)
-            {
-                ShowWindow(hWnd, SW_HIDE);
-            }
+            //IntPtr hWnd = GetConsoleWindow();
+            //if (hWnd != IntPtr.Zero)
+            //{
+            //    ShowWindow(hWnd, SW_HIDE);
+            //}
 
             string TempFDSPath = "C:\\web\\Temp\\FDS\\";
             Console.WriteLine("Hi! you are about to update your FDS application");
@@ -58,7 +58,12 @@ namespace AutoUpdate
                     installationPath = Path.GetDirectoryName(obj.ToString());
             }
 
-            Array.ForEach(Process.GetProcessesByName("FDS"), x => x.Kill());
+            if (IsAppRunning("FDS"))
+            {
+                WriteLog("App was running");
+            }
+
+            // Array.ForEach(Process.GetProcessesByName("FDS"), x => x.Kill());
 
             try
             {
@@ -70,13 +75,89 @@ namespace AutoUpdate
             }
             catch (Exception ex)
             {
+                WriteLog("Trying to close Launcher but error");
                 isAdmin = false;
                 ex.ToString();
+            }
+
+            if (string.IsNullOrEmpty(installationPath))
+            {
+                installationPath = "C:\\Fusion Data Secure\\FDS";
             }
 
             DeleteDirectoryContents(TempFDSPath, installationPath + "\\");
         }
 
+
+        static int CountProcesses(string processName)
+        {
+            int processCount = 0;
+
+            Process[] processes = Process.GetProcesses();
+
+            foreach (Process process in processes)
+            {
+                if (process.ProcessName.Equals(processName, StringComparison.OrdinalIgnoreCase))
+                {
+                    processCount++;
+                }
+            }
+
+            return processCount;
+        }
+
+
+        public static string GetProcessOwner2(int processId)
+        {
+            string query = "SELECT * FROM Win32_Process WHERE ProcessId = " + processId;
+            ManagementObjectSearcher searcher = new ManagementObjectSearcher(query);
+            ManagementObjectCollection processList = searcher.Get();
+
+            foreach (ManagementObject obj in processList)
+            {
+                string[] ownerInfo = new string[2];
+                obj.InvokeMethod("GetOwner", (object[])ownerInfo);
+                return ownerInfo[0];
+            }
+            return null;
+        }
+
+        public static bool IsAppRunning(string processName)
+        {
+            int bCnt = 0;
+            bool result = false;
+            string exeFileName = System.IO.Path.GetFileNameWithoutExtension(processName);
+            Process[] chromeProcesses = Process.GetProcessesByName(exeFileName);
+            string test = string.Empty;
+            foreach (Process process in chromeProcesses)
+            {
+                string processOwner = GetProcessOwner2(process.Id);
+                if (!string.IsNullOrEmpty(processOwner))
+                {
+                    test = processOwner;
+                    if (System.Security.Principal.WindowsIdentity.GetCurrent().Name.ToUpper().ToString().Contains(processOwner.ToUpper().ToString()))
+                    {
+                        bCnt++;
+                        try
+                        {
+                            process.Kill();
+                            WriteLog("Process " + process.ProcessName + " (ID: " + process.Id + ") closed successfully.");
+                        }
+                        catch (Exception ex)
+                        {
+                            WriteLog("Error closing process: " + ex.Message);
+                        }
+                    }
+                }
+            }
+
+            if (bCnt > 0)
+            {
+                WriteLog("Process Count = " + bCnt);
+                result = true;
+            }
+            return result;
+        }
 
 
         static bool IsProcessOpen(string processName)
@@ -91,6 +172,10 @@ namespace AutoUpdate
         {
             try
             {
+                //if(string.IsNullOrEmpty(directoryPath))
+                //{
+
+                //}
 
                 // Get the directory info
                 DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
@@ -105,13 +190,14 @@ namespace AutoUpdate
                     {
                         if ((file.Name == "LauncherApp.exe" && !isAdmin) || (file.Name == "FDS_Administrator.exe"))
                         {
+
                         }
                         else { file.Delete(); }
                     }
                     catch (Exception ex)
                     {
                         ex.ToString();
-                        WriteLog(" error in file deletion = " + ex.ToString());
+                        WriteLog(" error in file deletion = " + file.Name.ToString());
                     }
 
                     //Console.WriteLine($"{file.Name} deleted from the installation path");
@@ -121,31 +207,46 @@ namespace AutoUpdate
 
 
                 // Delete all subdirectories and their contents
+
                 foreach (DirectoryInfo subdirectory in directoryInfo.GetDirectories())
                 {
-                    if (!subdirectory.Name.Contains(baseTempFileDir))
+                    try
                     {
-                        subdirectory.Delete(true);
+                        if (!subdirectory.Name.Contains(baseTempFileDir))
+                        {
+                            subdirectory.Delete(true);
+                        }
+                    }
+                    catch
+                    {
+                        WriteLog("Error in folder deletion = " + subdirectory.Name.ToString());
                     }
                 }
 
 
+
                 //Hide the console window
-                IntPtr hWnd = GetConsoleWindow();
-                if (hWnd != IntPtr.Zero)
-                {
-                    ShowWindow(hWnd, SW_HIDE);
-                }
+                //IntPtr hWnd = GetConsoleWindow();
+                //if (hWnd != IntPtr.Zero)
+                //{
+                //    ShowWindow(hWnd, SW_HIDE);
+                //}
                 //Console.WriteLine("Files Deleted from installation path");
                 //Thread.Sleep(2000);
 
                 Console.WriteLine("Start Files Extracted to installation path");
+
                 ExtractMSIContent(sourcePath + "FDS.msi", directoryPath);
 
                 Thread.Sleep(20000);
                 //Console.WriteLine("Files Extracted to installation path");
 
+
                 string AutoUpdateExePath = string.Empty;
+                string FDSpath = directoryPath + "FDS.exe";
+
+                
+
                 if (File.Exists(directoryPath + "LauncherApp.exe"))
                 {
                     AutoUpdateExePath = directoryPath + "LauncherApp.exe";
@@ -154,21 +255,24 @@ namespace AutoUpdate
                 {
                     AutoUpdateExePath = directoryPath + "FDS.exe";
                 }
-
-                //StartService("FDSWatchDog");
-                //StopRemoveStartupApplication(directoryPath, "LauncherApp.exe");
-                //Console.WriteLine("start FDS from " + AutoUpdateExePath);
+                
                 try
                 {
                     if (!IsProcessOpen("LauncherApp"))
                     {
+                       // WriteLog("Start = " + AutoUpdateExePath);
                         Process.Start(AutoUpdateExePath);
+                    }
+                    else
+                    {
+                        //WriteLog("Start = " + FDSpath);
+                        Process.Start(FDSpath);
                     }
 
                 }
-                catch
+                catch (Exception ex)
                 {
-                    WriteLog("LauncherApp Catch error running");
+                    WriteLog("LauncherApp Catch error running " + ex.Message.ToString());
                 }
 
             }
@@ -195,7 +299,7 @@ namespace AutoUpdate
                 Verb = "runas", // Run as administrator if needed
                 UseShellExecute = true,
                 CreateNoWindow = true,
-                WindowStyle = ProcessWindowStyle.Hidden,
+                //WindowStyle = ProcessWindowStyle.Hidden,
                 Arguments = arguments // Pass arguments here
             };
 
@@ -222,11 +326,15 @@ namespace AutoUpdate
 
             //SendCommandToService("AutoUpdate");
 
-
+            string path = AppDomain.CurrentDomain.BaseDirectory + "AutoUpdate\\";
+            //string path = "C:\\web\\Temp\\FDS\\AutoUpdate\\";
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
             Process process = new Process();
             process.StartInfo.FileName = "msiexec";
-            process.StartInfo.Verb = "runas";
-            process.StartInfo.Arguments = $"/a \"{msiFilePath}\" /qn TARGETDIR=\"{outputDirectory}\"";
+            process.StartInfo.Arguments = $"/a \"{msiFilePath}\" /qn TARGETDIR=\"{path}\"";
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.RedirectStandardError = true;
@@ -235,19 +343,76 @@ namespace AutoUpdate
             try
             {
                 process.Start();
-                process.WaitForExit(); // Wait for the process to complete before moving files
+                Thread.Sleep(5000);
+                //process.BeginOutputReadLine();
 
-                // Move or copy files from tempDirectory to outputDirectory
-                // Example: Directory.Move(tempDirectory, outputDirectory);
             }
             catch (Exception ex)
             {
+                WriteLog("Error in Extracting");
                 Console.WriteLine("An error occurred: " + ex.Message);
             }
             finally
             {
-                // Cleanup: Delete temporary directory after moving files
+                process.Close();
+            }
 
+            //WriteLog("Source =" + path);
+            //WriteLog("Destination =" + outputDirectory);
+
+            CopyDirectory(path, outputDirectory);
+
+        }
+
+
+
+        static void CopyDirectory(string sourceDir, string destDir)
+        {
+            try
+            {
+
+           
+            if (!Directory.Exists(destDir))
+            {
+                Directory.CreateDirectory(destDir);
+            }
+
+            // Copy files
+            foreach (string filePath in Directory.GetFiles(sourceDir))
+            {
+                try
+                {
+                    string fileName = Path.GetFileName(filePath);
+                    string destFilePath = Path.Combine(destDir, fileName);
+
+                    File.Copy(filePath, destFilePath, true); // Set 'true' to overwrite existing files
+                    System.Threading.Thread.Sleep(100);
+                    File.Delete(filePath);
+                }
+                catch
+                {
+                    WriteLog("error in copy file " + filePath);
+                }
+            }
+
+            // Copy subdirectories
+            foreach (string subDir in Directory.GetDirectories(sourceDir))
+            {
+                try
+                {
+                    string subDirName = Path.GetFileName(subDir);
+                    string destSubDir = Path.Combine(destDir, subDirName);
+                    CopyDirectory(subDir, destSubDir);
+                    System.Threading.Thread.Sleep(100);
+                    Directory.Delete(subDir);
+                }
+                catch { WriteLog("error in folder " + subDir); }
+            }
+
+            }
+            catch (Exception)
+            {
+                WriteLog("Eception in copying file");                
             }
         }
 
