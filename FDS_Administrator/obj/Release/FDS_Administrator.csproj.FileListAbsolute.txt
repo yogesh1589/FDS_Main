@@ -5,3 +5,15 @@ F:\Fusion\FDS\windowsapp\FDS_Administrator\obj\Release\FDS_Administrator.csproj.
 F:\Fusion\FDS\windowsapp\FDS_Administrator\obj\Release\FDS_Administrator.csproj.CoreCompileInputs.cache
 F:\Fusion\FDS\windowsapp\FDS_Administrator\obj\Release\FDS_Administrator.exe
 F:\Fusion\FDS\windowsapp\FDS_Administrator\obj\Release\FDS_Administrator.pdb
+D:\14March\FDS\windowsapp\FDS_Administrator\bin\Release\FDS_Administrator.exe.config
+D:\14March\FDS\windowsapp\FDS_Administrator\bin\Release\FDS_Administrator.exe
+D:\14March\FDS\windowsapp\FDS_Administrator\bin\Release\FDS_Administrator.pdb
+D:\14March\FDS\windowsapp\FDS_Administrator\obj\Release\FDS_Administrator.csproj.AssemblyReference.cache
+D:\14March\FDS\windowsapp\FDS_Administrator\obj\Release\FDS_Administrator.csproj.CoreCompileInputs.cache
+D:\14March\FDS\windowsapp\FDS_Administrator\obj\Release\FDS_Administrator.exe
+D:\14March\FDS\windowsapp\FDS_Administrator\obj\Release\FDS_Administrator.pdb
+D:\14March\FDS\windowsapp\FDS_Administrator\bin\Release\Newtonsoft.Json.dll
+D:\14March\FDS\windowsapp\FDS_Administrator\bin\Release\System.CodeDom.dll
+D:\14March\FDS\windowsapp\FDS_Administrator\bin\Release\Newtonsoft.Json.xml
+D:\14March\FDS\windowsapp\FDS_Administrator\bin\Release\System.CodeDom.xml
+D:\14March\FDS\windowsapp\FDS_Administrator\obj\Release\FDS_Admi.AF765904.Up2Date

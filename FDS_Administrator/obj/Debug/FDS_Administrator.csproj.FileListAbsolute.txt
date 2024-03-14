@@ -5,3 +5,15 @@ F:\Fusion\FDS\windowsapp\FDS_Administrator\obj\Debug\FDS_Administrator.csproj.As
 F:\Fusion\FDS\windowsapp\FDS_Administrator\obj\Debug\FDS_Administrator.csproj.CoreCompileInputs.cache
 F:\Fusion\FDS\windowsapp\FDS_Administrator\obj\Debug\FDS_Administrator.exe
 F:\Fusion\FDS\windowsapp\FDS_Administrator\obj\Debug\FDS_Administrator.pdb
+D:\14March\FDS\windowsapp\FDS_Administrator\bin\Debug\FDS_Administrator.exe.config
+D:\14March\FDS\windowsapp\FDS_Administrator\bin\Debug\FDS_Administrator.exe
+D:\14March\FDS\windowsapp\FDS_Administrator\bin\Debug\FDS_Administrator.pdb
+D:\14March\FDS\windowsapp\FDS_Administrator\bin\Debug\Newtonsoft.Json.dll
+D:\14March\FDS\windowsapp\FDS_Administrator\bin\Debug\System.CodeDom.dll
+D:\14March\FDS\windowsapp\FDS_Administrator\bin\Debug\Newtonsoft.Json.xml
+D:\14March\FDS\windowsapp\FDS_Administrator\bin\Debug\System.CodeDom.xml
+D:\14March\FDS\windowsapp\FDS_Administrator\obj\Debug\FDS_Administrator.csproj.AssemblyReference.cache
+D:\14March\FDS\windowsapp\FDS_Administrator\obj\Debug\FDS_Administrator.csproj.CoreCompileInputs.cache
+D:\14March\FDS\windowsapp\FDS_Administrator\obj\Debug\FDS_Admi.AF765904.Up2Date
+D:\14March\FDS\windowsapp\FDS_Administrator\obj\Debug\FDS_Administrator.exe
+D:\14March\FDS\windowsapp\FDS_Administrator\obj\Debug\FDS_Administrator.pdb
