@@ -16,4 +16,4 @@ D:\14March\FDS\windowsapp\FDS_Administrator\bin\Release\Newtonsoft.Json.dll
 D:\14March\FDS\windowsapp\FDS_Administrator\bin\Release\System.CodeDom.dll
 D:\14March\FDS\windowsapp\FDS_Administrator\bin\Release\Newtonsoft.Json.xml
 D:\14March\FDS\windowsapp\FDS_Administrator\bin\Release\System.CodeDom.xml
-D:\14March\FDS\windowsapp\FDS_Administrator\obj\Release\FDS_Admi.AF765904.Up2Date
+D:\14March\FDS\windowsapp\FDS_Administrator\obj\Release\FDS_Administrator.csproj.CopyComplete

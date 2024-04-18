@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,6 +19,7 @@ namespace FDS.DTO.Responses
         public int Service_count { get; set; }
         public bool Service_active { get; set; }
         public List<SubservicesData> Subservices { get; set; }
+ 
 
     }
     public class SubservicesData
@@ -31,5 +33,9 @@ namespace FDS.DTO.Responses
         public bool Execute_now { get; set; }
 
         public bool Execute_Skipped_Service { get; set; }
+
+        public bool Subscribe { get; set; }
     }
+
+   
 }

@@ -62,10 +62,10 @@ D:\14March\FDS\windowsapp\AutoUpdate\bin\Release\Cake.Powershell.xml
 D:\14March\FDS\windowsapp\AutoUpdate\bin\Release\System.Management.Automation.xml
 D:\14March\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.AssemblyReference.cache
 D:\14March\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.CoreCompileInputs.cache
-D:\14March\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.Up2Date
 D:\14March\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.exe
 D:\14March\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.pdb
 D:\14March\FDS\windowsapp\AutoUpdate\bin\Release\Newtonsoft.Json.dll
 D:\14March\FDS\windowsapp\AutoUpdate\bin\Release\System.CodeDom.dll
 D:\14March\FDS\windowsapp\AutoUpdate\bin\Release\Newtonsoft.Json.xml
 D:\14March\FDS\windowsapp\AutoUpdate\bin\Release\System.CodeDom.xml
+D:\14March\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.CopyComplete

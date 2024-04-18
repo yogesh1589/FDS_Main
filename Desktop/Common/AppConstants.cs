@@ -14,6 +14,7 @@ namespace FDS.Common
     {
         internal const string InvalidKeyErrorMsg = "Invalid Key";
         internal const int TotalKeyActivationSeconds = 600;
+        internal const int TotalKeyActivationSecondsOTP = 120;
         public const string KeyPrfix = "FDS_Key_";
         //public const string AuthKey = SerialNumber + MACAddress + CodeVersion;
         public static string MachineName => System.Environment.MachineName;
@@ -43,6 +44,9 @@ namespace FDS.Common
             public const string CertificateLog = "certificatelog/";
             public const string ProxyLog = "proxylog/";
             public const string individual = "individual/";
+            public const string healthscore = "healthscore/";
+            public const string serviceinfo = "serviceinfo/";
+            
         }
         public const string DeviceType = "1";
         public static string CodeVersion = ConfigurationManager.AppSettings["CodeVersion"];

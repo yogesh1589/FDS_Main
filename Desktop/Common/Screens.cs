@@ -21,6 +21,7 @@ namespace FDS.Common
         Landing,
         ServiceClear,
         Popup,
-        DataProtection
+        DataProtection,
+         
     }
 }

@@ -1,17 +1,20 @@
-﻿using FDS.API_Service;
+﻿
+using FDS.API_Service;
 using FDS.Common;
+using FDS.DTO.Requests;
 using FDS.DTO.Responses;
 using FDS.Factories;
 using FDS.Logging;
 using FDS.Runners;
 using FDS.WindowService;
- 
+
 using Microsoft.Win32;
 using NCrontab;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Globalization;
@@ -23,15 +26,19 @@ using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Principal;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using WpfAnimatedGif;
+
+
 
 namespace FDS
 {
@@ -61,6 +68,7 @@ namespace FDS
         }
 
         DispatcherTimer timerQRCode;
+        DispatcherTimer timerOTPCode;
         DispatcherTimer timerDeviceLogin;
         DispatcherTimer timerLastUpdate;
         DispatcherTimer QRGeneratortimer;
@@ -69,7 +77,9 @@ namespace FDS
         DispatcherTimer UninstallResponseTimer;
         DispatcherTimer timerEventBasedService;
 
+        bool isOTPTimerExpired = false;
         int TotalSeconds = Common.AppConstants.TotalKeyActivationSeconds;
+        int TotalSecondsOTP = Common.AppConstants.TotalKeyActivationSecondsOTP;
         System.Windows.Forms.NotifyIcon icon;
         public DeviceResponse DeviceResponse { get; private set; }
         public Window thisWindow { get; }
@@ -115,7 +125,7 @@ namespace FDS
         string encryptOutPutFile = @"\Main";
         System.Windows.Controls.Image imgLoader;
         bool deviceDeletedFlag = false;
-        bool showMessageBoxes = false;//true for staging and false for production
+        bool showMessageBoxes = true;//true for staging and false for production
         ApiService apiService = new ApiService();
         public static byte[] EncKey { get; set; }
         public bool deviceActive = true;
@@ -124,16 +134,20 @@ namespace FDS
 
         public RSACryptoServiceProvider RSADevice { get; set; }
         public RSACryptoServiceProvider RSAServer { get; set; }
-
+        public double valueFromBackend = 0;
         public string proxyAddress = string.Empty;
         public string proxyPort = string.Empty;
         public bool loadFDS = false;
-      
+        private bool interactionsEnabled = true;
+        public ObservableCollection<ServiceDPP> Services { get; } = new ObservableCollection<ServiceDPP>();
+        public bool allServiceDisabled = false;
+
         public FDSMain()
         {
             try
             {
 
+                MaximumValue = 10; // Set the maximum value
                 int insCount = Generic.AlreadyRunningInstance();
                 if (insCount > 1)
                     App.Current.Shutdown();
@@ -144,10 +158,10 @@ namespace FDS
                 InitializeFDS();
                 DataContext = new ViewModel();
                 thisWindow = GetWindow(this);
-                //client = new HttpClient { BaseAddress = AppConstants.EndPoints.BaseAPI };
-                // // Set the path to the directory you want to monitor
-          
 
+
+               
+                DataContext = this;
             }
             catch (Exception ex)
             {
@@ -159,13 +173,61 @@ namespace FDS
 
         }
 
+        private double _maximumValue;
+        public double MaximumValue
+        {
+            get { return _maximumValue; }
+            set
+            {
+                if (_maximumValue != value)
+                {
+                    _maximumValue = value;
+                    OnPropertyChanged(nameof(MaximumValue));
+                }
+            }
+        }
 
+  
+        private void UpdateArcPropertiesFromApi(double vals)
+        {
+            // Simulated API call to get values
+            // For example, let's assume you get the values 5 and 90 from the API
+            double endAngleFromApi = vals; // Value from 1 to 10 mapped to 90 degrees
+            string arcColorFromApi = "#FF0000"; // Value from API for arc color
+
+            // Update ArcColor
+            arcColor.Stroke = (SolidColorBrush)(new BrushConverter().ConvertFrom(arcColorFromApi));
+
+            // Update EndAngle
+            arcColor.EndAngle = CalculateEndAngle2(endAngleFromApi);
+        }
+
+        private double CalculateEndAngle2(double value)
+        {
+            // Implement your logic to calculate the EndAngle here
+            // Example: Scaling the value to a range of -120 to 120 degrees
+            double maxAngle = 120; // Maximum angle
+            double minAngle = -120; // Minimum angle
+            double scaledValue = (value / 10.0) * (maxAngle - minAngle) + minAngle; // Scale the value
+            return scaledValue;
+        }
+
+       
+
+       
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
         private void InitializeFDS()
         {
             cmbCountryCode.DropDownClosed += cmbCountryCode_DropDownClosed;
-            txtCodeVersion.Text = AppConstants.CodeVersion;
+            txtCodeVersion.Text = "v" + AppConstants.CodeVersion;
             imgLoader = SetGIF("\\Assets\\spinner.gif");
             if (Generic.IsUserAdministrator())
+
             {
                 IsUninstallFlagUpdated();
             }
@@ -192,6 +254,10 @@ namespace FDS
             timerQRCode = new DispatcherTimer();
             timerQRCode.Interval = TimeSpan.FromMilliseconds(1000);
             timerQRCode.Tick += timerQRCode_Tick;
+
+            timerOTPCode = new DispatcherTimer();
+            timerOTPCode.Interval = TimeSpan.FromSeconds(1);
+            timerOTPCode.Tick += timerOTPCode_Tick;
 
             timerDeviceLogin = new DispatcherTimer();
             timerDeviceLogin.Interval = TimeSpan.FromMilliseconds(1000 * 5);
@@ -223,11 +289,14 @@ namespace FDS
             timerNetworkMonitering.IsEnabled = false;
         }
 
+
+
+
         public void SetShortCut(string LauncherAppPath)
         {
             try
             {
-                 
+
                 // Destination path for the shortcut in the Startup folder
                 string startupFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup), "FDS.lnk");
 
@@ -255,32 +324,128 @@ namespace FDS
             }
         }
 
+        private void Image1_MouseEnter(object sender, MouseEventArgs e)
+        {
+            image1.Opacity = 0.6;
+        }
+
+        private void Image1_MouseLeave(object sender, MouseEventArgs e)
+        {
+            image1.Opacity = 1.0;
+        }
+
+        private async void Image1_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (image1.Source.ToString().Contains("/Assets/VPNDis.png"))
+            {
+                image1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
+                vpnstatus.Text = "Connect";
+                vpnstatus.Foreground = Brushes.Green;
+                sytemInfo2.Text = "Unprotected";
+
+                sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                sytemInfo4.Text = "N/A";
+            }
+            else
+            {
+
+                // Show the loader and download status text
+                loaderVPN.Visibility = Visibility.Visible;
+                downloadStatusVPN.Visibility = Visibility.Visible;
+                vpnstatus.Visibility = Visibility.Hidden;
+                image1.Visibility = Visibility.Hidden;
+
+                // Simulate file download (Replace this with your actual file download logic)
+                await Task.Delay(10000); // Simulating a 3-second delay
+
+                // After files are downloaded, hide the loader and download status text
+                loaderVPN.Visibility = Visibility.Collapsed;
+                downloadStatusVPN.Visibility = Visibility.Collapsed;
+                vpnstatus.Visibility = Visibility.Visible;
+                image1.Visibility = Visibility.Visible;
+
+                image1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
+                vpnstatus.Text = "Disconnect";
+                vpnstatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                sytemInfo2.Text = "Protected";
+                sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
+                sytemInfo4.Text = "InstanceA";
+            }
+
+            image1.Opacity = 6.0;
+        }
+
+        private void VPNImage1_MouseEnter(object sender, MouseEventArgs e)
+        {
+            image1.Opacity = 0.6;
+        }
+
+        private void VPNImage1_MouseLeave(object sender, MouseEventArgs e)
+        {
+            image1.Opacity = 1.0;
+        }
+
+        private async void VPNImage1_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (VPNimage1.Source.ToString().Contains("/Assets/VPNDis.png"))
+            {
+                VPNimage1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
+                vpnstatus2.Text = "Connect";
+                vpnstatus2.Foreground = Brushes.Green;
+                sytemInfo2.Text = "Unprotected";
+                sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                sytemInfo4.Text = "N/A";
+            }
+            else
+            {
+
+                // Show the loader and download status text
+                loader.Visibility = Visibility.Visible;
+                downloadStatus.Visibility = Visibility.Visible;
+                vpnstatus2.Visibility = Visibility.Hidden;
+                VPNimage1.Visibility = Visibility.Hidden;
+
+                // Simulate file download (Replace this with your actual file download logic)
+                await Task.Delay(10000); // Simulating a 3-second delay
+
+                // After files are downloaded, hide the loader and download status text
+                loader.Visibility = Visibility.Collapsed;
+                downloadStatus.Visibility = Visibility.Collapsed;
+                vpnstatus2.Visibility = Visibility.Visible;
+                VPNimage1.Visibility = Visibility.Visible;
+                VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
+                vpnstatus2.Text = "Disconnect";
+                vpnstatus2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                sytemInfo2.Text = "Protected";
+                sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
+                sytemInfo4.Text = "InstanceA";
+            }
+
+            image1.Opacity = 6.0;
+            ShowMap();
+        }
+
         public void LoadFDS()
         {
             try
             {
                 try
                 {
-                    string LauncherAppPath = String.Format("{0}LauncherApp.exe", AppDomain.CurrentDomain.BaseDirectory);                
-                    SetShortCut(LauncherAppPath);                     
+                    string LauncherAppPath = String.Format("{0}LauncherApp.exe", AppDomain.CurrentDomain.BaseDirectory);
+                    SetShortCut(LauncherAppPath);
                     WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
                     windowServiceInstaller.InstallService();
                     windowServiceInstaller.StartService();
-
-                    //string folder = @"C:\web\Temp\FDS";
-                    //RemoveAccessControl(folder);
-                    //SetAccessControl(folder);
-                    // SetAccessControl("C:\\Fusion Data Secure\\FDS");
                 }
                 catch (Exception ex)
                 {
                     ex.ToString();
                 }
 
-                
 
-                btnUninstall.Foreground = System.Windows.Media.Brushes.Blue;
-                loadFDS = true;             
+
+                btnUninstall.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                loadFDS = true;
 
                 //// -------Actual Code --------------------------------
                 encryptOutPutFile = basePathEncryption + @"\Main";
@@ -296,48 +461,6 @@ namespace FDS
 
                 if (!CheckAllKeys())
                 {
-                    #region Auto start on startup done by Installer
-
-                    //string applicationPath = "";
-                    //RegistryKey registryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
-                    //if (registryKey != null)
-                    //{
-                    //    object obj = registryKey.GetValue("FDS");
-                    //    if (obj != null)
-                    //        applicationPath = Path.GetDirectoryName(obj.ToString());
-                    //}
-                    //if (Generic.IsUserAdministrator())
-                    //{
-                    //using (RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true))
-                    //{
-                    //    if (key != null)
-                    //    {
-                    //        string exeFile = Path.Combine(applicationPath, "LauncherApp.exe");
-
-                    //        // Check if the application is already in startup
-                    //        if (key.GetValue("LauncherApp1") == null)
-                    //        {
-                    //            // If not, add it to startup
-                    //            key.SetValue("LauncherApp1", $"\"{exeFile}\" --opened-at-login --minimize");
-                    //            Console.WriteLine("Application added to startup successfully.");
-                    //        }
-                    //        else
-                    //        {
-                    //            Console.WriteLine("Application already set to start on login.");
-                    //        }
-
-                    //        // Start the application
-                    //        Process.Start(exeFile);
-                    //        Console.WriteLine("Application started.");
-                    //    }
-                    //    else
-                    //    {
-                    //        Console.WriteLine("Registry key not found.");
-                    //    }
-                    //}
-                    //}
-                    #endregion
-
                     LoadMenu(Screens.GetStart);
                 }
                 else
@@ -393,12 +516,10 @@ namespace FDS
         {
             try
             {
+                Color myColor = Color.FromRgb(30, 47, 96);
+                SolidColorBrush newBrush = new SolidColorBrush(myColor);
                 cntGetStart.Visibility = Visibility.Hidden;
                 cntQRCode.Visibility = Visibility.Hidden;
-                cntLanding.Visibility = Visibility.Hidden;
-                //cntNavMenu.Visibility = Visibility.Hidden;
-                //imgWires.Visibility = Visibility.Hidden;
-                //imgPantgone.Visibility = Visibility.Hidden;
                 cntServiceSetting.Visibility = Visibility.Hidden;
                 cntServiceSettingPart2.Visibility = Visibility.Hidden;
                 cntBackdrop.Visibility = Visibility.Hidden;
@@ -415,11 +536,21 @@ namespace FDS
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
+                        imgDesktop2.Visibility = Visibility.Hidden;
+                        txtOrganization.Visibility = Visibility.Hidden;
                         cntGetStart.Visibility = Visibility.Visible;
                         btnUninstall.Visibility = Visibility.Hidden;
                         AuthenticationStep1.Visibility = Visibility.Hidden;
                         AuthenticationStep2.Visibility = Visibility.Hidden;
                         AuthenticationStep3.Visibility = Visibility.Hidden;
+                        lblMainLable1.Visibility = Visibility.Visible;
+                        lblMainLable2.Visibility = Visibility.Visible;
+                        MainHomePageUI.Visibility = Visibility.Hidden;
+
+                        titleFusion.Visibility = Visibility.Hidden;
+                        AuthenticationMethods2.Visibility = Visibility.Hidden;
+                        AuthenticationMethods.Visibility = Visibility.Hidden;
+
                         break;
                     case Screens.AuthenticationMethods2:
                         strScreenVals = "AuthenticationMethods2";
@@ -428,23 +559,29 @@ namespace FDS
                         AuthenticationStep1.Visibility = Visibility.Hidden;
                         AuthenticationStep2.Visibility = Visibility.Hidden;
                         AuthenticationStep3.Visibility = Visibility.Hidden;
-                        lblUserName.Visibility = Visibility.Hidden;
+                        //lblUserName.Visibility = Visibility.Hidden;
                         AuthenticationProcessing.Visibility = Visibility.Hidden;
                         AuthenticationFailed.Visibility = Visibility.Hidden;
                         AuthenticationSuccessfull.Visibility = Visibility.Hidden;
                         //txtEmail.Text = string.Empty;
-                        txtPhoneNubmer.Text = string.Empty;
+                        txtPhoneNumber.Text = string.Empty;
                         txtEmailToken.Text = string.Empty;
-                        txtDigit1.Text = string.Empty;
-                        txtDigit2.Text = string.Empty;
-                        txtDigit3.Text = string.Empty;
-                        txtDigit4.Text = string.Empty;
-                        txtDigit5.Text = string.Empty;
-                        txtDigit6.Text = string.Empty;
+                        //txtDigit1.Text = string.Empty;
+                        //txtDigit2.Text = string.Empty;
+                        //txtDigit3.Text = string.Empty;
+                        //txtDigit4.Text = string.Empty;
+                        //txtDigit5.Text = string.Empty;
+                        //txtDigit6.Text = string.Empty;
                         header.Visibility = Visibility.Visible;
-                        lblUserName.Visibility = Visibility.Hidden;
+
                         imgDesktop.Visibility = Visibility.Hidden;
+                        imgDesktop2.Visibility = Visibility.Hidden;
+                        txtOrganization.Visibility = Visibility.Hidden;
                         btnUninstall.Visibility = Visibility.Hidden;
+                        lblMainLable1.Visibility = Visibility.Hidden;
+                        lblMainLable2.Visibility = Visibility.Hidden;
+                        header.Background = newBrush;
+                        titleFusion.Visibility = Visibility.Visible;
                         break;
                     case Screens.AuthenticationMethods:
                         strScreenVals = "AuthenticationMethods";
@@ -458,18 +595,24 @@ namespace FDS
                         AuthenticationFailed.Visibility = Visibility.Hidden;
                         AuthenticationSuccessfull.Visibility = Visibility.Hidden;
                         //txtEmail.Text = string.Empty;
-                        txtPhoneNubmer.Text = string.Empty;
+                        txtPhoneNumber.Text = string.Empty;
                         txtEmailToken.Text = string.Empty;
-                        txtDigit1.Text = string.Empty;
-                        txtDigit2.Text = string.Empty;
-                        txtDigit3.Text = string.Empty;
-                        txtDigit4.Text = string.Empty;
-                        txtDigit5.Text = string.Empty;
-                        txtDigit6.Text = string.Empty;
+                        //txtDigit1.Text = string.Empty;
+                        //txtDigit2.Text = string.Empty;
+                        //txtDigit3.Text = string.Empty;
+                        //txtDigit4.Text = string.Empty;
+                        //txtDigit5.Text = string.Empty;
+                        //txtDigit6.Text = string.Empty;
                         header.Visibility = Visibility.Visible;
-                        lblUserName.Visibility = Visibility.Hidden;
+
                         imgDesktop.Visibility = Visibility.Hidden;
+                        imgDesktop2.Visibility = Visibility.Hidden;
+                        txtOrganization.Visibility = Visibility.Hidden;
                         btnUninstall.Visibility = Visibility.Hidden;
+                        lblMainLable1.Visibility = Visibility.Hidden;
+                        lblMainLable2.Visibility = Visibility.Hidden;
+                        header.Background = newBrush;
+                        titleFusion.Visibility = Visibility.Visible;
                         break;
                     case Screens.AuthenticationStep1:
                         strScreenVals = "AuthenticationStep1";
@@ -480,17 +623,29 @@ namespace FDS
                         AuthenticationStep3.Visibility = Visibility.Hidden;
                         lblUserName.Visibility = Visibility.Hidden;
                         header.Visibility = Visibility.Visible;
-                        lblUserName.Visibility = Visibility.Hidden;
+
                         imgDesktop.Visibility = Visibility.Hidden;
+                        imgDesktop2.Visibility = Visibility.Hidden;
+                        txtOrganization.Visibility = Visibility.Hidden;
                         btnUninstall.Visibility = Visibility.Hidden;
-                        txtDigit1.Text = string.Empty;
-                        txtDigit2.Text = string.Empty;
-                        txtDigit3.Text = string.Empty;
-                        txtDigit4.Text = string.Empty;
-                        txtDigit5.Text = string.Empty;
-                        txtDigit6.Text = string.Empty;
+                        //txtDigit1.Text = string.Empty;
+                        //txtDigit2.Text = string.Empty;
+                        //txtDigit3.Text = string.Empty;
+                        //txtDigit4.Text = string.Empty;
+                        //txtDigit5.Text = string.Empty;
+                        //txtDigit6.Text = string.Empty;
+                        lblMainLable1.Visibility = Visibility.Hidden;
+                        lblMainLable2.Visibility = Visibility.Hidden;
+                        txtPhoneValidation.Text = string.Empty;
+                        txtPhoneValidation.Visibility = Visibility.Hidden;
+                        txtEmailTokenValidation.Text = string.Empty;
+                        txtEmailTokenValidation.Visibility = Visibility.Hidden;
+                        header.Background = newBrush;
+                        titleFusion.Visibility = Visibility.Visible;
                         break;
                     case Screens.AuthenticationStep2:
+
+                        timerOTPCode.IsEnabled = true;
                         strScreenVals = "AuthenticationStep2";
                         AuthenticationStep2.Visibility = Visibility.Visible;
                         AuthenticationStep3.Visibility = Visibility.Hidden;
@@ -501,20 +656,33 @@ namespace FDS
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
+                        imgDesktop2.Visibility = Visibility.Hidden;
+                        txtOrganization.Visibility = Visibility.Hidden;
                         btnUninstall.Visibility = Visibility.Hidden;
+                        lblMainLable1.Visibility = Visibility.Hidden;
+                        lblMainLable2.Visibility = Visibility.Hidden;
+                        header.Background = newBrush;
+                        titleFusion.Visibility = Visibility.Visible;
                         break;
                     case Screens.AuthenticationStep3:
                         strScreenVals = "AuthenticationStep3";
                         AuthenticationStep3.Visibility = Visibility.Visible;
                         txtlicenseToken.Text = "";
                         AuthenticationStep2.Visibility = Visibility.Hidden;
-
+                        txtlicenseTokenValidation.Text = "";
+                        txtlicenseTokenValidation.Visibility = Visibility.Hidden;
                         AuthenticationMethods.Visibility = Visibility.Hidden;
                         AuthenticationMethods2.Visibility = Visibility.Hidden;
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
+                        imgDesktop2.Visibility = Visibility.Hidden;
+                        txtOrganization.Visibility = Visibility.Hidden;
                         btnUninstall.Visibility = Visibility.Hidden;
+                        lblMainLable1.Visibility = Visibility.Hidden;
+                        lblMainLable2.Visibility = Visibility.Hidden;
+                        header.Background = newBrush;
+                        titleFusion.Visibility = Visibility.Visible;
                         break;
                     case Screens.AuthenticationProcessing:
                         AuthenticationProcessing.Visibility = Visibility.Visible;
@@ -523,8 +691,14 @@ namespace FDS
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
-                        System.Windows.Controls.Image imgProcessing = SetGIF("\\Assets\\loader.gif");
-                        AuthenticationProcessing.Children.Add(imgProcessing);
+                        imgDesktop2.Visibility = Visibility.Hidden;
+                        txtOrganization.Visibility = Visibility.Hidden;
+                        //System.Windows.Controls.Image imgProcessing = SetGIF("\\Assets\\loader.gif");
+                        //AuthenticationProcessing.Children.Add(imgProcessing);
+                        lblMainLable1.Visibility = Visibility.Hidden;
+                        lblMainLable2.Visibility = Visibility.Hidden;
+                        header.Background = newBrush;
+                        titleFusion.Visibility = Visibility.Visible;
                         break;
                     case Screens.AuthSuccessfull:
                         AuthenticationSuccessfull.Visibility = Visibility.Visible;
@@ -535,8 +709,14 @@ namespace FDS
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
+                        imgDesktop2.Visibility = Visibility.Hidden;
+                        txtOrganization.Visibility = Visibility.Hidden;
                         System.Windows.Controls.Image imgSuccess = SetGIF("\\Assets\\success.gif");
                         AuthenticationSuccessfull.Children.Add(imgSuccess);
+                        lblMainLable1.Visibility = Visibility.Hidden;
+                        lblMainLable2.Visibility = Visibility.Hidden;
+                        header.Background = newBrush;
+                        titleFusion.Visibility = Visibility.Visible;
                         break;
                     case Screens.AuthFailed:
                         AuthenticationMethods.Visibility = Visibility.Hidden;
@@ -549,8 +729,14 @@ namespace FDS
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
+                        imgDesktop2.Visibility = Visibility.Hidden;
+                        txtOrganization.Visibility = Visibility.Hidden;
                         System.Windows.Controls.Image imgfailed = SetGIF("\\Assets\\failed.gif");
                         AuthenticationFailed.Children.Add(imgfailed);
+                        lblMainLable1.Visibility = Visibility.Hidden;
+                        lblMainLable2.Visibility = Visibility.Hidden;
+                        header.Background = newBrush;
+                        titleFusion.Visibility = Visibility.Visible;
                         break;
                     case Screens.QRCode:
                         cntQRCode.Visibility = Visibility.Visible;
@@ -558,21 +744,27 @@ namespace FDS
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
+                        imgDesktop2.Visibility = Visibility.Hidden;
+                        txtOrganization.Visibility = Visibility.Hidden;
                         btnUninstall.Visibility = Visibility.Hidden;
+                        lblMainLable1.Visibility = Visibility.Hidden;
+                        lblMainLable2.Visibility = Visibility.Hidden;
+                        header.Background = newBrush;
+                        titleFusion.Visibility = Visibility.Visible;
                         break;
                     case Screens.Landing:
                         AuthenticationStep3.Visibility = Visibility.Hidden;
-                        //imgWires.Visibility = Visibility.Visible;
-                        cntLanding.Visibility = Visibility.Visible;
+                        lblMainLable2.Visibility = Visibility.Hidden;
+                        lblMainLable1.Visibility = Visibility.Hidden;
                         cntDataProtection.Visibility = Visibility.Hidden;
                         txtHome.Visibility = Visibility.Hidden;
                         txtMenuService.Visibility = Visibility.Hidden;
-                        //cntNavMenu.Visibility = Visibility.Visible;
-                        //btnSettings.Background = System.Windows.Media.Brushes.White;
-                        //btnStatus.Background = Brushes.LightBlue;
+
                         header.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Visible;
                         imgDesktop.Visibility = Visibility.Visible;
+                        imgDesktop2.Visibility = Visibility.Visible;
+                        txtOrganization.Visibility = Visibility.Visible;
                         GetOTP.Visibility = Visibility.Hidden;
                         AuthenticationProcessing.Visibility = Visibility.Hidden;
                         AuthenticationFailed.Visibility = Visibility.Hidden;
@@ -580,7 +772,15 @@ namespace FDS
                         AuthenticationMethods.Visibility = Visibility.Hidden;
                         AuthenticationMethods2.Visibility = Visibility.Hidden;
                         btnUninstall.Visibility = Visibility.Visible;
-                        btnUninstall.Foreground = System.Windows.Media.Brushes.Blue;
+                        btnUninstall.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                        lblMainLable1.Visibility = Visibility.Hidden;
+                        lblMainLable2.Visibility = Visibility.Hidden;
+                        //MainHomePageUI.Visibility = Visibility.Visible;
+                        GrdhealthScore.Visibility = Visibility.Visible;
+                        healthScoreHeader.Visibility = Visibility.Visible;
+                        currentServerHeader.Visibility = Visibility.Visible;
+                        header.Background = newBrush;
+                        titleFusion.Visibility = Visibility.Visible;
                         break;
                     case Screens.ServiceClear:
                         //imgWires.Visibility = Visibility.Visible;
@@ -589,6 +789,8 @@ namespace FDS
                         cntServiceSettingPart2.Visibility = Visibility.Visible;
                         //btnStatus.Background = Brushes.White;
                         //btnSettings.Background = Brushes.LightBlue;
+                        lblMainLable1.Visibility = Visibility.Hidden;
+                        lblMainLable2.Visibility = Visibility.Hidden;
                         break;
                     case Screens.Popup:
                         //imgWires.Visibility = Visibility.Visible;
@@ -597,7 +799,8 @@ namespace FDS
                         cntServiceSettingPart2.Visibility = Visibility.Visible;
                         cntBackdrop.Visibility = Visibility.Visible;
                         cntPopup.Visibility = Visibility.Visible;
-
+                        lblMainLable1.Visibility = Visibility.Hidden;
+                        lblMainLable2.Visibility = Visibility.Hidden;
                         break;
                     case Screens.DataProtection:
                         //imgWires.Visibility = Visibility.Visible;
@@ -605,6 +808,8 @@ namespace FDS
                         txtHome.Visibility = Visibility.Visible;
                         txtMenuService.Visibility = Visibility.Visible;
                         cntDataProtection.Visibility = Visibility.Visible;
+                        lblMainLable1.Visibility = Visibility.Hidden;
+                        lblMainLable2.Visibility = Visibility.Hidden;
                         break;
                 }
             }
@@ -616,6 +821,96 @@ namespace FDS
                 }
             }
         }
+
+        private void cmbCountryCode_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (cmbCountryCode.SelectedItem != null)
+            {
+                // Extract the country code from the selected item
+                string countryCode = ((CountryCode)cmbCountryCode.SelectedItem).Phone_code;
+
+                string[] xArry = countryCode.Split('-');
+
+
+                cmbCountryCode.SelectedValue = xArry[0].ToString();
+                cmbCountryCode.Visibility = Visibility.Visible;
+
+
+            }
+        }
+
+        private void txtPhoneNumber_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var textBox = sender as TextBox;
+            if (textBox != null)
+            {
+                // Remove non-numeric characters from the input
+                string digitsOnly = new string(textBox.Text.Where(char.IsDigit).ToArray());
+
+                // Apply formatting: (XXX) XXX-XXXX
+                if (digitsOnly.Length > 0)
+                {
+                    // Pad the string with leading zeros to ensure it has at least 10 characters
+                    //digitsOnly = digitsOnly.PadRight(10, '0');
+
+                    // Apply formatting based on the length of the string
+                    StringBuilder formattedNumber = new StringBuilder("(");
+                    for (int i = 0; i < digitsOnly.Length; i++)
+                    {
+                        if (i == 3)
+                        {
+                            formattedNumber.Append(") ");
+                        }
+                        else if (i == 6)
+                        {
+                            formattedNumber.Append("-");
+                        }
+                        formattedNumber.Append(digitsOnly[i]);
+                    }
+                    textBox.Text = formattedNumber.ToString();
+                    //textBox.Text = formattedNumber.ToString().Substring(0, 14); // Limit to (XXX) XXX-XXXX
+                    textBox.SelectionStart = textBox.Text.Length;
+                }
+                else
+                {
+                    textBox.Text = "";
+                }
+            }
+        }
+
+
+        private void txtOTPVerification_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var textBox = sender as TextBox;
+            if (textBox != null)
+            {
+                // Remove non-numeric characters from the input
+                string digitsOnly = new string(textBox.Text.Where(char.IsDigit).ToArray());
+
+                // Apply formatting: (XXX) XXX-XXXX
+                if (digitsOnly.Length > 0)
+                {
+
+
+                    // Apply formatting based on the length of the string
+                    StringBuilder formattedNumber = new StringBuilder();
+                    for (int i = 0; i < digitsOnly.Length; i++)
+                    {
+
+                        formattedNumber.Append(digitsOnly[i]);
+                    }
+                    textBox.Text = formattedNumber.ToString();
+                    //textBox.Text = formattedNumber.ToString().Substring(0, 14); // Limit to (XXX) XXX-XXXX
+                    textBox.SelectionStart = textBox.Text.Length;
+                }
+                else
+                {
+                    textBox.Text = "";
+                }
+            }
+        }
+
+
 
         private System.Windows.Controls.Image SetGIF(string ImagePath)
         {
@@ -677,8 +972,47 @@ namespace FDS
                 }
             }
         }
+
+        private void timerOTPCode_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                TimeSpan t = new TimeSpan(0, 0, TotalSecondsOTP);
+
+                if(t.Minutes > 0)
+                {
+                    lblOtpTimer.Text = $"{t.Minutes.ToString("00")}:{t.Seconds.ToString("00")} m";
+                }else
+                {
+                    lblOtpTimer.Text = $"{t.Minutes.ToString("00")}:{t.Seconds.ToString("00")} s";
+                }
+
+                
+
+                if (TotalSecondsOTP <= 0)
+                {
+                    isOTPTimerExpired = true;
+                    timerOTPCode.IsEnabled = false;
+                    lblOtpTimer.Visibility = Visibility.Hidden;
+                    lbltimerRemain.Visibility = Visibility.Hidden;
+                    txtResend.Visibility = Visibility.Visible;
+                    //btnGetStarted_Click(btnGetStarted, null);
+                }
+
+                TotalSecondsOTP--;
+            }
+            catch (Exception ex)
+            {
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
         private void btnGetStarted_Click(object sender, RoutedEventArgs e)
         {
+
             ConfigDataClear();
             LoadMenu(Screens.AuthenticationMethods2);
         }
@@ -708,19 +1042,33 @@ namespace FDS
         private void btnCredential_Click(object sender, RoutedEventArgs e)
         {
             LoadMenu(Screens.AuthenticationStep1);
+            cmbCountryCode.Text = "+01";
+            cmbCountryCode.Visibility = Visibility.Visible;
             GetcountryCode();
         }
         private void cmbCountryCode_KeyUp(object sender, KeyEventArgs e)
         {
+            cmbCountryCode.Visibility = Visibility.Visible;
             string searchKeyword = cmbCountryCode.Text.ToLower();
 
 
-            // Filter the Countries collection based on the search text
+            //Filter the Countries collection based on the search text
             var filteredCountries = VM.AllCountries.Where(c => c.DisplayText.ToLower().Contains(searchKeyword));
 
-            // Update the ComboBox items source with the filtered collection
+            //Update the ComboBox items source with the filtered collection
             cmbCountryCode.ItemsSource = filteredCountries;
             cmbCountryCode.IsDropDownOpen = true;
+
+
+        }
+
+        private void txtPhoneNubmer_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            // Allow only numeric characters (0-9) and a single decimal point (.)
+            if (!char.IsDigit(e.Text, e.Text.Length - 1) && e.Text != ".")
+            {
+                e.Handled = true; // Mark the event as handled to prevent further processing
+            }
         }
 
         public void ClearChildrenNode()
@@ -780,22 +1128,42 @@ namespace FDS
                         VM.AllCountries = countryList;
                         cmbCountryCode.ItemsSource = VM.AllCountries;
                     }
+                    else if (response.StatusCode == HttpStatusCode.BadGateway)
+                    {
+                        if (showMessageBoxes == true)
+                        {
+                            LoadMenu(Screens.GetStart);
+                            MessageBox.Show("Server is down contact to Admin", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                            deviceDeletedFlag = true;
+                            lstCron.Clear();
+                            lstCronEvent.Clear();
+                            encryptOutPutFile = basePathEncryption + @"\Main";
+                            if (File.Exists(encryptOutPutFile))
+                            {
+
+                                File.Delete(encryptOutPutFile);
+                                ConfigDataClear();
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception ex)
             {
-
-                LoadMenu(Screens.GetStart);
-                MessageBox.Show("Your device has some issue contact to Admin", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                deviceDeletedFlag = true;
-                lstCron.Clear();
-                lstCronEvent.Clear();
-                encryptOutPutFile = basePathEncryption + @"\Main";
-                if (File.Exists(encryptOutPutFile))
+                if (showMessageBoxes == true)
                 {
+                    LoadMenu(Screens.GetStart);
+                    MessageBox.Show("Your device has some issue While Getting Country Code contact to Admin", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                    deviceDeletedFlag = true;
+                    lstCron.Clear();
+                    lstCronEvent.Clear();
+                    encryptOutPutFile = basePathEncryption + @"\Main";
+                    if (File.Exists(encryptOutPutFile))
+                    {
 
-                    File.Delete(encryptOutPutFile);
-                    ConfigDataClear();
+                        File.Delete(encryptOutPutFile);
+                        ConfigDataClear();
+                    }
                 }
             }
         }
@@ -807,15 +1175,29 @@ namespace FDS
                 {
                     cmbCountryCode.SelectedValue = selectedCountry.Phone_code;
                     VM.SelectedCountryCode = selectedCountry.Phone_code;
+
+                    string[] xArry = selectedCountry.Phone_code.Split('-');
+                    cmbCountryCode.SelectedValue = xArry[0].ToString();
+                    cmbCountryCode.Text = xArry[0].ToString();
+
+                    //cmbCountryCode.Visibility = Visibility.Hidden;
                 }
             }
         }
 
-        private async void btnSendOTP_Click(object sender, RoutedEventArgs e)
+        private async Task SendOTPAsync()
         {
             try
             {
-                if (!string.IsNullOrWhiteSpace(txtEmailToken.Text) && !string.IsNullOrWhiteSpace(txtPhoneNubmer.Text) && Generic.IsValidEmailTokenNumber(txtEmailToken.Text) && Generic.IsValidMobileNumber(txtPhoneNubmer.Text))
+                string phnumber = string.Empty;
+                if (!string.IsNullOrEmpty(txtPhoneNumber.Text))
+                {
+                    phnumber = txtPhoneNumber.Text.ToString().Replace("(", "").Trim().Replace(")", "").Trim().Replace("-", "").Replace(" ", "").Trim();
+
+                }
+
+
+                if (!string.IsNullOrWhiteSpace(txtEmailToken.Text) && !string.IsNullOrWhiteSpace(phnumber) && !string.IsNullOrEmpty(cmbCountryCode.Text) && Generic.IsValidEmailTokenNumber(txtEmailToken.Text) && Generic.IsValidMobileNumber(phnumber) && Generic.IsValidCountryCode(cmbCountryCode.Text))
                 {
                     txtPhoneValidation.Visibility = Visibility.Collapsed;
 
@@ -827,15 +1209,21 @@ namespace FDS
                         ImageContainerOTP.Children.Add(imgLoader);
                     }
 
-                    var apiResponse = await apiService.SendOTPAsync(txtEmailToken.Text, txtPhoneNubmer.Text, txtCountryCode.Text);
+                    string[] parts = cmbCountryCode.Text.Split('-');
+                    string newCountryCode = parts[0].ToString().Trim();
+
+                    var apiResponse = await apiService.SendOTPAsync(txtEmailToken.Text, phnumber, newCountryCode);
 
                     ClearChildrenNode();
 
                     if ((apiResponse.HttpStatusCode == 0) || (apiResponse.Success == true))
                     {
+                        txtOTPVerification.Text = "";
+                        txtTokenValidation.Text = "";
+                        txtTokenValidation.Visibility = Visibility.Hidden;
                         LoadMenu(Screens.AuthenticationStep2);
                         txtCodeVerification.TextAlignment = TextAlignment.Center;
-                        txtCodeVerification.Text = "A verification code has been sent to \n" + txtPhoneNubmer.Text;
+                        // txtCodeVerification.Text = "A verification code has been sent to \n" + txtPhoneNumber.Text;
                         txtEmailTokenValidation.Visibility = Visibility.Hidden;
                         txtPhoneValidation.Visibility = Visibility.Hidden;
                     }
@@ -851,22 +1239,32 @@ namespace FDS
                 {
                     if (string.IsNullOrWhiteSpace(txtEmailToken.Text))
                     {
-                        txtEmailTokenValidation.Text = "Please enter Email Token";
+                        txtEmailTokenValidation.Text = "Please Enter Email Token";
                         txtEmailTokenValidation.Visibility = Visibility.Visible;
                     }
                     else if (!Generic.IsValidEmailTokenNumber(txtEmailToken.Text))
                     {
-                        txtEmailTokenValidation.Text = "Invalid email token!";
+                        txtEmailTokenValidation.Text = "Invalid Email Token!";
                         txtEmailTokenValidation.Visibility = Visibility.Visible;
                     }
-                    else if (string.IsNullOrWhiteSpace(txtPhoneNubmer.Text))
+                    else if (string.IsNullOrWhiteSpace(phnumber))
                     {
-                        txtPhoneValidation.Text = "Please enter phone number";
+                        txtPhoneValidation.Text = "Please Enter Phone Number";
                         txtPhoneValidation.Visibility = Visibility.Visible;
                     }
-                    else if (!Generic.IsValidMobileNumber(txtPhoneNubmer.Text))
+                    else if (string.IsNullOrEmpty(cmbCountryCode.Text))
                     {
-                        txtPhoneValidation.Text = "Invalid phone number! Phone number should have 10 digit";
+                        txtPhoneValidation.Text = "Please Select Country Code";
+                        txtPhoneValidation.Visibility = Visibility.Visible;
+                    }
+                    else if (!Generic.IsValidCountryCode(cmbCountryCode.Text))
+                    {
+                        txtPhoneValidation.Text = "Invalid Country Code";
+                        txtPhoneValidation.Visibility = Visibility.Visible;
+                    }
+                    else if (!Generic.IsValidMobileNumber(phnumber))
+                    {
+                        txtPhoneValidation.Text = "Invalid Phone Number! Phone Number Should Have 10 Digit";
                         txtPhoneValidation.Visibility = Visibility.Visible;
                     }
                 }
@@ -880,25 +1278,45 @@ namespace FDS
             }
         }
 
+        private async void btnSendOTP_Click(object sender, RoutedEventArgs e)
+        {
+            await SendOTPAsync();
+        }
+
         private void txtBack_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             LoadMenu(Screens.AuthenticationMethods);
             txtEmailToken.Text = "";
-            txtPhoneNubmer.Text = "";
+            txtPhoneNumber.Text = "";
+        }
+
+
+
+        private void txtResend_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            SendOTPAsync();
+            lbltimerRemain.Visibility = Visibility.Visible;
+            lblOtpTimer.Visibility = Visibility.Visible;
+            txtResend.Visibility = Visibility.Hidden;
+            TotalSecondsOTP = 120;
+            isOTPTimerExpired = false;
+            txtTokenValidation.Visibility = Visibility.Hidden;
+            txtTokenValidation.Text = "";
+            timerOTPCode.IsEnabled = true;
         }
 
         private void btnSubmitLicense_Click(object sender, MouseButtonEventArgs e)
         {
             LoadMenu(Screens.AuthenticationMethods);
             txtEmailToken.Text = "";
-            txtPhoneNubmer.Text = "";
+            txtPhoneNumber.Text = "";
         }
 
         private void txtBackAuth_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             LoadMenu(Screens.AuthenticationMethods2);
             txtEmailToken.Text = "";
-            txtPhoneNubmer.Text = "";
+            txtPhoneNumber.Text = "";
         }
 
 
@@ -906,24 +1324,43 @@ namespace FDS
         {
             LoadMenu(Screens.AuthenticationMethods2);
             txtEmailToken.Text = "";
-            txtPhoneNubmer.Text = "";
+            txtPhoneNumber.Text = "";
         }
 
         private void btnStep2Next_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtDigit1.Text) || string.IsNullOrWhiteSpace(txtDigit2.Text) || string.IsNullOrWhiteSpace(txtDigit3.Text)
-                || string.IsNullOrWhiteSpace(txtDigit4.Text) || string.IsNullOrWhiteSpace(txtDigit5.Text) || string.IsNullOrWhiteSpace(txtDigit6.Text))
+            //if (string.IsNullOrWhiteSpace(txtDigit1.Text) || string.IsNullOrWhiteSpace(txtDigit2.Text) || string.IsNullOrWhiteSpace(txtDigit3.Text)
+            //    || string.IsNullOrWhiteSpace(txtDigit4.Text) || string.IsNullOrWhiteSpace(txtDigit5.Text) || string.IsNullOrWhiteSpace(txtDigit6.Text))
+            //{
+            //    txtTokenValidation.Text = "Please enter Verification code";
+            //}
+            //else if (!Generic.IsValidTokenNumber(txtDigit1.Text) && !Generic.IsValidTokenNumber(txtDigit2.Text) && !Generic.IsValidTokenNumber(txtDigit3.Text)
+            //    && !Generic.IsValidTokenNumber(txtDigit5.Text) && !Generic.IsValidTokenNumber(txtDigit5.Text) && !Generic.IsValidTokenNumber(txtDigit6.Text))
+            //{
+            //    txtTokenValidation.Text = "Invalid Verification code";
+            //    txtTokenValidation.Visibility = Visibility.Visible;
+            //}
+            if (string.IsNullOrWhiteSpace(txtOTPVerification.Text))
             {
                 txtTokenValidation.Text = "Please enter Verification code";
             }
-            else if (!Generic.IsValidTokenNumber(txtDigit1.Text) && !Generic.IsValidTokenNumber(txtDigit2.Text) && !Generic.IsValidTokenNumber(txtDigit3.Text)
-                && !Generic.IsValidTokenNumber(txtDigit5.Text) && !Generic.IsValidTokenNumber(txtDigit5.Text) && !Generic.IsValidTokenNumber(txtDigit6.Text))
+            else if (!Generic.IsValidTokenNumber(txtOTPVerification.Text))
             {
                 txtTokenValidation.Text = "Invalid Verification code";
                 txtTokenValidation.Visibility = Visibility.Visible;
             }
             else
+            {
                 LoadMenu(Screens.AuthenticationStep2);
+                lbltimerRemain.Visibility = Visibility.Visible;
+                lblOtpTimer.Visibility = Visibility.Visible;
+                txtResend.Visibility = Visibility.Hidden;
+                TotalSecondsOTP = 120;
+                isOTPTimerExpired = false;
+                txtTokenValidation.Visibility = Visibility.Hidden;
+                txtTokenValidation.Text = "";
+                timerOTPCode.IsEnabled = true;
+            }
         }
         private void TextBox_LostFocus(object sender, KeyEventArgs e)
         {
@@ -973,14 +1410,25 @@ namespace FDS
                 if (IsQRGenerated == true)
                 {
                     QRGeneratortimer.Stop();
-                    string VerificationCode = txtDigit1.Text + txtDigit2.Text + txtDigit3.Text + txtDigit4.Text + txtDigit5.Text + txtDigit6.Text;
+                    string VerificationCode = txtOTPVerification.Text;
 
                     Dispatcher.Invoke(() =>
                     {
                         LoadMenu(Screens.AuthenticationProcessing);
                     });
 
-                    var apiResponse = await apiService.QRGeneratortimerAsync(txtEmailToken.Text, txtPhoneNubmer.Text, txtCountryCode.Text, VerificationCode, DeviceResponse.qr_code_token);
+
+                    string phnumber = string.Empty;
+                    if (!string.IsNullOrEmpty(txtPhoneNumber.Text))
+                    {
+                        phnumber = txtPhoneNumber.Text.ToString().Replace("(", "").Trim().Replace(")", "").Trim().Replace("-", "").Replace(" ", "").Trim();
+
+                    }
+
+                    string[] parts = cmbCountryCode.Text.Split('-');
+                    string newCountryCode = parts[0].ToString().Trim();
+
+                    var apiResponse = await apiService.QRGeneratortimerAsync(txtEmailToken.Text, phnumber, newCountryCode, VerificationCode, DeviceResponse.qr_code_token);
                     if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
                     {
                         Dispatcher.Invoke(() =>
@@ -1009,7 +1457,27 @@ namespace FDS
 
         private async void btnStep3Submit_Click(object sender, RoutedEventArgs e)
         {
-            GenerateQRCode("Token");
+            if (!isOTPTimerExpired)
+            {
+                if (string.IsNullOrEmpty(txtOTPVerification.Text))
+                {
+                    txtTokenValidation.Visibility = Visibility.Visible;
+                    txtTokenValidation.Text = "Please enter OTP.";
+                }
+                else
+                {
+                    txtTokenValidation.Visibility = Visibility.Hidden;
+                    txtTokenValidation.Text = "";
+                    GenerateQRCode("Token");
+                }
+
+            }
+            else
+            {
+                txtTokenValidation.Visibility = Visibility.Visible;
+                txtTokenValidation.Text = "Invalid OTP. Please Try Again.";
+            }
+
 
         }
 
@@ -1038,6 +1506,14 @@ namespace FDS
         private void txtstep3Back_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             LoadMenu(Screens.AuthenticationStep2);
+            lbltimerRemain.Visibility = Visibility.Visible;
+            lblOtpTimer.Visibility = Visibility.Visible;
+            txtResend.Visibility = Visibility.Hidden;
+            TotalSecondsOTP = 120;
+            isOTPTimerExpired = false;
+            txtTokenValidation.Visibility = Visibility.Hidden;
+            txtTokenValidation.Text = "";
+            timerOTPCode.IsEnabled = true;
         }
 
 
@@ -1224,6 +1700,7 @@ namespace FDS
                     switch (QRCodeResponse.StatusCode)
                     {
                         case System.Net.HttpStatusCode.Unauthorized:
+
                             break;
                         case System.Net.HttpStatusCode.NotFound:
                             timerDeviceLogin.IsEnabled = false;
@@ -1358,13 +1835,13 @@ namespace FDS
 
         public void loadMenuItems(string ImageTxt, string txtValue)
         {
-            lblCompliant.Text = txtValue;
+            lblMessageHeader.Text = txtValue;
             string ImagePath = Path.Combine(BaseDir, ImageTxt);
             BitmapImage DeviceDeactive = new BitmapImage();
             DeviceDeactive.BeginInit();
             DeviceDeactive.UriSource = new Uri(ImagePath);
             DeviceDeactive.EndInit();
-            imgCompliant.Source = DeviceDeactive;
+            //imgCompliant.Source = DeviceDeactive;
             LoadMenu(Screens.Landing);
         }
 
@@ -1382,25 +1859,34 @@ namespace FDS
             if (isInternetConnected)
             {
 
+                if (isInternetConnected && deviceActive && !allServiceDisabled)
+                {
+                    loadMenuItems("Assets/DeviceActive.png", "Your device is protected");
+                    grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
+                    GetServiceHealthReport();
+                }
+
                 var apiResponse = await apiService.CheckDeviceHealthAsync();
 
                 if (apiResponse == null)
                 {
                     deviceOffline = true;
                     timerLastUpdate.IsEnabled = true;
-                    lblCompliant.Text = "Contact to Administrator";
+                    lblMessageHeader.Text = "Contact to Administrator";
+                    grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
                     string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
                     BitmapImage DeviceDeactive = new BitmapImage();
                     DeviceDeactive.BeginInit();
                     DeviceDeactive.UriSource = new Uri(ImagePath);
                     DeviceDeactive.EndInit();
-                    imgCompliant.Source = DeviceDeactive;
+                    //imgCompliant.Source = DeviceDeactive;
                     return;
                 }
 
 
                 if (apiResponse.Success == true)
                 {
+
                     loadFDS = false;
                     timerLastUpdate.IsEnabled = true;
                     var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
@@ -1429,11 +1915,7 @@ namespace FDS
                         }
 
                     }
-                    else
-                    {
-                        loadMenuItems("Assets/DeviceDisable.png", "Check With Administrator");
 
-                    }
 
                 }
                 else if (apiResponse.HttpStatusCode == HttpStatusCode.BadGateway)
@@ -1442,6 +1924,7 @@ namespace FDS
                     timerLastUpdate.IsEnabled = true;
                     deviceOffline = true;
                     loadMenuItems("Assets/DeviceDisable.png", "Ooops! Will be back soon.");
+                    grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
                 }
                 else if (apiResponse.HttpStatusCode == HttpStatusCode.Unauthorized)
                 {
@@ -1469,29 +1952,309 @@ namespace FDS
                 {
                     deviceOffline = true;
                     timerLastUpdate.IsEnabled = true;
-                    lblCompliant.Text = "Contact to Administrator";
+                    lblMessageHeader.Text = "Your Device is Disabled. Contact to Administrator";
+                    grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
                     string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
                     BitmapImage DeviceDeactive = new BitmapImage();
                     DeviceDeactive.BeginInit();
                     DeviceDeactive.UriSource = new Uri(ImagePath);
                     DeviceDeactive.EndInit();
-                    imgCompliant.Source = DeviceDeactive;
+                    //imgCompliant.Source = DeviceDeactive;
 
                 }
             }
             else
             {
                 timerLastUpdate.IsEnabled = true;
-                lblCompliant.Text = "No Internet Connection!";
+                lblMessageHeader.Text = "No internet connection!Your device is offline.";
+                grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                grdMapGrid.Visibility = Visibility.Hidden;
+                grdNoInternetGrid.Visibility = Visibility.Visible;
                 string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
                 BitmapImage DeviceDeactive = new BitmapImage();
                 DeviceDeactive.BeginInit();
                 DeviceDeactive.UriSource = new Uri(ImagePath);
                 DeviceDeactive.EndInit();
-                imgCompliant.Source = DeviceDeactive;
+                //imgCompliant.Source = DeviceDeactive;
 
             }
         }
+
+        private ListBoxItem lastSelectedItem = null;
+        private void ListBoxItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // Handle the click event here
+            var listBoxItem = sender as ListBoxItem;
+            if (listBoxItem != null)
+            {
+
+                ListBoxItem firstListBoxItem = lstServices.ItemContainerGenerator.ContainerFromIndex(0) as ListBoxItem;
+                if (firstListBoxItem != null)
+                {
+                    firstListBoxItem.Background = Brushes.Transparent; // Reset to default background color
+                }
+
+                if (lastSelectedItem != null)
+                {
+                    lastSelectedItem.Background = Brushes.Transparent; // Reset to default background color
+                }
+
+                listBoxItem.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0C1828"));
+
+                lastSelectedItem = listBoxItem;
+
+
+                // Access the TextBlock within the ListBoxItem
+                ServiceDPP service = listBoxItem.DataContext as ServiceDPP;
+                if (service != null)
+                {
+                    // Retrieve Id property of the service
+                    int id = service.ServiceID;
+
+                    GetEventDetails(id);
+                }
+            }
+        }
+
+
+        public void clearEventLogs()
+        {
+            txtlogEvent.Text = string.Empty;
+            txtlogEvent2.Text = string.Empty;
+            txtlogEvent3.Text = string.Empty;
+            txtlogEvent4.Text = string.Empty;
+            txtlogEvent5.Text = string.Empty;
+            txtlogsEvent.Text = string.Empty;
+            txtlogsEvent2.Text = string.Empty;
+            txtlogsEvent3.Text = string.Empty;
+            txtlogsEvent4.Text = string.Empty;
+            txtlogsEvent5.Text = string.Empty;
+            txtlogEventHeader.Text = string.Empty;
+            txtlogEventHeader2.Text = string.Empty;
+            txtlogEventHeader3.Text = string.Empty;
+            txtlogEventHeader4.Text = string.Empty;
+            txtlogEventHeader5.Text = string.Empty;
+        }
+
+        public async Task GetEventDetails(int id)
+        {
+            lblheadingServer.Text = "Activity Logs";
+            grdGridEvents.Visibility = Visibility.Visible;
+            grdMapGrid.Visibility = Visibility.Hidden;
+            grdNoInternetGrid.Visibility = Visibility.Hidden;
+            grdGridEventsG1.Visibility = Visibility.Hidden;
+            grdGridEventsG2.Visibility = Visibility.Hidden;
+            grdGridEventsG3.Visibility = Visibility.Hidden;
+            grdGridEventsG4.Visibility = Visibility.Hidden;
+
+            clearEventLogs();
+            List<LogEntry> Response = await apiService.GetServiceInfoAsync(id);
+
+            if ((Response != null) && (Response.Count != 0))
+            {
+
+                int counter = 1;
+                foreach (var logEntry in Response)
+                {
+                    if (counter == 1)
+                    {
+                        grdGridEventsG1.Visibility = Visibility.Visible;
+                    }
+                    else if (counter == 2)
+                    {
+                        grdGridEventsG2.Visibility = Visibility.Visible;
+                    }
+                    else if (counter == 3)
+                    {
+                        grdGridEventsG3.Visibility = Visibility.Visible;
+                    }
+                    else if (counter == 4)
+                    {
+                        grdGridEventsG4.Visibility = Visibility.Visible;
+                    }
+
+                    counter++;
+
+
+                    string logTime = string.Empty;
+                    string dataTimeVal = string.Empty;
+                    try
+                    {
+                        // Given UTC datetime string
+                        string utcDateTimeString = logEntry.time;
+
+                        // Parse the UTC datetime string to DateTime object
+                        DateTime utcDateTime = DateTime.ParseExact(utcDateTimeString, "yyyy-MM-ddTHH:mm:ss.ffffffZ", null, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal);
+
+                        // Convert to Indian Standard Time (IST)
+                        TimeZoneInfo istTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+                        DateTime istDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, istTimeZone);
+
+
+
+
+                        //string time = logEntry.time.ToString();
+                        //DateTime dateTime = DateTime.Parse(time);
+                        logTime = istDateTime.ToString("hh:mm tt");
+                        dataTimeVal = istDateTime.ToString();
+
+                    }
+                    catch (Exception ex)
+                    {
+                        ex.ToString();
+                    }
+
+
+                    if (logEntry.changed_by == "_")
+                    {
+                        logEntry.changed_by = "FDS";
+                    }
+
+
+                    //Defaults----Title and Description-----
+                    string eventTitle = logEntry.file_deleted.ToString() + " Files cleared";
+                    string eventDesc = "Event has be trigger successfully after browser closed by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+
+                    if (logEntry.service_name == "Web Cache Protection")
+                    {
+                        eventTitle = logEntry.file_deleted.ToString() + " B cleared";
+                        if (logEntry.sentence.Contains("Event"))
+                        {
+                            eventDesc = logEntry.sentence + " by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                        }
+                        else
+                        {
+                            eventDesc = logEntry.sentence + " completed by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                        }
+                    }
+                    else if (logEntry.service_name == "Web Session Protection")
+                    {
+                        eventTitle = logEntry.file_deleted.ToString() + " Cookies cleared";
+                        if (logEntry.sentence.Contains("Event"))
+                        {
+                            eventDesc = logEntry.sentence + " by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                        }
+                        else
+                        {
+                            eventDesc = logEntry.sentence + " completed by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                        }
+                    }
+                    else if (logEntry.service_name == "Web Tracking Protecting")
+                    {
+
+                        if (logEntry.sentence.Contains("Event"))
+                        {
+                            eventDesc = logEntry.sentence + " by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                        }
+                        else
+                        {
+                            eventDesc = logEntry.sentence + " completed by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                        }
+                    }
+                    else if (logEntry.service_name == "DNS Cache Protection")
+                    {
+                        eventTitle = logEntry.sentence + " completed";
+                        eventDesc = logEntry.sentence + " completed by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                    }
+                    else if (logEntry.service_name == "Windows Registry Protection")
+                    {
+                        eventDesc = logEntry.sentence + " completed by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                    }
+                    else if (logEntry.service_name == "Free Storage Protection")
+                    {
+                        eventTitle = logEntry.sentence + " completed";
+                        eventDesc = logEntry.sentence + " completed by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                    }
+                    else if (logEntry.service_name == "Trash Data Protection")
+                    {
+                        eventDesc = logEntry.sentence + " completed by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                    }
+                    else if (logEntry.service_name == "System Network Monitoring Protection")
+                    {
+
+                        if (logEntry.sentence.Contains("Requested"))
+                        {
+                            eventTitle = logEntry.file_deleted + " Issues requested to delete";
+                            eventDesc = logEntry.sentence;
+                        }
+                        else if (logEntry.sentence.Contains("Whitelisted"))
+                        {
+                            eventTitle = logEntry.file_deleted + " Issues whitelisted";
+                            eventDesc = logEntry.sentence;
+                        }
+                        else
+                        {
+                            eventTitle = logEntry.file_deleted + " Issues deleted";
+                            eventDesc = logEntry.sentence + " by " + logEntry.changed_by.ToString();
+                        }
+                    }
+
+
+
+                    string eventHeader = Generic.FormatDateTime(dataTimeVal);
+
+
+                    if (string.IsNullOrEmpty(txtlogEvent.Text))
+                    {
+                        txtlogEvent.Text = eventTitle;
+                        txtlogsEvent.Text = eventDesc;
+                        txtlogEventHeader.Text = eventHeader;
+                    }
+                    else if (string.IsNullOrEmpty(txtlogEvent2.Text))
+                    {
+                        txtlogEvent2.Text = eventTitle;
+                        txtlogsEvent2.Text = eventDesc;
+                        txtlogEventHeader2.Text = eventHeader;
+                    }
+                    else if (string.IsNullOrEmpty(txtlogEvent3.Text))
+                    {
+                        txtlogEvent3.Text = eventTitle;
+                        txtlogsEvent3.Text = eventDesc;
+                        txtlogEventHeader3.Text = eventHeader;
+                    }
+                    else if (string.IsNullOrEmpty(txtlogEvent4.Text))
+                    {
+                        txtlogEvent4.Text = eventTitle;
+                        txtlogsEvent4.Text = eventDesc;
+                        txtlogEventHeader4.Text = eventHeader;
+                    }
+                    else if (string.IsNullOrEmpty(txtlogEvent5.Text))
+                    {
+                        txtlogEvent5.Text = eventTitle;
+                        txtlogsEvent5.Text = eventDesc;
+                        txtlogEventHeader5.Text = eventHeader;
+                    }
+
+                }
+            }
+            else
+            {
+                grdNoInternetGrid.Visibility = Visibility.Visible;
+                grdGridEvents.Visibility = Visibility.Hidden;
+            }
+        }
+
+        // Helper method to find a child of a specific type within a Visual
+        private T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T typedChild)
+                {
+                    return typedChild;
+                }
+                else
+                {
+                    var result = FindVisualChild<T>(child);
+                    if (result != null)
+                        return result;
+                }
+            }
+            return null;
+        }
+
+
 
         private void StartForUnauthorized()
         {
@@ -1501,6 +2264,9 @@ namespace FDS
                 LoadMenu(Screens.GetStart);
                 if (!loadFDS)
                 {
+                    MainHomePageUI2.Visibility = Visibility.Hidden;
+                    MainHomePageUI.Visibility = Visibility.Hidden;
+
                     MessageBox.Show("Your device has been deleted", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 deviceDeletedFlag = true;
@@ -1510,7 +2276,7 @@ namespace FDS
 
                 if (File.Exists(encryptOutPutFile))
                 {
-                    try { File.Delete(encryptOutPutFile); } catch { }                    
+                    try { File.Delete(encryptOutPutFile); } catch { }
                     ConfigDataClear();
                 }
 
@@ -1531,6 +2297,65 @@ namespace FDS
             Application.Current.Shutdown();
         }
 
+        private void GetHealthScoreMain()
+        {
+            HealthScoreDetails healthScoreDetails = apiService.GetHealthscore();
+
+            // Check if the list is not null and contains any records
+            if (healthScoreDetails.Success == true)
+            {
+                // Iterate over each HealthScoreDetails record in the list
+
+                // Access properties of each healthScoreDetails object as needed
+                txtCertificatesCounts.Text = healthScoreDetails.blacklisted_cert_count.ToString();
+                txtCertificatesCounts2.Text = healthScoreDetails.blacklisted_cert_count.ToString();
+                txtProxyCount.Text = healthScoreDetails.blacklisted_proxy_count.ToString();
+                txtProxyCount2.Text = healthScoreDetails.blacklisted_proxy_count.ToString();
+                txtHealthScore.Text = healthScoreDetails.health_report.ToString();
+                try
+                {
+                     
+                   double val = Convert.ToDouble(txtHealthScore.Text);
+             
+                    UpdateArcPropertiesFromApi(val);
+
+                }
+                catch (Exception ex)
+                {
+                    ex.ToString();
+                }
+                DataContext = this;
+                arcColor.Stroke = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
+                // Do something with the properties...
+
+            }
+            else
+            {
+                // Handle case where no records are returned
+                Console.WriteLine("No health score details found.");
+            }
+
+        }
+
+
+
+        private async Task GetServiceInfo()
+        {
+            var apiResponse = await apiService.GetServiceInfoAsync();
+            if (apiResponse.Success)
+            {
+
+            }
+            else
+            {
+                //lblCompliant.Text = "Server Down !! Contact to Administrator";
+                grdMapGrid.Visibility = Visibility.Hidden;
+                grdNoInternetGrid.Visibility = Visibility.Visible;
+            }
+
+
+        }
+
         private async Task DeviceConfigurationCheck()
         {
 
@@ -1539,9 +2364,7 @@ namespace FDS
             {
                 return;
             }
-            //var DeviceConfigData = await apiService.DeviceConfigurationTestCheckAsync();
-            //if (DeviceConfigData != null)
-            //{
+
             if (((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true)) && (apiResponse.Data != null))
             {
                 var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
@@ -1559,6 +2382,7 @@ namespace FDS
                             if ((api.Equals("1") || api.Equals("4")) && (deviceActive == true))
                             {
                                 await RetrieveServices();
+                                await GetServiceHealthReport();
                             }
                             else if (api.Equals("2"))
                             {
@@ -1632,79 +2456,398 @@ namespace FDS
             }
         }
 
-
-        private async Task GetDeviceDetails()
+        private void ShowMap()
         {
-
-            var apiResponse = await apiService.GetDeviceDetailsAsync();
-            if (apiResponse == null)
+            if (lblLocation.Text == "")
             {
-                deviceOffline = true;
-                timerLastUpdate.IsEnabled = true;
-                lblCompliant.Text = "Contact to Administrator";
-                string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
-                BitmapImage DeviceDeactive = new BitmapImage();
-                DeviceDeactive.BeginInit();
-                DeviceDeactive.UriSource = new Uri(ImagePath);
-                DeviceDeactive.EndInit();
-                imgCompliant.Source = DeviceDeactive;
-                return;
+                watingMapVPN.Visibility = Visibility.Visible;
+                ohioMapVPN.Visibility = Visibility.Hidden;
+                northVerginiaMapVPN.Visibility = Visibility.Hidden;
+                californiaMapVPN.Visibility = Visibility.Hidden;
+                currentInfoVPN.Text = "NA";
+
+                watingMap.Visibility = Visibility.Visible;
+                ohioMap.Visibility = Visibility.Hidden;
+                northVerginiaMap.Visibility = Visibility.Hidden;
+                californiaMap.Visibility = Visibility.Hidden;
+                sytemInfo4.Text = "NA";
             }
-
-            if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
+            else if (lblLocation.Text.ToString().ToLower().Contains("california"))
             {
+                watingMapVPN.Visibility = Visibility.Hidden;
+                ohioMapVPN.Visibility = Visibility.Hidden;
+                northVerginiaMapVPN.Visibility = Visibility.Hidden;
+                californiaMapVPN.Visibility = Visibility.Visible;
+                currentInfoVPN.Text = "California";
 
-                var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
-                var deviceDetail = (dynamic)null;
-                if (!string.IsNullOrEmpty(plainText))
-                {
-                    int idx = plainText.LastIndexOf('}');
-                    var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
-                    deviceDetail = JsonConvert.DeserializeObject<DeviceDetail>(result);  //
-                }
+                watingMap.Visibility = Visibility.Hidden;
+                ohioMap.Visibility = Visibility.Hidden;
+                northVerginiaMap.Visibility = Visibility.Hidden;
+                californiaMap.Visibility = Visibility.Visible;
+                sytemInfo4.Text = "California";
 
+            }
+            else if (lblLocation.Text.ToString().ToLower().Contains("ohio"))
+            {
+                watingMapVPN.Visibility = Visibility.Hidden;               
+                ohioMapVPN.Visibility = Visibility.Visible;
+                northVerginiaMapVPN.Visibility = Visibility.Hidden;
+                californiaMapVPN.Visibility = Visibility.Hidden;
+                currentInfoVPN.Text = "Ohio";
 
-                if (deviceDetail != null)
-                {
+                watingMap.Visibility = Visibility.Hidden;
+                ohioMap.Visibility = Visibility.Visible;
+                northVerginiaMap.Visibility = Visibility.Hidden;
+                californiaMap.Visibility = Visibility.Hidden;
+                sytemInfo4.Text = "Ohio";
 
-                    lblSerialNumber.Text = lblPopSerialNumber.Text = deviceDetail.serial_number;
-                    lblUserName.Text = lblDeviceName.Text = deviceDetail.device_name;
-                    lblLocation.Text = deviceDetail.device_location != null ? deviceDetail.device_location.ToString() : "";
-                    txtOrganization.Text = deviceDetail.org_name != null ? deviceDetail.org_name.ToString() : txtOrganization.Text;
-
-                    DateTime localDate = DateTime.Now.ToLocalTime();
-                    txtUpdatedOn.Text = localDate.ToString();
-
-                    //timerLastUpdate.IsEnabled = false;
-                    if (deviceDetail.is_active)
-                    {
-                        deviceActive = true;
-
-                        await RetrieveServices();
-                        loadMenuItems("Assets/DeviceActive.png", "Your system is Compliant");
-
-                    }
-                    else
-                    {
-                        lstCron.Clear();
-                        lstCronEvent.Clear();
-                        deviceActive = false;
-                        IsServiceActive = false;
-                        timerLastUpdate.IsEnabled = true;
-                        loadMenuItems("Assets/DeviceDisable.png", "Check With Administrator");
-
-                    }
-
-                }
+            }
+            else if (lblLocation.Text.ToString().ToLower().Contains("verginia"))
+            {
+                watingMapVPN.Visibility = Visibility.Hidden;
+                watingMap.Visibility = Visibility.Hidden;
+                ohioMapVPN.Visibility = Visibility.Hidden;
+                ohioMap.Visibility = Visibility.Hidden;
+                northVerginiaMapVPN.Visibility = Visibility.Visible;
+                northVerginiaMap.Visibility = Visibility.Visible;
+                californiaMapVPN.Visibility = Visibility.Hidden;
+                californiaMap.Visibility = Visibility.Hidden;
+                currentInfoVPN.Text = "North Verginia";
+                sytemInfo4.Text = "North Verginia";
             }
             else
             {
-                if (showMessageBoxes == true)
+                watingMapVPN.Visibility = Visibility.Visible;
+                watingMap.Visibility = Visibility.Visible;
+                ohioMapVPN.Visibility = Visibility.Hidden;
+                ohioMap.Visibility = Visibility.Hidden;
+                northVerginiaMapVPN.Visibility = Visibility.Hidden;
+                northVerginiaMap.Visibility = Visibility.Hidden;
+                californiaMapVPN.Visibility = Visibility.Hidden;
+                californiaMap.Visibility = Visibility.Hidden;
+                currentInfoVPN.Text = "NA";
+                sytemInfo4.Text = "NA";
+            }
+        }
+
+        private void lstServices_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (!interactionsEnabled)
+            {
+                e.Handled = true;
+            }
+        }
+
+        public void ServiceGridDetails(ServiceResponseNew Response)
+        {
+            int falseCount = 0;
+            if (Response.Data[0].Services.Count > 0)
+            {
+
+                bool dataPrivacyActive = false;
+                bool vpnActive = false;
+
+                interactionsEnabled = true;
+
+                foreach (var services in Response.Data[0].Services)
                 {
-                    MessageBox.Show("An error occurred in GetDeviceDetails: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    if ((services.Service_name == "Data Privacy Protection" && services.Service_active == true) || (services.Service_name == "Fusion VPN" && services.Service_active == true))
+                    {        
+                        if(services.Service_name == "Data Privacy Protection")
+                        {
+                            dataPrivacyActive = true;
+                        }else if(services.Service_name == "Fusion VPN")
+                        {
+                            vpnActive = true;
+                        }                      
+                        
+                    }
+                    else if (services.Service_name == "Data Privacy Protection" && services.Service_active == true)
+                    {
+                        dataPrivacyActive = true;
+                        vpnActive = false;
+                    }
+                    else if (services.Service_name == "Fusion VPN" && services.Service_active == false)
+                    {
+                        falseCount++;
+                        
+                    }
+                    else if (services.Service_name == "Data Privacy Protection" && services.Service_active == false)
+                    {
+                        falseCount++;
+                        interactionsEnabled = false;
+                        Services.Clear();
+                        foreach (var services1 in Response.Data[0].Services)
+                        {
+                            foreach (var subservice in services1.Subservices)
+                            {
+                                Services.Add(new ServiceDPP { ServiceID = subservice.Id, ServiceName = subservice.name, IsActive = subservice.sub_service_active, IsSubscribe = subservice.subscribe });
+                            }
+                        }
+                        MainHomePageUI2.Visibility = Visibility.Visible;
+                        grdGridEvents.Visibility = Visibility.Hidden;
+                        grdNoInternetGrid.Visibility = Visibility.Visible;
+                        grdWithVPN.Visibility = Visibility.Hidden;
+                        grdWithoutVPN.Visibility = Visibility.Visible;
+                        headerWithoutVPN.Visibility = Visibility.Visible;
+                        txtCertificatesCounts2.Text = "0";
+                        txtProxyCount2.Text = "0";
+                        txtHealthScore.Text = "0";
+
+                        valueFromBackend = 0;
+                        UpdateArcPropertiesFromApi(0);
+
+
+
+                    }
+                    else if (services.Service_name == "Fusion VPN" && services.Service_active == true)
+                    {
+                        dataPrivacyActive = false;
+                        vpnActive = true;
+                    }
+                }
+
+                if (Response.Data[0].Services.Count == falseCount)
+                {
+                    if (deviceActive)
+                    {
+                        allServiceDisabled = true;
+                        loadMenuItems("Assets/DeviceDisable.png", "Services are deactivated.Check with administrator");
+                        grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                    }
+                }
+
+
+                if ((dataPrivacyActive) && (vpnActive))
+                {
+                    MainHomePageUI2.Visibility = Visibility.Visible;
+                    healthScoreHeader.Visibility = Visibility.Visible;
+                    GrdhealthScore.Visibility = Visibility.Visible;
+                    currentServerHeader.Visibility = Visibility.Visible;
+                    headerWithoutVPN.Visibility = Visibility.Hidden;
+                    grdWithoutVPN.Visibility = Visibility.Hidden;
+                    headerWithVPN.Visibility = Visibility.Visible;
+                    grdWithVPN.Visibility = Visibility.Visible;
+                    //MainHomePageDPP.Visibility = Visibility.Hidden;
+                    MainHomePageUI.Visibility = Visibility.Hidden;
+                    grdMapGrid.Visibility = Visibility.Visible;
+                    grdGridEvents.Visibility = Visibility.Hidden;
+                    grdNoInternetGrid.Visibility = Visibility.Hidden;
+               
+                    Services.Clear();
+
+
+                    foreach (var services in Response.Data[0].Services)
+                    {
+                        foreach (var subservice in services.Subservices)
+                        {
+                            Services.Add(new ServiceDPP { ServiceID = subservice.Id, ServiceName = subservice.name, IsActive = subservice.sub_service_active, IsSubscribe = subservice.subscribe });
+                        }
+                    }
+                    ShowMap();
+                }
+                else if (dataPrivacyActive)
+                {
+                    lblheadingServer.Text = "Activity Logs";
+                    MainHomePageUI2.Visibility = Visibility.Visible;
+                    healthScoreHeader.Visibility = Visibility.Visible;
+                    GrdhealthScore.Visibility = Visibility.Visible;
+                    currentServerHeader.Visibility = Visibility.Visible;
+                    headerWithoutVPN.Visibility = Visibility.Visible;
+                    grdWithoutVPN.Visibility = Visibility.Visible;
+                    headerWithVPN.Visibility = Visibility.Hidden;
+                    grdWithVPN.Visibility = Visibility.Hidden;
+                    //MainHomePageDPP.Visibility = Visibility.Hidden;
+                    MainHomePageUI.Visibility = Visibility.Hidden;
+
+                    grdMapGrid.Visibility = Visibility.Hidden;
+                    grdGridEvents.Visibility = Visibility.Visible;
+                    grdNoInternetGrid.Visibility = Visibility.Hidden;
+                    Services.Clear();
+                    foreach (var services in Response.Data[0].Services)
+                    {
+                        foreach (var subservice in services.Subservices)
+                        {
+                            Services.Add(new ServiceDPP { ServiceID = subservice.Id, ServiceName = subservice.name, IsActive = subservice.sub_service_active, IsSubscribe = subservice.subscribe });
+                        }
+                    }
+                    if (lstServices.Items.Count > 0)
+                    {
+                        ServiceDPP firstService = lstServices.Items[0] as ServiceDPP;
+                        if (firstService != null)
+                        {
+                            InitializeListBox();
+                            int id = firstService.ServiceID;
+                            GetEventDetails(id);
+                        }
+                    }
+                    ShowMap();
+                }
+                else if (vpnActive)
+                {
+
+                    MainHomePageUI2.Visibility = Visibility.Hidden;
+                    headerWithoutVPN.Visibility = Visibility.Hidden;
+                    grdWithoutVPN.Visibility = Visibility.Hidden;
+                    headerWithVPN.Visibility = Visibility.Hidden;
+                    grdWithVPN.Visibility = Visibility.Hidden;
+                    //MainHomePageDPP.Visibility = Visibility.Hidden;
+                    MainHomePageUI.Visibility = Visibility.Visible;
+
+                    ShowMap();
+
                 }
             }
         }
+
+        private void InitializeListBox()
+        {
+            Dispatcher.BeginInvoke((Action)(() =>
+            {
+                ListBoxItem firstListBoxItem = lstServices.ItemContainerGenerator.ContainerFromIndex(0) as ListBoxItem;
+                if (firstListBoxItem != null)
+                {
+                    // Access the first ListBoxItem here
+                    // For example, set its background color
+                    firstListBoxItem.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0C1828"));
+                }
+            }), System.Windows.Threading.DispatcherPriority.ContextIdle);
+        }
+
+        private void lstServices_Loaded(object sender, RoutedEventArgs e)
+        {
+            InitializeListBox();
+        }
+
+
+        private async Task GetServiceHealthReport()
+        {
+            var Response = await apiService.GetServiceInfoAsync();
+            if ((Response.Success) && (Response.Data.Count > 0))
+            {
+                ServiceGridDetails(Response);
+
+                if (deviceActive == true)
+                {
+                    GetHealthScoreMain();
+                }
+                else
+                {
+                    grdBlurScreen.Visibility = Visibility.Visible;
+                    DeviceActivateDeactivate(false);
+                }
+            }
+
+        }
+
+        private async Task GetDeviceDetails()
+        {
+            try
+            {
+                var apiResponse = await apiService.GetDeviceDetailsAsync();
+                if (apiResponse == null)
+                {
+                    deviceOffline = true;
+                    timerLastUpdate.IsEnabled = true;
+                    lblMessageHeader.Text = "Your Device is Disabled. Contact to Administrator";
+                    grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                    string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
+                    BitmapImage DeviceDeactive = new BitmapImage();
+                    DeviceDeactive.BeginInit();
+                    DeviceDeactive.UriSource = new Uri(ImagePath);
+                    DeviceDeactive.EndInit();
+                    //imgCompliant.Source = DeviceDeactive;
+                    return;
+                }
+
+                if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
+                {
+
+                    var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
+                    var deviceDetail = (dynamic)null;
+                    if (!string.IsNullOrEmpty(plainText))
+                    {
+                        int idx = plainText.LastIndexOf('}');
+                        var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
+                        deviceDetail = JsonConvert.DeserializeObject<DeviceDetail>(result);  //
+                    }
+
+
+                    if (deviceDetail != null)
+                    {
+
+                        lblSerialNumber.Text = lblPopSerialNumber.Text = deviceDetail.serial_number;
+                        lblUserName.Text = lblDeviceName.Text = deviceDetail.device_name;
+                        lblUserName.Text = lblUserName.Text + "’s Desktop";
+                        lblLocation.Text = deviceDetail.device_location != null ? deviceDetail.device_location.ToString() : "";
+                        txtDeviceLocation.Text = lblLocation.Text;
+                        txtloc1.Text = lblLocation.Text;
+                        txtOrganization.Text = deviceDetail.org_name != null ? deviceDetail.org_name.ToString() : txtOrganization.Text;
+
+                        DateTime localDate = DateTime.Now.ToLocalTime();
+                        //txtUpdatedOn.Text = localDate.ToString();
+
+                        //timerLastUpdate.IsEnabled = false;
+                        if (deviceDetail.is_active)
+                        {
+                            deviceActive = true;
+                            grdBlurScreen.Visibility = Visibility.Hidden;
+                            await RetrieveServices();
+                            loadMenuItems("Assets/DeviceActive.png", "Your device is protected");
+                            grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
+
+                        }
+                        else
+                        {
+                            lstCron.Clear();
+                            lstCronEvent.Clear();
+                            deviceActive = false;
+                            IsServiceActive = false;
+                            timerLastUpdate.IsEnabled = true;
+                            grdBlurScreen.Visibility = Visibility.Visible;
+                            DeviceActivateDeactivate(false);
+                            loadMenuItems("Assets/DeviceDisable.png", "Your device is disabled.");
+                            grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFC16B"));
+                        }
+
+                    }
+                }
+                else
+                {
+                    if (showMessageBoxes == true)
+                    {
+                        MessageBox.Show("An error occurred in GetDeviceDetails: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+
+                await GetServiceHealthReport();
+            }
+            catch (Exception ex)
+            {
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred in Fetching API: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+
+        public void DeviceActivateDeactivate(bool isVisible)
+        {
+            
+            headerWithVPN.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+            headerWithoutVPN.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+            grdWithoutVPN.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+            grdWithDeviceInfo.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+            grdWithVPN.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+            currentServerHeader.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+            healthScoreHeader.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+            grdMapGrid.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+            grdGridEvents.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+            grdNoInternetGrid.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+            GrdhealthScore.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+        }
+
 
 
         private async Task GetDeviceDetailsUI()
@@ -1714,13 +2857,14 @@ namespace FDS
             {
                 deviceOffline = true;
                 timerLastUpdate.IsEnabled = true;
-                lblCompliant.Text = "Contact to Administrator";
+                lblMessageHeader.Text = "Contact to Administrator";
+                grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
                 string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
                 BitmapImage DeviceDeactive = new BitmapImage();
                 DeviceDeactive.BeginInit();
                 DeviceDeactive.UriSource = new Uri(ImagePath);
                 DeviceDeactive.EndInit();
-                imgCompliant.Source = DeviceDeactive;
+                //imgCompliant.Source = DeviceDeactive;
                 return;
             }
             if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
@@ -1740,18 +2884,22 @@ namespace FDS
 
                     lblSerialNumber.Text = lblPopSerialNumber.Text = deviceDetail.serial_number;
                     lblUserName.Text = lblDeviceName.Text = deviceDetail.device_name;
+                    lblUserName.Text = lblUserName.Text + "’s Desktop";
                     lblLocation.Text = deviceDetail.device_location != null ? deviceDetail.device_location.ToString() : "";
+                    txtDeviceLocation.Text = lblLocation.Text;
+                    txtloc1.Text = lblLocation.Text;
                     txtOrganization.Text = deviceDetail.org_name != null ? deviceDetail.org_name.ToString() : txtOrganization.Text;
 
                     DateTime localDate = DateTime.Now.ToLocalTime();
-                    txtUpdatedOn.Text = localDate.ToString();
+                    //txtUpdatedOn.Text = localDate.ToString();
 
                     //timerLastUpdate.IsEnabled = false;
                     if (deviceDetail.is_active)
                     {
                         deviceActive = true;
                         // await RetrieveServices();
-                        loadMenuItems("Assets/DeviceActive.png", "Your system is Compliant");
+                        loadMenuItems("Assets/DeviceActive.png", "Your device is protected.");
+                        grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
                     }
                     else
                     {
@@ -1761,7 +2909,7 @@ namespace FDS
                         IsServiceActive = false;
                         timerLastUpdate.IsEnabled = true;
                         loadMenuItems("Assets/DeviceDisable.png", "Check With Administrator");
-
+                        grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
                     }
                 }
             }
@@ -1795,7 +2943,7 @@ namespace FDS
                                                                                                    //var servicesResponse = JsonConvert.DeserializeObject<ServicesResponse>(plainText);
 
                     DateTime localDate = DateTime.Now.ToLocalTime();
-                    txtUpdatedOn.Text = localDate.ToString();
+                    //txtUpdatedOn.Text = localDate.ToString();
                     ExecuteServices(servicesResponse);
                 }
 
@@ -1821,46 +2969,77 @@ namespace FDS
 
                 if (IsServiceActive)
                 {
+
+                    bool isEventServiceRun = false;
+                    bool isNetworkServiceRun = false;
+
                     lstCron.Clear();
                     lstCronEvent.Clear();
                     foreach (var services in servicesResponse.Services)
                     {
-                        foreach (var subservice in services.Subservices)
+                        if (services.Service_active == true && services.Service_name == "Data Privacy Protection")
                         {
 
-                            if (subservice.Sub_service_active)
+                            foreach (var subservice in services.Subservices)
                             {
-                                if (subservice.Execute_now)
-                                {
-                                    //MessageBox.Show("Manual Execution :" + subservice.Sub_service_name);
-                                    ExecuteSubService(subservice, "M");
-                                }
-                                else if ((subservice.Execute_Skipped_Service) && (subservice.Sub_service_name != "system_network_monitoring_protection"))
-                                {
-                                    //MessageBox.Show("Skipped Execution :" + subservice.Sub_service_name);
-                                    ExecuteSubService(subservice, "SK");
-                                }
-                                else
+
+                                if (subservice.Sub_service_active)
                                 {
 
-                                    if (!string.IsNullOrEmpty(subservice.Execution_period))
+                                    if (subservice.Sub_service_name == "system_network_monitoring_protection")
                                     {
-                                        var schedule = CrontabSchedule.Parse(subservice.Execution_period);
-                                        DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
-                                        lstCron.Add(subservice, nextRunTime);
+                                        isNetworkServiceRun = true;
+                                    }
+                                    string transformed = TransformString(subservice.Sub_service_name);
+                                    if ((transformed == ServiceTypeName.WebSessionProtection.ToString()) || (transformed == ServiceTypeName.WebCacheProtection.ToString()) || (transformed == ServiceTypeName.WebTrackingProtecting.ToString()))
+                                    {
+                                        isEventServiceRun = true;
                                     }
 
-                                    lstCronEvent.Add(subservice, DateTime.MinValue);
 
+
+                                    if (subservice.Execute_now)
+                                    {
+                                        //MessageBox.Show("Manual Execution :" + subservice.Sub_service_name);
+                                        ExecuteSubService(subservice, "M");
+                                    }
+                                    else if ((subservice.Execute_Skipped_Service) && (subservice.Sub_service_name != "system_network_monitoring_protection"))
+                                    {
+                                        //MessageBox.Show("Skipped Execution :" + subservice.Sub_service_name);
+                                        ExecuteSubService(subservice, "SK");
+                                    }
+                                    else
+                                    {
+
+                                        if (!string.IsNullOrEmpty(subservice.Execution_period))
+                                        {
+                                            var schedule = CrontabSchedule.Parse(subservice.Execution_period);
+                                            DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
+                                            lstCron.Add(subservice, nextRunTime);
+                                        }
+
+                                        lstCronEvent.Add(subservice, DateTime.MinValue);
+
+                                    }
                                 }
                             }
+
+
+                            CronLastUpdate.Start();
+
+                            if (isEventServiceRun)
+                            {
+                                timerEventBasedService.Start();
+                            }
+
+                            if (isNetworkServiceRun)
+                            {
+                                timerNetworkMonitering.Start();
+                            }
+
                         }
-                        break;
                     }
 
-                    CronLastUpdate.Start();
-                    timerEventBasedService.Start();
-                    timerNetworkMonitering.Start();
                 }
             }
             catch (Exception ex)
@@ -1909,7 +3088,7 @@ namespace FDS
                             if (result)
                             {
                                 DateTime localDate = DateTime.Now.ToLocalTime();
-                                txtUpdatedOn.Text = localDate.ToString();
+                                //txtUpdatedOn.Text = localDate.ToString();
                             }
 
                             var schedule = CrontabSchedule.Parse(SubservicesData.Execution_period);
@@ -2002,7 +3181,7 @@ namespace FDS
                     if (result)
                     {
                         DateTime localDate = DateTime.Now.ToLocalTime();
-                        txtUpdatedOn.Text = localDate.ToString();
+                        //txtUpdatedOn.Text = localDate.ToString();
                     }
                 }
             }
@@ -2028,7 +3207,7 @@ namespace FDS
                             if (result)
                             {
                                 DateTime localDate = DateTime.Now.ToLocalTime();
-                                txtUpdatedOn.Text = localDate.ToString();
+                                //txtUpdatedOn.Text = localDate.ToString();
                             }
                         }
                     }
@@ -2066,7 +3245,7 @@ namespace FDS
 
 
                 DateTime localDate = DateTime.Now.ToLocalTime();
-                txtUpdatedOn.Text = localDate.ToString();
+                //txtUpdatedOn.Text = localDate.ToString();
 
             }
             catch (Exception ex)
@@ -2223,11 +3402,12 @@ namespace FDS
                         btnUninstall.IsEnabled = true;
                         UninstallResponseTimer.Stop();
                         btnUninstall.ToolTip = "Your uninstall request has been declined!";
-                        btnUninstall.Foreground = System.Windows.Media.Brushes.Red;
+
+                        btnUninstall.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
                     }
                     else if (apiResponse.Data == "2")
                     {
-                         
+
                         encryptOutPutFile = basePathEncryption + @"\Main";
                         if (File.Exists(encryptOutPutFile))
                         {
@@ -2400,7 +3580,7 @@ namespace FDS
 
                     try
                     {
-                       
+
                         WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
                         windowServiceInstaller.StopService();
                         windowServiceInstaller.UninstallService();
@@ -2433,7 +3613,7 @@ namespace FDS
                         ShowWindow(mainWindowHandle, SW_HIDE);
                     }
 
-                    
+
                     //Process.Start(AutoUpdateExePath);
                 }
 
@@ -2450,7 +3630,7 @@ namespace FDS
             return true;
         }
 
-         
+
 
         private bool TryCloseRunningProcess(string processName)
         {
@@ -2564,4 +3744,25 @@ namespace FDS
         }
 
     }
+
+    public class ComboBoxSelectedValueConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (values == null || values.Length != 3)
+                return DependencyProperty.UnsetValue;
+
+            string phoneCode = values[0] as string;
+            string countryCode = values[1] as string;
+            string countryName = values[2] as string;
+
+            return $"{phoneCode} - {countryCode} - {countryName}";
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
 }

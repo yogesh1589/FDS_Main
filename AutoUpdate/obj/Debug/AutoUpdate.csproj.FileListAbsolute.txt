@@ -40,6 +40,6 @@ D:\14March\FDS\windowsapp\AutoUpdate\bin\Debug\System.CodeDom.xml
 D:\14March\FDS\windowsapp\AutoUpdate\bin\Debug\System.Management.Automation.xml
 D:\14March\FDS\windowsapp\AutoUpdate\obj\Debug\AutoUpdate.csproj.AssemblyReference.cache
 D:\14March\FDS\windowsapp\AutoUpdate\obj\Debug\AutoUpdate.csproj.CoreCompileInputs.cache
-D:\14March\FDS\windowsapp\AutoUpdate\obj\Debug\AutoUpdate.csproj.Up2Date
+D:\14March\FDS\windowsapp\AutoUpdate\obj\Debug\AutoUpdate.csproj.CopyComplete
 D:\14March\FDS\windowsapp\AutoUpdate\obj\Debug\AutoUpdate.exe
 D:\14March\FDS\windowsapp\AutoUpdate\obj\Debug\AutoUpdate.pdb

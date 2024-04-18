@@ -51,6 +51,6 @@ D:\14March\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.csproj.Ass
 D:\14March\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.ProjectInstaller.resources
 D:\14March\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.csproj.GenerateResource.cache
 D:\14March\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.csproj.CoreCompileInputs.cache
-D:\14March\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowSe.D4B25C2B.Up2Date
+D:\14March\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.csproj.CopyComplete
 D:\14March\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.exe
 D:\14March\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.pdb

@@ -827,6 +827,180 @@ namespace FDS.API_Service
             }
         }
 
+        public async Task<HealthScoreDetails> GetHealthscoreAsync()
+        {
+            try
+            {
+
+                var handler = new HttpClientHandler
+                {
+                    UseProxy = false // Disable using the system proxy
+                };
+
+                using (var client1 = new HttpClient(handler))
+                {
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var response = await client1.GetAsync(AppConstants.EndPoints.healthscore + "?device_uuid=" + AppConstants.UUId);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        HealthScoreDetails healthScore = JsonConvert.DeserializeObject<HealthScoreDetails>(responseString);
+
+
+                        healthScore.HttpStatusCode = HttpStatusCode.OK;
+                        healthScore.Success = true;
+                       
+                        return healthScore;
+                    }
+                    else
+                    {
+                        HealthScoreDetails healthScore = new HealthScoreDetails();
+
+                        healthScore.HttpStatusCode = HttpStatusCode.OK;
+                        healthScore.Success = true;
+                        
+                        return healthScore;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions and log errors if needed.
+                return null;
+            }
+        }
+
+
+
+        public HealthScoreDetails GetHealthscore()
+        {
+            try
+            {
+                var handler = new HttpClientHandler
+                {
+                    UseProxy = false // Disable using the system proxy
+                };
+
+                using (var client1 = new HttpClient(handler))
+                {
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var response = client1.GetAsync(AppConstants.EndPoints.healthscore + "?device_uuid=" + AppConstants.UUId).Result;
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseString = response.Content.ReadAsStringAsync().Result;                       
+                        HealthScoreDetails healthScore = JsonConvert.DeserializeObject<HealthScoreDetails>(responseString);
+
+                        healthScore.HttpStatusCode = HttpStatusCode.OK;
+                        healthScore.Success = true;
+                        
+                        return healthScore;
+                    }
+                    else
+                    {
+                        // If the response is not successful, handle accordingly
+                        return null;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions and log errors if needed.
+                return null;
+            }
+        }
+
+
+        public async Task<ServiceResponseNew> GetServiceInfoAsync()
+        {
+            try
+            {
+                var handler = new HttpClientHandler
+                {
+                    UseProxy = false // Disable using the system proxy
+                };
+
+                using (var client1 = new HttpClient(handler))
+                {
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var getresponse = await client1.GetAsync(AppConstants.EndPoints.serviceinfo + "?device_uuid=" + AppConstants.UUId);
+                    if (getresponse.IsSuccessStatusCode)
+                    {
+                        var responseString = await getresponse.Content.ReadAsStringAsync();
+
+                        // Deserialize the JSON response into an object
+                        ServiceResponseNew serviceResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<ServiceResponseNew>(responseString);
+                        serviceResponse.HttpStatusCode = HttpStatusCode.OK;
+                        serviceResponse.Success = true;
+                        return serviceResponse;
+                    }
+                    else
+                    {
+                        ServiceResponseNew qRCodeResponse = new ServiceResponseNew
+                        {
+                            HttpStatusCode = getresponse.StatusCode,
+                            Success = false
+                        };
+                        return qRCodeResponse;
+                    }
+                }
+            }
+
+
+            catch (Exception ex)
+            {
+                // Handle exceptions and log errors if needed.
+                return null;
+            }
+
+            return null;
+        }
+
+
+        public async Task<List<DTO.Responses.LogEntry>> GetServiceInfoAsync(int serviceID)
+        {
+            try
+            {
+                var handler = new HttpClientHandler
+                {
+                    UseProxy = false // Disable using the system proxy
+                };
+                List<DTO.Responses.LogEntry> logEntries = new List<DTO.Responses.LogEntry>();
+                using (var client1 = new HttpClient(handler))
+                {
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var getresponse = await client1.GetAsync(AppConstants.EndPoints.serviceinfo + "?device_uuid=" + AppConstants.UUId + "&subservices_id=" + serviceID.ToString());
+                    if (getresponse.IsSuccessStatusCode)
+                    {
+                        var responseString = await getresponse.Content.ReadAsStringAsync();
+
+                        LogResponse logResponse = JsonConvert.DeserializeObject<LogResponse>(responseString);
+
+                        // Access the list of log entries
+                        logEntries = logResponse.log;
+                         
+                      
+                        return logEntries;
+                    }
+                    else
+                    {
+                         
+                        return logEntries;
+                    }
+                }
+            }
+
+
+            catch (Exception ex)
+            {
+                // Handle exceptions and log errors if needed.
+                return null;
+            }
+
+            return null;
+        }
+
 
         public async Task<ResponseData> QRGeneratortimerAsync(string emailToken, string phone, string countryCode, string varificationCode, string qrCodeToken)
         {

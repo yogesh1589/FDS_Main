@@ -52,27 +52,15 @@ namespace FDS.Common
 
         public static bool IsBrowserOpen(string browser)
         {
-            int bCnt = 0;
-            bool result = false;
-            Process[] chromeProcesses = Process.GetProcessesByName(browser);
-            string test = string.Empty;
-            foreach (Process process in chromeProcesses)
+            var chromeProcesses = Process.GetProcessesByName(browser);
+            bool result = chromeProcesses.Any(process =>
             {
                 string processOwner = GetProcessOwner2(process.Id);
-                if (!string.IsNullOrEmpty(processOwner))
-                {
-                    test = processOwner;
-                    if (System.Security.Principal.WindowsIdentity.GetCurrent().Name.ToUpper().ToString().Contains(processOwner.ToUpper().ToString()))
-                    {
-                        bCnt++;
-                    }
-                }
-            }
+                return !string.IsNullOrEmpty(processOwner) &&
+                       System.Security.Principal.WindowsIdentity.GetCurrent().Name
+                       .ToUpper().Contains(processOwner.ToUpper());
+            });
 
-            if (bCnt > 0)
-            {
-                result = true;
-            }
             return result;
         }
 

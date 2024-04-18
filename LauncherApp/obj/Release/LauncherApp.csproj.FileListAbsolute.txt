@@ -31,10 +31,10 @@ D:\14March\FDS\windowsapp\LauncherApp\bin\Release\zh-CN\Microsoft.Win32.TaskSche
 D:\14March\FDS\windowsapp\LauncherApp\bin\Release\zh-Hant\Microsoft.Win32.TaskScheduler.resources.dll
 D:\14March\FDS\windowsapp\LauncherApp\obj\Release\LauncherApp.csproj.AssemblyReference.cache
 D:\14March\FDS\windowsapp\LauncherApp\obj\Release\LauncherApp.csproj.CoreCompileInputs.cache
-D:\14March\FDS\windowsapp\LauncherApp\obj\Release\Launcher.91152B33.Up2Date
 D:\14March\FDS\windowsapp\LauncherApp\obj\Release\LauncherApp.exe
 D:\14March\FDS\windowsapp\LauncherApp\obj\Release\LauncherApp.pdb
 D:\14March\FDS\windowsapp\LauncherApp\bin\Release\Newtonsoft.Json.dll
 D:\14March\FDS\windowsapp\LauncherApp\bin\Release\System.CodeDom.dll
 D:\14March\FDS\windowsapp\LauncherApp\bin\Release\Newtonsoft.Json.xml
 D:\14March\FDS\windowsapp\LauncherApp\bin\Release\System.CodeDom.xml
+D:\14March\FDS\windowsapp\LauncherApp\obj\Release\LauncherApp.csproj.CopyComplete

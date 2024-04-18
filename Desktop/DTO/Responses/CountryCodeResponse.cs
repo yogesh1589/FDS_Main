@@ -69,18 +69,7 @@ namespace FDS.DTO.Responses
 
          
 
-        //public ViewModel()
-        //{
-        //    // Populate the list of countries
-        //    AllCountries = new List<CountryCode>
-        //    {
-        //        new CountryCode { Name = "IN", phone_code = "India" },
-        //        new CountryCode { Name = "US", phone_code = "United States" },
-        //        new CountryCode { Name = "GB", phone_code = "United Kingdom" },
-        //        new CountryCode { Name = "JP", phone_code = "Japan" }
-        //        // Add more countries as needed
-        //    };
-        //}
+       
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -89,5 +78,6 @@ namespace FDS.DTO.Responses
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
+
 
 }

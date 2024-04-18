@@ -6,8 +6,10 @@ using System;
 using System.Diagnostics;
 using System.DirectoryServices.AccountManagement;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.IO.Pipes;
+using System.Linq;
 using System.Management;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
@@ -113,6 +115,62 @@ namespace FDS.Common
         {
             return System.Text.RegularExpressions.Regex.IsMatch(mobileNumber, @"^[0-9]{10}$");
         }
+
+        public static string FormatDateTime(string dateTimeString)
+        {
+            // Parse the datetime string into a DateTime object
+            DateTime dateTime = DateTime.ParseExact(dateTimeString, "dd-MM-yyyy HH:mm:ss", CultureInfo.InvariantCulture);
+            TimeSpan timeDifference = DateTime.Today - dateTime.Date;
+
+            // Check if the datetime is today
+            if (dateTime.Date == DateTime.Today)
+            {
+                // If the datetime is today, format as "Today, HH:mm AM/PM"
+                return $"Today, {dateTime.ToString("hh:mm tt")}";
+            }
+            else if (timeDifference.Days == 1)
+            {
+                // If the datetime was yesterday, format as "Yesterday, HH:mm AM/PM"
+                return $"Yesterday, {dateTime.ToString("hh:mm tt")}";
+            }
+            else
+            {
+                // If the datetime was more than one day ago, format as "X Days ago, HH:mm AM/PM"
+                return $"{timeDifference.Days} Days ago, {dateTime.ToString("hh:mm tt")}";
+            }
+        }
+
+        public static bool IsValidCountryCode(string countryCode)
+        {
+            if ((countryCode.Contains("+")) && (!countryCode.Contains("-")))
+            {
+                return true;
+            }
+            string[] parts = countryCode.Split('-');
+            if ((parts[0].ToString().Contains("+")) && (parts.Length == 3))
+            {
+                string numericPart = parts[0].Replace("+","").Trim();
+                string country = parts[1].ToString().Trim();
+                string country2 = parts[2].ToString().Trim();
+
+                bool isNumeric = System.Text.RegularExpressions.Regex.IsMatch(numericPart, @"^\d+$");
+                if (!isNumeric)
+                {
+                    return false;
+                }
+                if (!((country.Length) == 2 && country.All(char.IsLetter)))
+                {
+                    return false;
+                }
+                if (!country2.All(char.IsLetter))
+                {
+                    return false;
+                }
+            }
+            else { return false; }
+
+            return true;
+        }
         public static bool IsValidEmail(string email)
         {
             try
@@ -132,46 +190,23 @@ namespace FDS.Common
             ImageSource imageSource = null;
             try
             {
-
                 QRCodeGenerator qrGenerator = new QRCodeGenerator();
                 QRCodeData qrCodeData = qrGenerator.CreateQrCode(Code, QRCodeGenerator.ECCLevel.Q);
                 QRCode qrCode = new QRCode(qrCodeData);
 
-                // Convert QR Code to Bitmap
+                // Convert QR Code to Bitmap with red background
                 Bitmap qrBitmap;
-                using (var qrCodeImage = qrCode.GetGraphic(20))
+                using (var qrCodeImage = qrCode.GetGraphic(20, System.Drawing.Color.Black, System.Drawing.Color.Transparent, true))
                 {
                     qrBitmap = new Bitmap(qrCodeImage);
                 }
 
-                // Create new Bitmap with transparent background
-                System.Drawing.Bitmap newBitmap = new Bitmap(qrBitmap.Width, qrBitmap.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                using (System.Drawing.Graphics graphics = Graphics.FromImage(newBitmap))
-                {
-                    graphics.Clear(System.Drawing.Color.Transparent);
-
-                    // Draw QR Code onto new Bitmap
-                    graphics.DrawImage(qrBitmap, 0, 0);
-
-                    // Calculate position for logo in center of new Bitmap
-                    int logoSize = 300;
-                    int logoX = (newBitmap.Width - logoSize) / 2;
-                    int logoY = (newBitmap.Height - logoSize) / 2;
-
-                    // Load logo image from file
-                    Image logoImage = Image.FromFile(Path.Combine(BaseDir, "Assets/FDSIcon.png"));
-
-                    // Draw logo onto new Bitmap
-                    graphics.DrawImage(logoImage, logoX, logoY, logoSize, logoSize);
-                }
-
-                // Convert new Bitmap to ImageSource for use in WPF
+                // Convert QR Code Bitmap to ImageSource for use in WPF
                 imageSource = Imaging.CreateBitmapSourceFromHBitmap(
-                    newBitmap.GetHbitmap(),
+                    qrBitmap.GetHbitmap(),
                     IntPtr.Zero,
                     Int32Rect.Empty,
                     BitmapSizeOptions.FromEmptyOptions());
-
 
             }
             catch (Exception ex)
@@ -585,7 +620,7 @@ namespace FDS.Common
             return false;
         }
 
-         public static void UninstallFDS()
+        public static void UninstallFDS()
         {
             string applicationName = "FDS";
             bool uninstallURL = false;

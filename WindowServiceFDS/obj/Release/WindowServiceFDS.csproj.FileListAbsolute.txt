@@ -47,10 +47,10 @@ D:\14March\FDS\windowsapp\WindowServiceFDS\obj\Release\WindowServiceFDS.csproj.A
 D:\14March\FDS\windowsapp\WindowServiceFDS\obj\Release\WindowServiceFDS.ProjectInstaller.resources
 D:\14March\FDS\windowsapp\WindowServiceFDS\obj\Release\WindowServiceFDS.csproj.GenerateResource.cache
 D:\14March\FDS\windowsapp\WindowServiceFDS\obj\Release\WindowServiceFDS.csproj.CoreCompileInputs.cache
-D:\14March\FDS\windowsapp\WindowServiceFDS\obj\Release\WindowSe.D4B25C2B.Up2Date
 D:\14March\FDS\windowsapp\WindowServiceFDS\obj\Release\WindowServiceFDS.exe
 D:\14March\FDS\windowsapp\WindowServiceFDS\obj\Release\WindowServiceFDS.pdb
 D:\14March\FDS\windowsapp\WindowServiceFDS\bin\Release\Newtonsoft.Json.dll
 D:\14March\FDS\windowsapp\WindowServiceFDS\bin\Release\System.CodeDom.dll
 D:\14March\FDS\windowsapp\WindowServiceFDS\bin\Release\Newtonsoft.Json.xml
 D:\14March\FDS\windowsapp\WindowServiceFDS\bin\Release\System.CodeDom.xml
+D:\14March\FDS\windowsapp\WindowServiceFDS\obj\Release\WindowServiceFDS.csproj.CopyComplete

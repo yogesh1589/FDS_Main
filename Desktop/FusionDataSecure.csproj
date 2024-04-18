@@ -30,7 +30,7 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>FDS</RootNamespace>
     <AssemblyName>FDS</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
@@ -128,6 +128,8 @@
     </StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
@@ -156,6 +158,7 @@
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
+    <Reference Include="WindowsBase" />
     <!--<reference include="windowsbase" />
     <reference include="presentationcore" />
     <reference include="presentationframework" />-->
@@ -169,6 +172,8 @@
     <Compile Include="API Service\CertificateService.cs" />
     <Compile Include="API Service\ProxyService.cs" />
     <Compile Include="Common\BrowsersGeneric.cs" />
+    <Compile Include="Common\CountryCodeConverter.cs" />
+    <Compile Include="Common\IsActiveToColorConverter.cs" />
     <Compile Include="Common\SystemMoniteringService\CertificateDetails.cs" />
     <Compile Include="Common\Cipher.cs" />
     <Compile Include="Common\EncryptDecryptData.cs" />
@@ -187,20 +192,27 @@
     <Compile Include="DTO\Requests\ProxyDeletionRequest.cs" />
     <Compile Include="DTO\Requests\RetriveServices.cs" />
     <Compile Include="DTO\Requests\ExecuteNow.cs" />
+    <Compile Include="DTO\Requests\ServiceDPP.cs" />
     <Compile Include="DTO\Responses\AutoUpdateResponse.cs" />
     <Compile Include="DTO\Responses\CertificatePayloadResponse.cs" />
     <Compile Include="DTO\Responses\CertificateResponse.cs" />
+    <Compile Include="DTO\Responses\ComboBoxSelectedValueConverter.cs" />
     <Compile Include="DTO\Responses\ConfigDetails.cs" />
     <Compile Include="DTO\Responses\CountryCodeResponse.cs" />
     <Compile Include="DTO\Responses\DeviceConfigCheckResponse.cs" />
+    <Compile Include="DTO\Responses\DeviceHealthScore.cs" />
     <Compile Include="DTO\Responses\HealthCheckResponse.cs" />
+    <Compile Include="DTO\Responses\HealthScoreDetails.cs" />
     <Compile Include="DTO\Responses\LicenseResponse.cs" />
+    <Compile Include="DTO\Responses\LogEntry.cs" />
     <Compile Include="DTO\Responses\ProxyPayloadResponse.cs" />
     <Compile Include="DTO\Responses\ProxyResponse.cs" />
+    <Compile Include="DTO\Responses\ServiceResponseNew.cs" />
     <Compile Include="DTO\Responses\ServicesResponse.cs" />
     <Compile Include="DTO\Responses\WhiteListDomainResponse.cs" />
     <Compile Include="Factories\ServiceFactory.cs" />
     <Compile Include="Factories\ServiceType.cs" />
+    <Compile Include="HealthScore.cs" />
     <Compile Include="Logging\BrowsersDB.cs" />
     <Compile Include="Logging\DatabaseLogger.cs" />
     <Compile Include="Logging\ILogger.cs" />
@@ -229,6 +241,9 @@
     <Compile Include="SingleTon\GlobalDictionaryService.cs" />
     <Compile Include="SingleTon\GlobalVariables.cs" />
     <Compile Include="SingleTon\RSASingleTon.cs" />
+    <Compile Include="TestFDSMain.xaml.cs">
+      <DependentUpon>TestFDSMain.xaml</DependentUpon>
+    </Compile>
     <Compile Include="User32API.cs" />
     <Compile Include="WindowService\WindowServiceInstaller.cs" />
     <Page Include="css\sendOTPStyle.xaml">
@@ -263,6 +278,10 @@
       <DependentUpon>FDSMain.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="TestFDSMain.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -293,9 +312,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Assets\Auth.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
     <Resource Include="Assets\card.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
@@ -311,40 +327,10 @@
     <Resource Include="Assets\location.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Assets\logo FDS.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Assets\Logo-FDS.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <EmbeddedResource Include="Assets\LogoFDSXL.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <Resource Include="Assets\LogoFDSXL.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
     <Resource Include="Assets\QR.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Assets\securityoutlined.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Assets\Settings.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Assets\Status.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Assets\tool.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
     <Resource Include="Assets\uncheck.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Assets\wires.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Assets\XCheckCircle.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>
@@ -370,31 +356,16 @@
     <Resource Include="Assets\FDSLogo.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Assets\FDSLogo1.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Assets\AddDeviceButton.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Assets\Scan.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Assets\Desktop.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Assets\dataprotection.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Assets\background.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Assets\ScanQR.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Assets\Credential.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Assets\AuthenticationStep3.png" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Cake.Powershell">
@@ -469,20 +440,12 @@
     <PackageReference Include="TaskScheduler">
       <Version>2.10.1</Version>
     </PackageReference>
+    <PackageReference Include="Unnoficial.Microsoft.Expression.Drawing">
+      <Version>1.0.0</Version>
+    </PackageReference>
     <PackageReference Include="WpfAnimatedGif">
       <Version>2.0.2</Version>
     </PackageReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Assets\AuthFailed.png" />
-    <Resource Include="Assets\AuthProcessing.png" />
-    <Resource Include="Assets\AuthSuccessfull.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Assets\FDSIcon.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Assets\GetStarted.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Assets\FDSDesktopLogo.png" />
@@ -492,12 +455,6 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="FDSDesktopLogo.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Assets\HighLightedcredential.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Assets\HighLightedQR.png" />
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="IWshRuntimeLibrary">
@@ -531,19 +488,9 @@
     <Resource Include="Assets\failed.gif" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Assets\AuthenticationStep1.png" />
-    <Resource Include="Assets\AuthenticationStep2.png" />
-    <Resource Include="Assets\ByIndividual.png" />
-    <Resource Include="Assets\ByIndividual2.png" />
-    <Resource Include="Assets\ByOrganisation.png" />
-    <Resource Include="Assets\ByOrganisation2.png" />
-    <Resource Include="Assets\IndividualKey.png" />
-    <Resource Include="Assets\AuthenticationStep4.png" />
     <Resource Include="Assets\Ind1.png" />
-    <Resource Include="Assets\Ind2.png" />
     <Resource Include="Assets\KeyBG.png" />
     <Resource Include="Assets\Org1.png" />
-    <Resource Include="Assets\Org2.png" />
     <Resource Include="Assets\spinner.gif" />
   </ItemGroup>
   <ItemGroup>
@@ -566,6 +513,87 @@
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\backgroundN.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\SystemIcon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\VPNDis.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\california.png" />
+    <Resource Include="Assets\north verginia.png" />
+    <Resource Include="Assets\ohio.png" />
+    <Resource Include="Assets\wating.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\GreenButton.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\locationCard.png" />
+    <Resource Include="Assets\serialNoCard.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\SystemNetwork.png" />
+    <Resource Include="Assets\Vector.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\ByIndividuals.png" />
+    <Resource Include="Assets\ByOrganization.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\withcred.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\Credential21.png" />
+    <Resource Include="Assets\QR21.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\tokenDots.png" />
+    <Resource Include="Assets\tokenKeys.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\Organisation.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\verificationicon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\NoInternetImg.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\backArrow.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\DPP1.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\licenseKey.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\QRCode1.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\deleteIcon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\MinimizeIcon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\newFDSGif.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\AuthenticationSuccessful.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\SystemDeactivated.png" />
+    <Resource Include="Assets\SystemDeactivatedMain.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="wireguard.h" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
