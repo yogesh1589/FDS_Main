@@ -14,6 +14,8 @@ namespace FDS.DTO.Responses
         public string current_user { get; set; }
         public string time { get; set; }
 
+        public string title { get; set; }
+
         public string changed_by { get; set; }
     }
     public class LogResponse

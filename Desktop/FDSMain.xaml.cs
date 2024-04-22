@@ -11,6 +11,7 @@ using FDS.WindowService;
 using Microsoft.Win32;
 using NCrontab;
 using Newtonsoft.Json;
+using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -141,7 +142,8 @@ namespace FDS
         private bool interactionsEnabled = true;
         public ObservableCollection<ServiceDPP> Services { get; } = new ObservableCollection<ServiceDPP>();
         public bool allServiceDisabled = false;
-
+        public bool chkFlgClick = false;
+        public bool isInternetReconnect = false;
         public FDSMain()
         {
             try
@@ -160,7 +162,7 @@ namespace FDS
                 thisWindow = GetWindow(this);
 
 
-               
+
                 DataContext = this;
             }
             catch (Exception ex)
@@ -187,7 +189,7 @@ namespace FDS
             }
         }
 
-  
+
         private void UpdateArcPropertiesFromApi(double vals)
         {
             // Simulated API call to get values
@@ -212,9 +214,9 @@ namespace FDS
             return scaledValue;
         }
 
-       
 
-       
+
+
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected virtual void OnPropertyChanged(string propertyName)
@@ -979,15 +981,16 @@ namespace FDS
             {
                 TimeSpan t = new TimeSpan(0, 0, TotalSecondsOTP);
 
-                if(t.Minutes > 0)
+                if (t.Minutes > 0)
                 {
                     lblOtpTimer.Text = $"{t.Minutes.ToString("00")}:{t.Seconds.ToString("00")} m";
-                }else
+                }
+                else
                 {
                     lblOtpTimer.Text = $"{t.Minutes.ToString("00")}:{t.Seconds.ToString("00")} s";
                 }
 
-                
+
 
                 if (TotalSecondsOTP <= 0)
                 {
@@ -1847,11 +1850,12 @@ namespace FDS
 
         public async Task CheckDeviceHealth()
         {
-
+            
             isInternetConnected = Generic.CheckInternetConnection();
 
             if (!isInternetConnected)
             {
+                isInternetReconnect = false;
                 System.Threading.Thread.Sleep(2000);
                 isInternetConnected = Generic.CheckInternetConnection();
             }
@@ -1859,12 +1863,14 @@ namespace FDS
             if (isInternetConnected)
             {
 
-                if (isInternetConnected && deviceActive && !allServiceDisabled)
+                if (deviceActive && !allServiceDisabled && !isInternetReconnect)
                 {
+                    isInternetReconnect = true;
                     loadMenuItems("Assets/DeviceActive.png", "Your device is protected");
                     grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
                     GetServiceHealthReport();
                 }
+                 
 
                 var apiResponse = await apiService.CheckDeviceHealthAsync();
 
@@ -2036,8 +2042,27 @@ namespace FDS
             txtlogEventHeader5.Text = string.Empty;
         }
 
+
+        public (string,string) GetLogTitles(string logTitle,string logEntryChangedby, string logEntryTime)
+        {
+            string eventTitle = string.Empty;
+            string eventDesc = string.Empty;
+            if (logTitle.Contains("completed"))
+            {
+                eventTitle = logTitle;
+                eventDesc = logTitle + " by " + logEntryChangedby + " at " + logEntryTime;
+            }
+            else
+            {
+                eventTitle = logTitle + " completed";
+                eventDesc = logTitle + " completed by " + logEntryChangedby + " at " + logEntryTime;
+            }
+            return (eventTitle,eventDesc);
+        }
+
         public async Task GetEventDetails(int id)
         {
+            chkFlgClick = true;
             lblheadingServer.Text = "Activity Logs";
             grdGridEvents.Visibility = Visibility.Visible;
             grdMapGrid.Visibility = Visibility.Hidden;
@@ -2048,7 +2073,7 @@ namespace FDS
             grdGridEventsG4.Visibility = Visibility.Hidden;
 
             clearEventLogs();
-            List<LogEntry> Response = await apiService.GetServiceInfoAsync(id);
+            List<DTO.Responses.LogEntry> Response = await apiService.GetServiceInfoAsync(id);
 
             if ((Response != null) && (Response.Count != 0))
             {
@@ -2118,74 +2143,81 @@ namespace FDS
                     if (logEntry.service_name == "Web Cache Protection")
                     {
                         eventTitle = logEntry.file_deleted.ToString() + " B cleared";
-                        if (logEntry.sentence.Contains("Event"))
+                        if (logEntry.title.Contains("Event"))
                         {
-                            eventDesc = logEntry.sentence + " by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                            eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
                         }
                         else
                         {
-                            eventDesc = logEntry.sentence + " completed by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                            var eventDetails = GetLogTitles(logEntry.title, logEntry.changed_by.ToString(), logTime.ToString());
+                            eventTitle = eventDetails.Item1;
+                            eventDesc = eventDetails.Item2;
                         }
                     }
                     else if (logEntry.service_name == "Web Session Protection")
                     {
                         eventTitle = logEntry.file_deleted.ToString() + " Cookies cleared";
-                        if (logEntry.sentence.Contains("Event"))
+                        if (logEntry.title.Contains("Event"))
                         {
-                            eventDesc = logEntry.sentence + " by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                            eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
                         }
                         else
                         {
-                            eventDesc = logEntry.sentence + " completed by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                            var eventDetails = GetLogTitles(logEntry.title, logEntry.changed_by.ToString(), logTime.ToString());
+                            eventTitle = eventDetails.Item1;
+                            eventDesc = eventDetails.Item2;
                         }
                     }
                     else if (logEntry.service_name == "Web Tracking Protecting")
                     {
 
-                        if (logEntry.sentence.Contains("Event"))
+                        if (logEntry.title.Contains("Event"))
                         {
-                            eventDesc = logEntry.sentence + " by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                            eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
                         }
                         else
                         {
-                            eventDesc = logEntry.sentence + " completed by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                            var eventDetails = GetLogTitles(logEntry.title, logEntry.changed_by.ToString(), logTime.ToString());
+                            eventTitle = eventDetails.Item1;
+                            eventDesc = eventDetails.Item2;
                         }
                     }
                     else if (logEntry.service_name == "DNS Cache Protection")
                     {
-                        eventTitle = logEntry.sentence + " completed";
-                        eventDesc = logEntry.sentence + " completed by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                        var eventDetails = GetLogTitles(logEntry.title, logEntry.changed_by.ToString(), logTime.ToString());
+                        eventTitle = eventDetails.Item1;
+                        eventDesc = eventDetails.Item2; 
                     }
                     else if (logEntry.service_name == "Windows Registry Protection")
                     {
-                        eventDesc = logEntry.sentence + " completed by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                        eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
                     }
                     else if (logEntry.service_name == "Free Storage Protection")
                     {
-                        eventTitle = logEntry.sentence + " completed";
-                        eventDesc = logEntry.sentence + " completed by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                        eventTitle = logEntry.title;
+                        eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
                     }
                     else if (logEntry.service_name == "Trash Data Protection")
                     {
-                        eventDesc = logEntry.sentence + " completed by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                        eventDesc = logEntry.title + " completed by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
                     }
                     else if (logEntry.service_name == "System Network Monitoring Protection")
                     {
 
-                        if (logEntry.sentence.Contains("Requested"))
+                        if (logEntry.title.Contains("Requested"))
                         {
                             eventTitle = logEntry.file_deleted + " Issues requested to delete";
-                            eventDesc = logEntry.sentence;
+                            eventDesc = logEntry.title;
                         }
-                        else if (logEntry.sentence.Contains("Whitelisted"))
+                        else if (logEntry.title.Contains("Whitelisted"))
                         {
                             eventTitle = logEntry.file_deleted + " Issues whitelisted";
-                            eventDesc = logEntry.sentence;
+                            eventDesc = logEntry.title;
                         }
                         else
                         {
                             eventTitle = logEntry.file_deleted + " Issues deleted";
-                            eventDesc = logEntry.sentence + " by " + logEntry.changed_by.ToString();
+                            eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString();
                         }
                     }
 
@@ -2314,9 +2346,9 @@ namespace FDS
                 txtHealthScore.Text = healthScoreDetails.health_report.ToString();
                 try
                 {
-                     
-                   double val = Convert.ToDouble(txtHealthScore.Text);
-             
+
+                    double val = Convert.ToDouble(txtHealthScore.Text);
+
                     UpdateArcPropertiesFromApi(val);
 
                 }
@@ -2489,7 +2521,7 @@ namespace FDS
             }
             else if (lblLocation.Text.ToString().ToLower().Contains("ohio"))
             {
-                watingMapVPN.Visibility = Visibility.Hidden;               
+                watingMapVPN.Visibility = Visibility.Hidden;
                 ohioMapVPN.Visibility = Visibility.Visible;
                 northVerginiaMapVPN.Visibility = Visibility.Hidden;
                 californiaMapVPN.Visibility = Visibility.Hidden;
@@ -2552,15 +2584,16 @@ namespace FDS
                 foreach (var services in Response.Data[0].Services)
                 {
                     if ((services.Service_name == "Data Privacy Protection" && services.Service_active == true) || (services.Service_name == "Fusion VPN" && services.Service_active == true))
-                    {        
-                        if(services.Service_name == "Data Privacy Protection")
+                    {
+                        if (services.Service_name == "Data Privacy Protection")
                         {
                             dataPrivacyActive = true;
-                        }else if(services.Service_name == "Fusion VPN")
+                        }
+                        else if (services.Service_name == "Fusion VPN")
                         {
                             vpnActive = true;
-                        }                      
-                        
+                        }
+
                     }
                     else if (services.Service_name == "Data Privacy Protection" && services.Service_active == true)
                     {
@@ -2570,7 +2603,7 @@ namespace FDS
                     else if (services.Service_name == "Fusion VPN" && services.Service_active == false)
                     {
                         falseCount++;
-                        
+
                     }
                     else if (services.Service_name == "Data Privacy Protection" && services.Service_active == false)
                     {
@@ -2630,21 +2663,28 @@ namespace FDS
                     grdWithVPN.Visibility = Visibility.Visible;
                     //MainHomePageDPP.Visibility = Visibility.Hidden;
                     MainHomePageUI.Visibility = Visibility.Hidden;
-                    grdMapGrid.Visibility = Visibility.Visible;
+
                     grdGridEvents.Visibility = Visibility.Hidden;
-                    grdNoInternetGrid.Visibility = Visibility.Hidden;
-               
-                    Services.Clear();
+                    grdNoInternetGrid.Visibility = Visibility.Hidden;               
 
-
-                    foreach (var services in Response.Data[0].Services)
+                    if (!chkFlgClick)
                     {
-                        foreach (var subservice in services.Subservices)
+                        Services.Clear();
+                        foreach (var services in Response.Data[0].Services)
                         {
-                            Services.Add(new ServiceDPP { ServiceID = subservice.Id, ServiceName = subservice.name, IsActive = subservice.sub_service_active, IsSubscribe = subservice.subscribe });
+                            foreach (var subservice in services.Subservices)
+                            {
+                                Services.Add(new ServiceDPP { ServiceID = subservice.Id, ServiceName = subservice.name, IsActive = subservice.sub_service_active, IsSubscribe = subservice.subscribe });
+                            }
                         }
+                        grdMapGrid.Visibility = Visibility.Visible;
+                        ShowMap();
+                    }                     
+                    else
+                    {
+                        grdGridEvents.Visibility = Visibility.Visible;
                     }
-                    ShowMap();
+
                 }
                 else if (dataPrivacyActive)
                 {
@@ -2663,14 +2703,23 @@ namespace FDS
                     grdMapGrid.Visibility = Visibility.Hidden;
                     grdGridEvents.Visibility = Visibility.Visible;
                     grdNoInternetGrid.Visibility = Visibility.Hidden;
-                    Services.Clear();
-                    foreach (var services in Response.Data[0].Services)
+
+                    if (!chkFlgClick)
                     {
-                        foreach (var subservice in services.Subservices)
+                        Services.Clear();
+                        foreach (var services in Response.Data[0].Services)
                         {
-                            Services.Add(new ServiceDPP { ServiceID = subservice.Id, ServiceName = subservice.name, IsActive = subservice.sub_service_active, IsSubscribe = subservice.subscribe });
-                        }
+                            foreach (var subservice in services.Subservices)
+                            {
+                                Services.Add(new ServiceDPP { ServiceID = subservice.Id, ServiceName = subservice.name, IsActive = subservice.sub_service_active, IsSubscribe = subservice.subscribe });
+                            }
+                        }                      
                     }
+                    else
+                    {
+                        grdGridEvents.Visibility = Visibility.Visible;
+                    }
+                     
                     if (lstServices.Items.Count > 0)
                     {
                         ServiceDPP firstService = lstServices.Items[0] as ServiceDPP;
@@ -2681,7 +2730,7 @@ namespace FDS
                             GetEventDetails(id);
                         }
                     }
-                    ShowMap();
+               
                 }
                 else if (vpnActive)
                 {
@@ -2834,7 +2883,7 @@ namespace FDS
 
         public void DeviceActivateDeactivate(bool isVisible)
         {
-            
+
             headerWithVPN.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
             headerWithoutVPN.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
             grdWithoutVPN.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
