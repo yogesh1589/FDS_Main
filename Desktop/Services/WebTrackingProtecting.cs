@@ -121,7 +121,7 @@ namespace FDS.Services
             if (result.Item2)
             {
                 globals.IsLogicExecuted_ChromeHistory = true;
-                globalDict.DictionaryService["WebTrackingProtecting"] = false;
+                globalDict.DictionaryService["WebTrackingProtection"] = false;
             }
 
             return result.Item1;
@@ -139,7 +139,7 @@ namespace FDS.Services
             if (result.Item2)
             {
                 globals.IsLogicExecuted_EdgeHistory = true;
-                globalDict.DictionaryService["WebTrackingProtecting"] = false;
+                globalDict.DictionaryService["WebTrackingProtection"] = false;
             }
 
             return result.Item1;
@@ -168,7 +168,7 @@ namespace FDS.Services
                                 command.CommandText = "DELETE FROM moz_places";
                                 totalCount += command.ExecuteNonQuery();
                                 globals.IsLogicExecuted_FirefoxHistory = true;
-                                globalDict.DictionaryService["WebTrackingProtecting"] = false;
+                                globalDict.DictionaryService["WebTrackingProtection"] = false;
 
                             }
                         }
@@ -198,7 +198,7 @@ namespace FDS.Services
                             {
                                 totalCount = command.ExecuteNonQuery();
                                 globals.IsLogicExecuted_OperaHistory = true;
-                                globalDict.DictionaryService["WebTrackingProtecting"] = false;
+                                globalDict.DictionaryService["WebTrackingProtection"] = false;
                             }
                         }
                     }

@@ -29,7 +29,7 @@ namespace FDS.Factories
                     return new WebCacheProtection();
                 case ServiceTypeName.WebSessionProtection:
                     return new WebSessionProtection();
-                case ServiceTypeName.WebTrackingProtecting:
+                case ServiceTypeName.WebTrackingProtection:
                     return new WebTrackingProtecting();
                 case ServiceTypeName.WindowsRegistryProtection:
                     return new WindowsRegistryProtection();

@@ -68,4 +68,4 @@ D:\14March\FDS\windowsapp\AutoUpdate\bin\Release\Newtonsoft.Json.dll
 D:\14March\FDS\windowsapp\AutoUpdate\bin\Release\System.CodeDom.dll
 D:\14March\FDS\windowsapp\AutoUpdate\bin\Release\Newtonsoft.Json.xml
 D:\14March\FDS\windowsapp\AutoUpdate\bin\Release\System.CodeDom.xml
-D:\14March\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.CopyComplete
+D:\14March\FDS\windowsapp\AutoUpdate\obj\Release\AutoUpdate.csproj.Up2Date

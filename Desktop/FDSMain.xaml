@@ -724,7 +724,7 @@
                         </Grid>
                     </Border>
 
-                    <Grid x:Name="MainHomePageUI" Margin="30,60,30,20" Width="1140" Height="596" Visibility="Visible">
+                    <Grid x:Name="MainHomePageUI" Margin="30,60,30,20" Width="1140" Height="596" Visibility="Hidden">
 
                         <Border Background="#094075"  BorderThickness="1,1,1,1"  CornerRadius="20" Margin="0,0,0,10">
 
@@ -780,7 +780,7 @@
                                             <ProgressBar Grid.RowSpan="2" Grid.Column="1" x:Name="loaderVPN" IsIndeterminate="True" Visibility="Collapsed" Width="60" Height="20" Margin="0,21,20,10" VerticalAlignment="Center" HorizontalAlignment="Right"/>
 
                                             <!-- TextBlock for displaying download status -->
-                                            <TextBlock Grid.Row="1" Margin="0,60,90,0" HorizontalAlignment="Center" VerticalAlignment="Top" FontWeight="SemiBold" FontSize="16" x:Name="downloadStatusVPN"   Text="Downloading files..." Grid.ColumnSpan="2" Foreground="#FFC16B" Visibility="Collapsed" FontFamily="Radian" Height="22" Width="160"   />
+                                            <TextBlock Grid.Row="1" Margin="0,60,90,0" HorizontalAlignment="Center" VerticalAlignment="Top" FontWeight="SemiBold" FontSize="16" x:Name="downloadStatusVPN"   Text="Connecting..." Grid.ColumnSpan="2" Foreground="#FFC16B" Visibility="Collapsed" FontFamily="Radian" Height="22" Width="160"   />
 
                                             <Image x:Name="image1" Grid.Column="1" Source="/Assets/GreenButton.png" Width="60" Height="60" Stretch="Uniform" Margin="0,25,20,25" VerticalAlignment="Top" HorizontalAlignment="Right" RenderTransformOrigin="2.63,0.644" MouseEnter="Image1_MouseEnter" MouseLeave="Image1_MouseLeave" MouseDown="Image1_MouseDown"/>
                                             <TextBlock HorizontalAlignment="Center" VerticalAlignment="Top"  FontWeight="Bold" FontSize="20" Foreground="White" FontFamily="Radian" Text="Fusion VPN" Margin="20,29,105,4" Height="26" Width="172" Grid.ColumnSpan="2"/>
@@ -895,7 +895,7 @@
 
                                                 <TextBlock FontWeight="Medium" Text="Device Location" Margin="20,0,47,47" FontStyle="Normal" TextAlignment="Center" Height="16" Width="252" 
                                                            FontSize="12" Foreground="#CED1D4" VerticalAlignment="Bottom" HorizontalAlignment="Center"  ></TextBlock>
-                                                <TextBlock Text="Persional" Name="txtloc1"  Margin="0,0,40,25" FontStyle="Normal"  TextAlignment="Center" Height="18" Width="252" FontSize="14" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Bottom" HorizontalAlignment="Center"  ></TextBlock>
+                                                <TextBlock Text="Personal" Name="txtloc1"  Margin="0,0,40,25" FontStyle="Normal"  TextAlignment="Center" Height="18" Width="252" FontSize="14" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Bottom" HorizontalAlignment="Center"  ></TextBlock>
                                             </Grid>
                                         </Border>
                                     </StackPanel>
@@ -927,7 +927,7 @@
                                         <ColumnDefinition Width="240"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock x:Name="lblReportedIssue" Grid.Column="0" Text="Reported Issues" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Left"   Foreground="White" Width="99" Margin="15,0,0,0"></TextBlock>
-                                    <TextBlock x:Name="lblVPNHeading" Grid.Column="1" Text="Virtual Private Network (VPN)" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Left" Width="303"  Foreground="White"   Margin="72,0,10,0"></TextBlock>
+                                    <TextBlock x:Name="lblVPNHeading" Grid.Column="1" Text="Virtual Private Network (VPN)" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Left" Width="303"  Foreground="White"   Margin="68,0,10,0"></TextBlock>
                                 </Grid>
 
                                 <Grid Grid.Column="1" Visibility="Hidden" Width="813" x:Name="headerWithoutVPN" Grid.ColumnSpan="2" HorizontalAlignment="Center" Height="20"  VerticalAlignment="Top" Margin="5,89,30,0" >
@@ -1178,7 +1178,7 @@
                                             <ProgressBar Grid.RowSpan="2" Grid.Column="1" x:Name="loader" IsIndeterminate="True" Visibility="Collapsed" Width="60" Height="20" Margin="0,21,20,10" VerticalAlignment="Center" HorizontalAlignment="Right"/>
 
                                             <!-- TextBlock for displaying download status -->
-                                            <TextBlock Grid.Row="1" Margin="0,0,80,0" HorizontalAlignment="Center" VerticalAlignment="Top" FontWeight="SemiBold" FontSize="16" x:Name="downloadStatus"   Text="Downloading files..." Grid.ColumnSpan="2" Foreground="#FFC16B" Visibility="Collapsed" FontFamily="Radian" Height="22" Width="160"   />
+                                            <TextBlock Grid.Row="1" Margin="0,0,80,0" HorizontalAlignment="Center" VerticalAlignment="Top" FontWeight="SemiBold" FontSize="16" x:Name="downloadStatus"   Text="Connecting..." Grid.ColumnSpan="2" Foreground="#FFC16B" Visibility="Collapsed" FontFamily="Radian" Height="22" Width="160"   />
 
                                             <Image x:Name="VPNimage1" Grid.RowSpan="2" Grid.Column="1" Source="/Assets/GreenButton.png" Width="60" Height="71" Stretch="Uniform" Margin="0,21,20,10" VerticalAlignment="Center" HorizontalAlignment="Right" RenderTransformOrigin="2.63,0.644" MouseEnter="VPNImage1_MouseEnter" MouseLeave="VPNImage1_MouseLeave" MouseDown="VPNImage1_MouseDown"/>
                                             <TextBlock HorizontalAlignment="Center" Grid.Row="0" Grid.Column="0" VerticalAlignment="Bottom"  FontWeight="Bold" FontSize="20" Foreground="White" FontFamily="Radian" Text="Fusion VPN" Margin="20,29,0,0" Height="26" Width="113" />
@@ -1312,7 +1312,7 @@
                                     </Border>
                                 </Grid>
 
-                                <Grid Name="GrdhealthScore" Visibility="Hidden" Grid.Column="2" Height="303" Width="303" VerticalAlignment="Bottom" Margin="19.667,0,0,20">
+                                <Grid Name="GrdhealthScore" Visibility="Visible" Grid.Column="2" Height="303" Width="303" VerticalAlignment="Bottom" Margin="19.667,0,0,20">
                                     <Border CornerRadius="10" Background="#0E2E5B" Width="303" Height="306" Margin="0,0,0,0">
                                         <Grid>
                                             <TextBlock Text="Today's Health Score of Device" Foreground="#FFFFFF" FontSize="16" FontWeight="SemiBold" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="16,10,23,0" Width="273" Height="22"/>

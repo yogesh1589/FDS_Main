@@ -12,17 +12,20 @@ using Microsoft.Win32;
 using NCrontab;
 using Newtonsoft.Json;
 using OpenQA.Selenium;
+using OpenQA.Selenium.DevTools;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
+using System.Drawing.Drawing2D;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
@@ -37,6 +40,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using Tunnel;
 using WpfAnimatedGif;
 
 
@@ -126,7 +130,7 @@ namespace FDS
         string encryptOutPutFile = @"\Main";
         System.Windows.Controls.Image imgLoader;
         bool deviceDeletedFlag = false;
-        bool showMessageBoxes = true;//true for staging and false for production
+        bool showMessageBoxes = false;//true for staging and false for production
         ApiService apiService = new ApiService();
         public static byte[] EncKey { get; set; }
         public bool deviceActive = true;
@@ -144,6 +148,9 @@ namespace FDS
         public bool allServiceDisabled = false;
         public bool chkFlgClick = false;
         public bool isInternetReconnect = false;
+
+        private bool connectedVPN;
+
         public FDSMain()
         {
             try
@@ -340,38 +347,59 @@ namespace FDS
         {
             if (image1.Source.ToString().Contains("/Assets/VPNDis.png"))
             {
-                image1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
-                vpnstatus.Text = "Connect";
-                vpnstatus.Foreground = Brushes.Green;
-                sytemInfo2.Text = "Unprotected";
+                downloadStatusVPN.Text = "Disconnecting...";
+                loaderVPN.Visibility = Visibility.Visible;
+                downloadStatusVPN.Visibility = Visibility.Visible;
+                vpnstatus.Visibility = Visibility.Hidden;
+                image1.Visibility = Visibility.Hidden;
 
-                sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-                sytemInfo4.Text = "N/A";
+                bool result = await ConnectVPN();
+
+                if (result)
+                {
+
+                    loaderVPN.Visibility = Visibility.Collapsed;
+                    downloadStatusVPN.Visibility = Visibility.Collapsed;
+                    vpnstatus.Visibility = Visibility.Visible;
+                    image1.Visibility = Visibility.Visible;
+
+
+                    image1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
+                    vpnstatus.Text = "Connect";
+                    vpnstatus.Foreground = Brushes.Green;
+                    sytemInfo2.Text = "Unprotected";
+                    sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                    sytemInfo4.Text = "N/A";
+                }
             }
             else
             {
-
+                downloadStatusVPN.Text = "Connecting...";
                 // Show the loader and download status text
                 loaderVPN.Visibility = Visibility.Visible;
                 downloadStatusVPN.Visibility = Visibility.Visible;
                 vpnstatus.Visibility = Visibility.Hidden;
                 image1.Visibility = Visibility.Hidden;
 
-                // Simulate file download (Replace this with your actual file download logic)
-                await Task.Delay(10000); // Simulating a 3-second delay
 
-                // After files are downloaded, hide the loader and download status text
-                loaderVPN.Visibility = Visibility.Collapsed;
-                downloadStatusVPN.Visibility = Visibility.Collapsed;
-                vpnstatus.Visibility = Visibility.Visible;
-                image1.Visibility = Visibility.Visible;
+                bool result = await ConnectVPN();
 
-                image1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
-                vpnstatus.Text = "Disconnect";
-                vpnstatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-                sytemInfo2.Text = "Protected";
-                sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
-                sytemInfo4.Text = "InstanceA";
+                if (result)
+                {
+
+                    // After files are downloaded, hide the loader and download status text
+                    loaderVPN.Visibility = Visibility.Collapsed;
+                    downloadStatusVPN.Visibility = Visibility.Collapsed;
+                    vpnstatus.Visibility = Visibility.Visible;
+                    image1.Visibility = Visibility.Visible;
+
+                    image1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
+                    vpnstatus.Text = "Disconnect";
+                    vpnstatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                    sytemInfo2.Text = "Protected";
+                    sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
+                    sytemInfo4.Text = "InstanceA";
+                }
             }
 
             image1.Opacity = 6.0;
@@ -391,41 +419,163 @@ namespace FDS
         {
             if (VPNimage1.Source.ToString().Contains("/Assets/VPNDis.png"))
             {
-                VPNimage1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
-                vpnstatus2.Text = "Connect";
-                vpnstatus2.Foreground = Brushes.Green;
-                sytemInfo2.Text = "Unprotected";
-                sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-                sytemInfo4.Text = "N/A";
+                downloadStatus.Text = "Disconnecting...";
+                loader.Visibility = Visibility.Visible;
+                downloadStatus.Visibility = Visibility.Visible;
+                vpnstatus2.Visibility = Visibility.Hidden;
+                VPNimage1.Visibility = Visibility.Hidden;
+
+                bool result = await ConnectVPN();
+
+                if (result)
+                {
+
+                    VPNimage1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
+                    vpnstatus2.Text = "Connect";
+                    vpnstatus2.Foreground = Brushes.Green;
+                    sytemInfo2.Text = "Unprotected";
+                    sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                    sytemInfo4.Text = "N/A";
+                    loader.Visibility = Visibility.Hidden;
+                    downloadStatus.Visibility = Visibility.Hidden;
+                    vpnstatus2.Visibility = Visibility.Visible;
+                    VPNimage1.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    downloadStatus.Text = "Disconnecting...";
+                    loader.Visibility = Visibility.Visible;
+                    downloadStatus.Visibility = Visibility.Visible;
+                    vpnstatus2.Visibility = Visibility.Hidden;
+                    VPNimage1.Visibility = Visibility.Hidden;
+                }
             }
             else
             {
-
+                downloadStatus.Text = "Connecting...";
                 // Show the loader and download status text
                 loader.Visibility = Visibility.Visible;
                 downloadStatus.Visibility = Visibility.Visible;
                 vpnstatus2.Visibility = Visibility.Hidden;
                 VPNimage1.Visibility = Visibility.Hidden;
 
-                // Simulate file download (Replace this with your actual file download logic)
-                await Task.Delay(10000); // Simulating a 3-second delay
+                await Task.Delay(2000);
 
-                // After files are downloaded, hide the loader and download status text
-                loader.Visibility = Visibility.Collapsed;
-                downloadStatus.Visibility = Visibility.Collapsed;
-                vpnstatus2.Visibility = Visibility.Visible;
-                VPNimage1.Visibility = Visibility.Visible;
-                VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
-                vpnstatus2.Text = "Disconnect";
-                vpnstatus2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-                sytemInfo2.Text = "Protected";
-                sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
-                sytemInfo4.Text = "InstanceA";
+                bool result = await ConnectVPN();
+
+                if (result)
+                {
+                    await Task.Delay(5000);
+
+                    // After files are downloaded, hide the loader and download status text
+                    loader.Visibility = Visibility.Collapsed;
+                    downloadStatus.Visibility = Visibility.Collapsed;
+                    vpnstatus2.Visibility = Visibility.Visible;
+                    VPNimage1.Visibility = Visibility.Visible;
+                    VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
+                    vpnstatus2.Text = "Disconnect";
+                    vpnstatus2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                    sytemInfo2.Text = "Protected";
+                    sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
+                    sytemInfo4.Text = "InstanceA";
+                }
+                else
+                {
+                    downloadStatus.Text = "Connecting...";
+                    // Show the loader and download status text
+                    loader.Visibility = Visibility.Visible;
+                    downloadStatus.Visibility = Visibility.Visible;
+                    vpnstatus2.Visibility = Visibility.Hidden;
+                    VPNimage1.Visibility = Visibility.Hidden;
+                }
             }
 
             image1.Opacity = 6.0;
             ShowMap();
         }
+
+
+        public async Task<bool> ConnectVPN()
+        {
+            string configFile = String.Format("{0}wg0.conf", AppDomain.CurrentDomain.BaseDirectory); // Provide the path where you want to save the file
+
+            try
+            {
+
+                if (!connectedVPN)
+                {
+
+                    VPNService vpnService = new VPNService();
+                    VPNServiceRequest vpnData = await vpnService.VPNConnectAsync();
+                    if (vpnData != null)
+                    {
+                        var configData = vpnData.Data.Config;
+
+                        if (File.Exists(configFile))
+                        {
+                            File.Delete(configFile);
+                        }
+                        File.WriteAllText(configFile, configData);
+
+                        Tunnel.Service.Run(configFile);
+                        var config = await generateNewConfig();
+                        await WriteAllBytesAsync(configFile, Encoding.UTF8.GetBytes(config));
+                        await Task.Run(() => Tunnel.Service.Add(configFile, true));
+                        connectedVPN = true;
+                        return true;
+                    }
+                }
+                else
+                {
+                    await Task.Run(() =>
+                    {
+                        Tunnel.Service.Remove(configFile, true);
+                        try { File.Delete(configFile); } catch { }
+                    });
+                    connectedVPN = false;
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                try { File.Delete(configFile); } catch { }
+            }
+            return false;
+        }
+
+        public async Task WriteAllBytesAsync(string filePath, byte[] bytes)
+        {
+            using (FileStream sourceStream = new FileStream(filePath,
+                FileMode.Create, FileAccess.Write, FileShare.None,
+                bufferSize: 4096, useAsync: true))
+            {
+                await sourceStream.WriteAsync(bytes, 0, bytes.Length);
+            }
+        }
+
+        private async Task<string> generateNewConfig()
+        {
+
+            var keys = Keypair.Generate();
+            var client = new TcpClient();
+            await client.ConnectAsync("demo.wireguard.com", 42912);
+            var stream = client.GetStream();
+            var reader = new StreamReader(stream, Encoding.UTF8);
+            var pubKeyBytes = Encoding.UTF8.GetBytes(keys.Public + "\n");
+            await stream.WriteAsync(pubKeyBytes, 0, pubKeyBytes.Length);
+            await stream.FlushAsync();
+            var ret = (await reader.ReadLineAsync()).Split(':');
+            client.Close();
+            var status = ret.Length >= 1 ? ret[0] : "";
+            var serverPubkey = ret.Length >= 2 ? ret[1] : "";
+            var serverPort = ret.Length >= 3 ? ret[2] : "";
+            var internalIP = ret.Length >= 4 ? ret[3] : "";
+            if (status != "OK")
+                throw new InvalidOperationException(string.Format("Server status is {0}", status));
+            return string.Format("[Interface]\nPrivateKey = {0}\nAddress = {1}/24\nDNS = 8.8.8.8, 8.8.4.4\n\n[Peer]\nPublicKey = {2}\nEndpoint = demo.wireguard.com:{3}\nAllowedIPs = 0.0.0.0/0\n", keys.Private, internalIP, serverPubkey, serverPort);
+        }
+
+
 
         public void LoadFDS()
         {
@@ -1850,116 +2000,134 @@ namespace FDS
 
         public async Task CheckDeviceHealth()
         {
-            
-            isInternetConnected = Generic.CheckInternetConnection();
-
-            if (!isInternetConnected)
+            try
             {
-                isInternetReconnect = false;
-                System.Threading.Thread.Sleep(2000);
+
                 isInternetConnected = Generic.CheckInternetConnection();
-            }
 
-            if (isInternetConnected)
-            {
-
-                if (deviceActive && !allServiceDisabled && !isInternetReconnect)
+                if (!isInternetConnected)
                 {
-                    isInternetReconnect = true;
-                    loadMenuItems("Assets/DeviceActive.png", "Your device is protected");
-                    grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
-                    GetServiceHealthReport();
-                }
-                 
-
-                var apiResponse = await apiService.CheckDeviceHealthAsync();
-
-                if (apiResponse == null)
-                {
-                    deviceOffline = true;
-                    timerLastUpdate.IsEnabled = true;
-                    lblMessageHeader.Text = "Contact to Administrator";
-                    grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-                    string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
-                    BitmapImage DeviceDeactive = new BitmapImage();
-                    DeviceDeactive.BeginInit();
-                    DeviceDeactive.UriSource = new Uri(ImagePath);
-                    DeviceDeactive.EndInit();
-                    //imgCompliant.Source = DeviceDeactive;
-                    return;
+                    isInternetReconnect = false;
+                    System.Threading.Thread.Sleep(2000);
+                    isInternetConnected = Generic.CheckInternetConnection();
                 }
 
-
-                if (apiResponse.Success == true)
+                if (isInternetConnected)
                 {
 
-                    loadFDS = false;
-                    timerLastUpdate.IsEnabled = true;
-                    var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
-                    int idx = plainText.LastIndexOf('}');
-                    var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
-                    var HealthData = JsonConvert.DeserializeObject<HealthCheckResponse>(result);
-
-
-                    if (HealthData.call_config)
+                    if (deviceActive && !allServiceDisabled && !isInternetReconnect)
                     {
+                        isInternetReconnect = true;
+                        loadMenuItems("Assets/DeviceActive.png", "Your device is protected");
+                        grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
+                        GetServiceHealthReport();
+                    }
 
-                        DeviceConfigurationCheck();
+                    
+                    var apiResponse = await apiService.CheckDeviceHealthAsync();
+
+                    if (apiResponse == null)
+                    {
+                        deviceOffline = true;
+                        timerLastUpdate.IsEnabled = true;
+                        lblMessageHeader.Text = "Contact to Administrator";
+                        grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                        string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
+                        BitmapImage DeviceDeactive = new BitmapImage();
+                        DeviceDeactive.BeginInit();
+                        DeviceDeactive.UriSource = new Uri(ImagePath);
+                        DeviceDeactive.EndInit();
+                        //imgCompliant.Source = DeviceDeactive;
+                        return;
                     }
 
 
-                    if (IsServiceActive)
+                    if (apiResponse.Success == true)
                     {
 
-                        //loadMenuItems("Assets/DeviceActive.png", "Your system is Compliant");
+                        loadFDS = false;
+                        timerLastUpdate.IsEnabled = true;
+                        var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
+                        int idx = plainText.LastIndexOf('}');
+                        var result = idx != -1 ? plainText.Substring(0, idx + 1) : plainText;
+                        var HealthData = JsonConvert.DeserializeObject<HealthCheckResponse>(result);
 
-                        if (deviceOffline)
+
+                        if (HealthData.call_config)
                         {
 
-                            await GetDeviceDetailsUI();
-                            deviceOffline = false;
+                            DeviceConfigurationCheck();
                         }
 
+
+                        if (IsServiceActive)
+                        {
+
+                            //loadMenuItems("Assets/DeviceActive.png", "Your system is Compliant");
+
+                            if (deviceOffline)
+                            {
+
+                                await GetDeviceDetailsUI();
+                                deviceOffline = false;
+                            }
+
+                        }
+
+
                     }
-
-
-                }
-                else if (apiResponse.HttpStatusCode == HttpStatusCode.BadGateway)
-                {
-
-                    timerLastUpdate.IsEnabled = true;
-                    deviceOffline = true;
-                    loadMenuItems("Assets/DeviceDisable.png", "Ooops! Will be back soon.");
-                    grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-                }
-                else if (apiResponse.HttpStatusCode == HttpStatusCode.Unauthorized)
-                {
-
-                    timerLastUpdate.IsEnabled = false;
-                    if (isUninstallRequestRaised)
+                    else if (apiResponse.HttpStatusCode == HttpStatusCode.BadGateway)
                     {
-                        UninstallProgram();
+
+                        timerLastUpdate.IsEnabled = true;
+                        deviceOffline = true;
+                        loadMenuItems("Assets/DeviceDisable.png", "Ooops! Will be back soon.");
+                        grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                    }
+                    else if (apiResponse.HttpStatusCode == HttpStatusCode.Unauthorized)
+                    {
+
+                        timerLastUpdate.IsEnabled = false;
+                        if (isUninstallRequestRaised)
+                        {
+                            UninstallProgram();
+                        }
+                        else
+                        {
+                            cleanSystem();
+                            if (DeviceResponse != null)
+                            {
+                                DeviceResponse.qr_code_token = null;
+                            }
+
+                        }
+
+                        //btnGetStarted_Click(btnGetStarted, null);
+                        StartForUnauthorized();
+                        //this.Close();
                     }
                     else
                     {
-                        cleanSystem();
-                        if (DeviceResponse != null)
-                        {
-                            DeviceResponse.qr_code_token = null;
-                        }
+                        deviceOffline = true;
+                        timerLastUpdate.IsEnabled = true;
+                        lblMessageHeader.Text = "Your Device is Disabled. Contact to Administrator";
+                        grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                        string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
+                        BitmapImage DeviceDeactive = new BitmapImage();
+                        DeviceDeactive.BeginInit();
+                        DeviceDeactive.UriSource = new Uri(ImagePath);
+                        DeviceDeactive.EndInit();
+                        //imgCompliant.Source = DeviceDeactive;
 
                     }
-
-                    //btnGetStarted_Click(btnGetStarted, null);
-                    StartForUnauthorized();
-                    //this.Close();
                 }
                 else
                 {
-                    deviceOffline = true;
                     timerLastUpdate.IsEnabled = true;
-                    lblMessageHeader.Text = "Your Device is Disabled. Contact to Administrator";
+                    lblMessageHeader.Text = "No internet connection!Your device is offline.";
                     grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                    grdMapGrid.Visibility = Visibility.Hidden;
+                    grdNoInternetGrid.Visibility = Visibility.Visible;
                     string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
                     BitmapImage DeviceDeactive = new BitmapImage();
                     DeviceDeactive.BeginInit();
@@ -1968,21 +2136,16 @@ namespace FDS
                     //imgCompliant.Source = DeviceDeactive;
 
                 }
-            }
-            else
-            {
-                timerLastUpdate.IsEnabled = true;
-                lblMessageHeader.Text = "No internet connection!Your device is offline.";
-                grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-                grdMapGrid.Visibility = Visibility.Hidden;
-                grdNoInternetGrid.Visibility = Visibility.Visible;
-                string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
-                BitmapImage DeviceDeactive = new BitmapImage();
-                DeviceDeactive.BeginInit();
-                DeviceDeactive.UriSource = new Uri(ImagePath);
-                DeviceDeactive.EndInit();
-                //imgCompliant.Source = DeviceDeactive;
 
+
+            }
+            catch (Exception ex)
+            {
+
+                if (showMessageBoxes == true)
+                {
+                    MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
@@ -2043,7 +2206,7 @@ namespace FDS
         }
 
 
-        public (string,string) GetLogTitles(string logTitle,string logEntryChangedby, string logEntryTime)
+        public (string, string) GetLogTitles(string logTitle, string logEntryChangedby, string logEntryTime)
         {
             string eventTitle = string.Empty;
             string eventDesc = string.Empty;
@@ -2057,7 +2220,7 @@ namespace FDS
                 eventTitle = logTitle + " completed";
                 eventDesc = logTitle + " completed by " + logEntryChangedby + " at " + logEntryTime;
             }
-            return (eventTitle,eventDesc);
+            return (eventTitle, eventDesc);
         }
 
         public async Task GetEventDetails(int id)
@@ -2168,7 +2331,7 @@ namespace FDS
                             eventDesc = eventDetails.Item2;
                         }
                     }
-                    else if (logEntry.service_name == "Web Tracking Protecting")
+                    else if (logEntry.service_name == "Web Tracking Protection")
                     {
 
                         if (logEntry.title.Contains("Event"))
@@ -2186,7 +2349,7 @@ namespace FDS
                     {
                         var eventDetails = GetLogTitles(logEntry.title, logEntry.changed_by.ToString(), logTime.ToString());
                         eventTitle = eventDetails.Item1;
-                        eventDesc = eventDetails.Item2; 
+                        eventDesc = eventDetails.Item2;
                     }
                     else if (logEntry.service_name == "Windows Registry Protection")
                     {
@@ -2583,17 +2746,10 @@ namespace FDS
 
                 foreach (var services in Response.Data[0].Services)
                 {
-                    if ((services.Service_name == "Data Privacy Protection" && services.Service_active == true) || (services.Service_name == "Fusion VPN" && services.Service_active == true))
+                    if ((services.Service_name == "Data Privacy Protection + Fusion VPN" && services.Service_active == true))
                     {
-                        if (services.Service_name == "Data Privacy Protection")
-                        {
-                            dataPrivacyActive = true;
-                        }
-                        else if (services.Service_name == "Fusion VPN")
-                        {
-                            vpnActive = true;
-                        }
-
+                        dataPrivacyActive = true;
+                        vpnActive = true;
                     }
                     else if (services.Service_name == "Data Privacy Protection" && services.Service_active == true)
                     {
@@ -2603,10 +2759,11 @@ namespace FDS
                     else if (services.Service_name == "Fusion VPN" && services.Service_active == false)
                     {
                         falseCount++;
-
                     }
-                    else if (services.Service_name == "Data Privacy Protection" && services.Service_active == false)
+                    else if (services.Service_name == "Data Privacy Protection + Fusion VPN" && services.Service_active == false)
                     {
+                        dataPrivacyActive = false;
+                        vpnActive = false;
                         falseCount++;
                         interactionsEnabled = false;
                         Services.Clear();
@@ -2665,7 +2822,7 @@ namespace FDS
                     MainHomePageUI.Visibility = Visibility.Hidden;
 
                     grdGridEvents.Visibility = Visibility.Hidden;
-                    grdNoInternetGrid.Visibility = Visibility.Hidden;               
+                    grdNoInternetGrid.Visibility = Visibility.Hidden;
 
                     if (!chkFlgClick)
                     {
@@ -2679,7 +2836,7 @@ namespace FDS
                         }
                         grdMapGrid.Visibility = Visibility.Visible;
                         ShowMap();
-                    }                     
+                    }
                     else
                     {
                         grdGridEvents.Visibility = Visibility.Visible;
@@ -2713,13 +2870,13 @@ namespace FDS
                             {
                                 Services.Add(new ServiceDPP { ServiceID = subservice.Id, ServiceName = subservice.name, IsActive = subservice.sub_service_active, IsSubscribe = subservice.subscribe });
                             }
-                        }                      
+                        }
                     }
                     else
                     {
                         grdGridEvents.Visibility = Visibility.Visible;
                     }
-                     
+
                     if (lstServices.Items.Count > 0)
                     {
                         ServiceDPP firstService = lstServices.Items[0] as ServiceDPP;
@@ -2730,7 +2887,7 @@ namespace FDS
                             GetEventDetails(id);
                         }
                     }
-               
+
                 }
                 else if (vpnActive)
                 {
@@ -2855,6 +3012,8 @@ namespace FDS
                             timerLastUpdate.IsEnabled = true;
                             grdBlurScreen.Visibility = Visibility.Visible;
                             DeviceActivateDeactivate(false);
+                            healthScoreHeader.Visibility = Visibility.Hidden;
+                            GrdhealthScore.Visibility = Visibility.Hidden;
                             loadMenuItems("Assets/DeviceDisable.png", "Your device is disabled.");
                             grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFC16B"));
                         }
@@ -3026,8 +3185,7 @@ namespace FDS
                     lstCronEvent.Clear();
                     foreach (var services in servicesResponse.Services)
                     {
-                        if (services.Service_active == true && services.Service_name == "Data Privacy Protection")
-                        {
+                         
 
                             foreach (var subservice in services.Subservices)
                             {
@@ -3040,7 +3198,7 @@ namespace FDS
                                         isNetworkServiceRun = true;
                                     }
                                     string transformed = TransformString(subservice.Sub_service_name);
-                                    if ((transformed == ServiceTypeName.WebSessionProtection.ToString()) || (transformed == ServiceTypeName.WebCacheProtection.ToString()) || (transformed == ServiceTypeName.WebTrackingProtecting.ToString()))
+                                    if ((transformed == ServiceTypeName.WebSessionProtection.ToString()) || (transformed == ServiceTypeName.WebCacheProtection.ToString()) || (transformed == ServiceTypeName.WebTrackingProtection.ToString()))
                                     {
                                         isEventServiceRun = true;
                                     }
@@ -3086,7 +3244,7 @@ namespace FDS
                                 timerNetworkMonitering.Start();
                             }
 
-                        }
+                      
                     }
 
                 }
@@ -3214,7 +3372,7 @@ namespace FDS
                 {
                     SubservicesData SubservicesData = key.Key;
                     string transformed = TransformString(SubservicesData.Sub_service_name);
-                    if ((SubservicesData.Sub_service_active) && ((transformed == ServiceTypeName.WebSessionProtection.ToString()) || (transformed == ServiceTypeName.WebCacheProtection.ToString()) || (transformed == ServiceTypeName.WebTrackingProtecting.ToString())))
+                    if ((SubservicesData.Sub_service_active) && ((transformed == ServiceTypeName.WebSessionProtection.ToString()) || (transformed == ServiceTypeName.WebCacheProtection.ToString()) || (transformed == ServiceTypeName.WebTrackingProtection.ToString())))
                     {
                         dicEventServices.Add(transformed, SubservicesData);
                     }
@@ -3242,7 +3400,7 @@ namespace FDS
         {
             try
             {
-
+                GetHealthScoreMain();
                 if ((lstCronEvent.Count > 0) && (deviceActive == true))
                 {
                     foreach (var key in lstCronEvent)

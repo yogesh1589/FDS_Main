@@ -41,7 +41,7 @@ namespace FDS.Runners.Abstract
                         case ServiceTypeName.WebSessionProtection:
                             service = new WebSessionProtection();
                             break;
-                        case ServiceTypeName.WebTrackingProtecting:
+                        case ServiceTypeName.WebTrackingProtection:
                             service = new WebTrackingProtecting();
                             break;
                     }

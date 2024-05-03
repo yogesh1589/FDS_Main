@@ -22,17 +22,27 @@ namespace FDS
     {
         protected override void OnStartup(StartupEventArgs e)
         {
-            //if (SingleInstance.AlreadyRunning())
-            //    App.Current.Shutdown(); // Just shutdown the current application,if any instance found.  
-
-            //if (!IsRunningAsAdmin())
-            //{
-            //    LaunchElevationHelperProcess();
-            //    Shutdown();
-            //    return;
-            //}
-            //[ProgramFilesFolder]
-            //Registry.SetValue(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System", "EnableLUA", 0);
+            if (e.Args.Length == 3 && e.Args[0] == "/service")
+            {
+                var t = new Thread(() =>
+                {
+                    try
+                    {
+                        var currentProcess = Process.GetCurrentProcess();
+                        var uiProcess = Process.GetProcessById(int.Parse(e.Args[2]));
+                        if (uiProcess.MainModule.FileName != currentProcess.MainModule.FileName)
+                            return;
+                        uiProcess.WaitForExit();
+                        Tunnel.Service.Remove(e.Args[1], false);
+                    }
+                    catch { }
+                });
+                t.Start();
+                Tunnel.Service.Run(e.Args[1]);
+                t.Interrupt();
+                Shutdown(); // Exit the application after running the service
+                return;
+            }
             base.OnStartup(e);
         }
 

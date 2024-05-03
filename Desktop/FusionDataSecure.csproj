@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Condition=" '$(EAZFUSCATOR_NET_HOME)' != '' and Exists('$(EAZFUSCATOR_NET_HOME)\Integration\MSBuild\Eazfuscator.NET.targets') " Project="$(EAZFUSCATOR_NET_HOME)\Integration\MSBuild\Eazfuscator.NET.targets" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <ContentSQLiteInteropFiles>true</ContentSQLiteInteropFiles>
@@ -22,6 +23,12 @@
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup>
+    <!-- Eazfuscator.NET is integrated with this project at MSBuild level: https://help.gapotchenko.com/eazfuscator.net/kb/100036 -->
+    <EazfuscatorIntegration>MSBuild</EazfuscatorIntegration>
+    <EazfuscatorActiveConfiguration>Release</EazfuscatorActiveConfiguration>
+    <EazfuscatorCompatibilityVersion>2023.4</EazfuscatorCompatibilityVersion>
   </PropertyGroup>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -51,6 +58,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Debug\FDS.xml</DocumentationFile>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -61,6 +69,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>FDSDesktopLogo.ico</ApplicationIcon>
@@ -77,6 +86,7 @@
     <LangVersion>7.3</LangVersion>
     <ErrorReport>prompt</ErrorReport>
     <Prefer32Bit>true</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <OutputPath>bin\x86\Release\</OutputPath>
@@ -87,6 +97,7 @@
     <LangVersion>7.3</LangVersion>
     <ErrorReport>prompt</ErrorReport>
     <Prefer32Bit>true</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -97,6 +108,7 @@
     <LangVersion>7.3</LangVersion>
     <ErrorReport>prompt</ErrorReport>
     <Prefer32Bit>true</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <OutputPath>bin\x64\Release\</OutputPath>
@@ -107,6 +119,7 @@
     <LangVersion>7.3</LangVersion>
     <ErrorReport>prompt</ErrorReport>
     <Prefer32Bit>true</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestCertificateThumbprint>17FC68D7105A8F5696D7D0D7FCA0541F1D45B4BB</ManifestCertificateThumbprint>
@@ -171,6 +184,7 @@
     <Compile Include="API Service\ApiService.cs" />
     <Compile Include="API Service\CertificateService.cs" />
     <Compile Include="API Service\ProxyService.cs" />
+    <Compile Include="API Service\VPNService.cs" />
     <Compile Include="Common\BrowsersGeneric.cs" />
     <Compile Include="Common\CountryCodeConverter.cs" />
     <Compile Include="Common\IsActiveToColorConverter.cs" />
@@ -193,6 +207,7 @@
     <Compile Include="DTO\Requests\RetriveServices.cs" />
     <Compile Include="DTO\Requests\ExecuteNow.cs" />
     <Compile Include="DTO\Requests\ServiceDPP.cs" />
+    <Compile Include="DTO\Requests\VPNServiceRequest.cs" />
     <Compile Include="DTO\Responses\AutoUpdateResponse.cs" />
     <Compile Include="DTO\Responses\CertificatePayloadResponse.cs" />
     <Compile Include="DTO\Responses\CertificateResponse.cs" />
@@ -244,6 +259,11 @@
     <Compile Include="TestFDSMain.xaml.cs">
       <DependentUpon>TestFDSMain.xaml</DependentUpon>
     </Compile>
+    <Compile Include="TunnelDll\Driver.cs" />
+    <Compile Include="TunnelDll\Keypair.cs" />
+    <Compile Include="TunnelDll\Ringlogger.cs" />
+    <Compile Include="TunnelDll\Service.cs" />
+    <Compile Include="TunnelDll\Win32.cs" />
     <Compile Include="User32API.cs" />
     <Compile Include="WindowService\WindowServiceInstaller.cs" />
     <Page Include="css\sendOTPStyle.xaml">
@@ -596,4 +616,7 @@
     <Content Include="wireguard.h" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>REM Eazfuscator.NET is integrated with this project at MSBuild level: https://help.gapotchenko.com/eazfuscator.net/kb/100036</PostBuildEvent>
+  </PropertyGroup>
 </Project>
