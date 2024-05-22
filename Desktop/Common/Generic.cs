@@ -14,6 +14,7 @@ using System.Management;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Security.Principal;
 using System.Text;
 using System.Threading;
 using System.Windows;
@@ -41,6 +42,8 @@ namespace FDS.Common
         static extern bool SetInformationJobObject(IntPtr hJob, int infoType, IntPtr lpJobObjectInfo, uint cbJobObjectInfoLength);
 
         const int JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x2000;
+
+        private static bool? _isUserAdministrator;
 
         public static bool CheckInternetConnection()
         {
@@ -678,6 +681,35 @@ namespace FDS.Common
                 {
                     return false;
                 }
+            }
+        }
+
+
+        public static bool IsUserAdministrator2()
+        {
+            if (_isUserAdministrator.HasValue)
+            {
+                return _isUserAdministrator.Value;
+            }
+
+            try
+            {
+                WindowsIdentity identity = WindowsIdentity.GetCurrent();
+                WindowsPrincipal principal = new WindowsPrincipal(identity);
+
+                // Check if the user is in the Administrators group
+                bool isAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
+
+                // Cache the result for subsequent calls
+                _isUserAdministrator = isAdmin;
+                return isAdmin;
+            }
+            catch (Exception ex)
+            {
+                // Log or handle exceptions as needed
+                Console.WriteLine($"Exception in IsUserAdministrator: {ex.Message}");
+                _isUserAdministrator = false;
+                return false;
             }
         }
 

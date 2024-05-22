@@ -9,6 +9,10 @@ using System.Threading.Tasks;
 using FDS.DTO.Responses;
 using FDS.DTO.Requests;
 using System.Net;
+using System.IO;
+using System.Net.Sockets;
+using Tunnel;
+using Newtonsoft.Json.Linq;
 
 namespace FDS.API_Service
 {
@@ -66,6 +70,33 @@ namespace FDS.API_Service
                 return null;
             }
             return null;
+        }
+
+        public async Task<string> GetPublicIpAddressAsync()
+        {
+            using (HttpClient httpClient = new HttpClient())
+            {
+                return await httpClient.GetStringAsync("https://api.ipify.org");
+            }
+        }
+
+        public async Task<string> GetIpLocationAsync(string ipAddress)
+        {
+            using (HttpClient httpClient = new HttpClient())
+            {
+                string apiUrl = $"http://ip-api.com/json/{ipAddress}";
+                string response = await httpClient.GetStringAsync(apiUrl);
+
+                JObject locationInfo = JObject.Parse(response);
+                if ((string)locationInfo["status"] == "success")
+                {
+                    return (string)locationInfo["regionName"]; // Extract the state
+                }
+                else
+                {
+                    return "Location information not available.";
+                }
+            }
         }
 
 

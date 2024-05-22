@@ -147,7 +147,7 @@ uint nLength, out uint lpnLengthNeeded);
                     {
 
                         //System.Threading.Thread.Sleep(5000);
-                        Thread.Sleep(TimeSpan.FromSeconds(50));
+                       
 
                         if ((!CheckAppRunning(FdsProcessName)) && ((File.Exists(encryptOutPutFile)) || (cnt == 0)))
                         {
@@ -187,11 +187,11 @@ uint nLength, out uint lpnLengthNeeded);
                                 // Hide the window of the launched process
                                 ShowWindow(mainWindowHandle, SW_HIDE);
                             }
-
+                            Thread.Sleep(TimeSpan.FromSeconds(10));
 
                             cnt++;
 
-                            Thread.Sleep(TimeSpan.FromSeconds(10));
+                          
 
                             // Monitor the WPF application
                             while (!wpfApp.HasExited)
@@ -382,7 +382,7 @@ uint nLength, out uint lpnLengthNeeded);
                     string desiredPath = Path.Combine(currentDirectory, @"..\Desktop");
                     string originalPath = Path.GetFullPath(desiredPath);
 
-                    string desiredPath1 = Path.Combine(Path.GetDirectoryName(originalPath), "..\\..\\Desktop\\bin\\Release\\");
+                    string desiredPath1 = Path.Combine(Path.GetDirectoryName(originalPath), "..\\..\\Desktop\\bin\\Debug\\");
                     string fullPath = Path.GetFullPath(desiredPath1);
 
                     applicationPath = fullPath;

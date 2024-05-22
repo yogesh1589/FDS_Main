@@ -148,6 +148,7 @@ namespace FDS
         public bool allServiceDisabled = false;
         public bool chkFlgClick = false;
         public bool isInternetReconnect = false;
+        public string currentServerName = string.Empty;
 
         private bool connectedVPN;
 
@@ -235,7 +236,7 @@ namespace FDS
             cmbCountryCode.DropDownClosed += cmbCountryCode_DropDownClosed;
             txtCodeVersion.Text = "v" + AppConstants.CodeVersion;
             imgLoader = SetGIF("\\Assets\\spinner.gif");
-            if (Generic.IsUserAdministrator())
+            if (Generic.IsUserAdministrator2())
 
             {
                 IsUninstallFlagUpdated();
@@ -333,6 +334,12 @@ namespace FDS
             }
         }
 
+        private void Grid_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            // Your click event logic here
+            ShowMap();
+        }
+
         private void Image1_MouseEnter(object sender, MouseEventArgs e)
         {
             image1.Opacity = 0.6;
@@ -347,7 +354,7 @@ namespace FDS
         {
             if (image1.Source.ToString().Contains("/Assets/VPNDis.png"))
             {
-                downloadStatusVPN.Text = "Disconnecting...";
+                downloadStatusVPN.Text = "Connecting...";
                 loaderVPN.Visibility = Visibility.Visible;
                 downloadStatusVPN.Visibility = Visibility.Visible;
                 vpnstatus.Visibility = Visibility.Hidden;
@@ -364,8 +371,8 @@ namespace FDS
                     image1.Visibility = Visibility.Visible;
 
 
-                    image1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
-                    vpnstatus.Text = "Connect";
+                    image1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
+                    vpnstatus.Text = "Disconnected";
                     vpnstatus.Foreground = Brushes.Green;
                     sytemInfo2.Text = "Unprotected";
                     sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
@@ -374,7 +381,7 @@ namespace FDS
             }
             else
             {
-                downloadStatusVPN.Text = "Connecting...";
+                downloadStatusVPN.Text = "Disconnecting...";
                 // Show the loader and download status text
                 loaderVPN.Visibility = Visibility.Visible;
                 downloadStatusVPN.Visibility = Visibility.Visible;
@@ -393,8 +400,8 @@ namespace FDS
                     vpnstatus.Visibility = Visibility.Visible;
                     image1.Visibility = Visibility.Visible;
 
-                    image1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
-                    vpnstatus.Text = "Disconnect";
+                    image1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
+                    vpnstatus.Text = "Connected";
                     vpnstatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
                     sytemInfo2.Text = "Protected";
                     sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
@@ -419,7 +426,7 @@ namespace FDS
         {
             if (VPNimage1.Source.ToString().Contains("/Assets/VPNDis.png"))
             {
-                downloadStatus.Text = "Disconnecting...";
+                downloadStatus.Text = "Connecting...";
                 loader.Visibility = Visibility.Visible;
                 downloadStatus.Visibility = Visibility.Visible;
                 vpnstatus2.Visibility = Visibility.Hidden;
@@ -429,9 +436,76 @@ namespace FDS
 
                 if (result)
                 {
+                    VPNService vpnService = new VPNService();
+                    string publicIp = await vpnService.GetPublicIpAddressAsync();         
+
+                    if (!string.IsNullOrEmpty(publicIp))
+                    {
+                        var location = await vpnService.GetIpLocationAsync(publicIp);
+                        currentServerName = location;
+                        ShowMap(); 
+                    }
 
                     VPNimage1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
-                    vpnstatus2.Text = "Connect";
+                    vpnstatus2.Text = "Connected";
+                    vpnstatus2.Foreground = Brushes.Green;
+                    sytemInfo2.Text = "Protected";
+                    sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                    sytemInfo4.Text = "InstanceA";
+                    loader.Visibility = Visibility.Hidden;
+                    downloadStatus.Visibility = Visibility.Hidden;
+                    vpnstatus2.Visibility = Visibility.Visible;
+                    VPNimage1.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    loader.Visibility = Visibility.Collapsed;
+                    downloadStatus.Visibility = Visibility.Collapsed;
+                    vpnstatus2.Visibility = Visibility.Visible;
+                    VPNimage1.Visibility = Visibility.Visible;
+                    VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
+                    vpnstatus2.Text = "Disconnected";
+                    vpnstatus2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                    sytemInfo2.Text = "Unprotected";
+                    sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
+                    sytemInfo4.Text = "N/A";
+                }
+            }
+            else
+            {
+                downloadStatus.Text = "Disconnecting...";
+                // Show the loader and download status text
+                loader.Visibility = Visibility.Visible;
+                downloadStatus.Visibility = Visibility.Visible;
+                vpnstatus2.Visibility = Visibility.Hidden;
+                VPNimage1.Visibility = Visibility.Hidden;
+
+                 
+
+                bool result = await ConnectVPN();
+
+                if (result)
+                {
+                     
+
+                    // After files are downloaded, hide the loader and download status text
+                    loader.Visibility = Visibility.Collapsed;
+                    downloadStatus.Visibility = Visibility.Collapsed;
+                    vpnstatus2.Visibility = Visibility.Visible;
+                    VPNimage1.Visibility = Visibility.Visible;
+                    VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
+                    vpnstatus2.Text = "Disconnected";
+                    vpnstatus2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                    sytemInfo2.Text = "Unprotected";
+                    sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
+                    sytemInfo4.Text = "N/A";
+                    currentServerName = string.Empty;
+                    ShowMap();
+                }
+                else
+                {
+                    VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
+                    vpnstatus2.Text = "Disconnected";
                     vpnstatus2.Foreground = Brushes.Green;
                     sytemInfo2.Text = "Unprotected";
                     sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
@@ -440,53 +514,6 @@ namespace FDS
                     downloadStatus.Visibility = Visibility.Hidden;
                     vpnstatus2.Visibility = Visibility.Visible;
                     VPNimage1.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    downloadStatus.Text = "Disconnecting...";
-                    loader.Visibility = Visibility.Visible;
-                    downloadStatus.Visibility = Visibility.Visible;
-                    vpnstatus2.Visibility = Visibility.Hidden;
-                    VPNimage1.Visibility = Visibility.Hidden;
-                }
-            }
-            else
-            {
-                downloadStatus.Text = "Connecting...";
-                // Show the loader and download status text
-                loader.Visibility = Visibility.Visible;
-                downloadStatus.Visibility = Visibility.Visible;
-                vpnstatus2.Visibility = Visibility.Hidden;
-                VPNimage1.Visibility = Visibility.Hidden;
-
-                await Task.Delay(2000);
-
-                bool result = await ConnectVPN();
-
-                if (result)
-                {
-                    await Task.Delay(5000);
-
-                    // After files are downloaded, hide the loader and download status text
-                    loader.Visibility = Visibility.Collapsed;
-                    downloadStatus.Visibility = Visibility.Collapsed;
-                    vpnstatus2.Visibility = Visibility.Visible;
-                    VPNimage1.Visibility = Visibility.Visible;
-                    VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
-                    vpnstatus2.Text = "Disconnect";
-                    vpnstatus2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-                    sytemInfo2.Text = "Protected";
-                    sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
-                    sytemInfo4.Text = "InstanceA";
-                }
-                else
-                {
-                    downloadStatus.Text = "Connecting...";
-                    // Show the loader and download status text
-                    loader.Visibility = Visibility.Visible;
-                    downloadStatus.Visibility = Visibility.Visible;
-                    vpnstatus2.Visibility = Visibility.Hidden;
-                    VPNimage1.Visibility = Visibility.Hidden;
                 }
             }
 
@@ -510,6 +537,7 @@ namespace FDS
                     if (vpnData != null)
                     {
                         var configData = vpnData.Data.Config;
+ 
 
                         if (File.Exists(configFile))
                         {
@@ -517,9 +545,8 @@ namespace FDS
                         }
                         File.WriteAllText(configFile, configData);
 
-                        Tunnel.Service.Run(configFile);
-                        var config = await generateNewConfig();
-                        await WriteAllBytesAsync(configFile, Encoding.UTF8.GetBytes(config));
+                        Tunnel.Service.Run(configFile);                        
+                        await WriteAllBytesAsync(configFile, Encoding.UTF8.GetBytes(configData));
                         await Task.Run(() => Tunnel.Service.Add(configFile, true));
                         connectedVPN = true;
                         return true;
@@ -552,6 +579,8 @@ namespace FDS
                 await sourceStream.WriteAsync(bytes, 0, bytes.Length);
             }
         }
+
+
 
         private async Task<string> generateNewConfig()
         {
@@ -2262,29 +2291,45 @@ namespace FDS
                     }
 
                     counter++;
-
+                    string utcDateTimeString = logEntry.time;
 
                     string logTime = string.Empty;
                     string dataTimeVal = string.Empty;
                     try
                     {
-                        // Given UTC datetime string
-                        string utcDateTimeString = logEntry.time;
 
                         // Parse the UTC datetime string to DateTime object
                         DateTime utcDateTime = DateTime.ParseExact(utcDateTimeString, "yyyy-MM-ddTHH:mm:ss.ffffffZ", null, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal);
 
-                        // Convert to Indian Standard Time (IST)
-                        TimeZoneInfo istTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
-                        DateTime istDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, istTimeZone);
+                        // Get the local time zone of the system
+                        TimeZoneInfo localTimeZone = TimeZoneInfo.Local;
+
+                        // Convert to local time zone
+                        DateTime localDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, localTimeZone);
+
+                        // Convert to EST if in USA, otherwise keep in local time zone
+                        DateTime convertedDateTime;
+                        if (localTimeZone.Id == "Eastern Standard Time")
+                        {
+                            // Already in EST
+                            convertedDateTime = localDateTime;
+                        }
+                        else
+                        {
+                            // Convert to EST
+                            TimeZoneInfo estTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+                            convertedDateTime = TimeZoneInfo.ConvertTime(localDateTime, localTimeZone, estTimeZone);
+                        }
+
+
 
 
 
 
                         //string time = logEntry.time.ToString();
                         //DateTime dateTime = DateTime.Parse(time);
-                        logTime = istDateTime.ToString("hh:mm tt");
-                        dataTimeVal = istDateTime.ToString();
+                        logTime = convertedDateTime.ToString("hh:mm tt");
+                        dataTimeVal = convertedDateTime.ToString();
 
                     }
                     catch (Exception ex)
@@ -2653,7 +2698,10 @@ namespace FDS
 
         private void ShowMap()
         {
-            if (lblLocation.Text == "")
+            grdMapGrid.Visibility = Visibility.Visible;
+            grdGridEvents.Visibility = Visibility.Hidden;
+            lblheadingServer.Text = "Current Server";
+            if (currentServerName == string.Empty)
             {
                 watingMapVPN.Visibility = Visibility.Visible;
                 ohioMapVPN.Visibility = Visibility.Hidden;
@@ -2667,7 +2715,7 @@ namespace FDS
                 californiaMap.Visibility = Visibility.Hidden;
                 sytemInfo4.Text = "NA";
             }
-            else if (lblLocation.Text.ToString().ToLower().Contains("california"))
+            else if (currentServerName.ToLower().Contains("california"))
             {
                 watingMapVPN.Visibility = Visibility.Hidden;
                 ohioMapVPN.Visibility = Visibility.Hidden;
@@ -2682,7 +2730,7 @@ namespace FDS
                 sytemInfo4.Text = "California";
 
             }
-            else if (lblLocation.Text.ToString().ToLower().Contains("ohio"))
+            else if (currentServerName.ToLower().Contains("ohio"))
             {
                 watingMapVPN.Visibility = Visibility.Hidden;
                 ohioMapVPN.Visibility = Visibility.Visible;
@@ -2697,7 +2745,7 @@ namespace FDS
                 sytemInfo4.Text = "Ohio";
 
             }
-            else if (lblLocation.Text.ToString().ToLower().Contains("verginia"))
+            else if (currentServerName.ToLower().Contains("virginia"))
             {
                 watingMapVPN.Visibility = Visibility.Hidden;
                 watingMap.Visibility = Visibility.Hidden;
@@ -2707,8 +2755,8 @@ namespace FDS
                 northVerginiaMap.Visibility = Visibility.Visible;
                 californiaMapVPN.Visibility = Visibility.Hidden;
                 californiaMap.Visibility = Visibility.Hidden;
-                currentInfoVPN.Text = "North Verginia";
-                sytemInfo4.Text = "North Verginia";
+                currentInfoVPN.Text = "North Virginia";
+                sytemInfo4.Text = "North Virginia";
             }
             else
             {
@@ -3630,8 +3678,10 @@ namespace FDS
                         Generic.StopRemoveStartupApplication();
 
                         cleanSystem();
-
+                        LoadMenu(Screens.GetStart);
                         Generic.UninstallFDS();
+
+                        
 
 
                     }

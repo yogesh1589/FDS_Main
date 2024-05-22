@@ -782,9 +782,9 @@
                                             <!-- TextBlock for displaying download status -->
                                             <TextBlock Grid.Row="1" Margin="0,60,90,0" HorizontalAlignment="Center" VerticalAlignment="Top" FontWeight="SemiBold" FontSize="16" x:Name="downloadStatusVPN"   Text="Connecting..." Grid.ColumnSpan="2" Foreground="#FFC16B" Visibility="Collapsed" FontFamily="Radian" Height="22" Width="160"   />
 
-                                            <Image x:Name="image1" Grid.Column="1" Source="/Assets/GreenButton.png" Width="60" Height="60" Stretch="Uniform" Margin="0,25,20,25" VerticalAlignment="Top" HorizontalAlignment="Right" RenderTransformOrigin="2.63,0.644" MouseEnter="Image1_MouseEnter" MouseLeave="Image1_MouseLeave" MouseDown="Image1_MouseDown"/>
+                                            <Image x:Name="image1" Grid.Column="1" Source="/Assets/VPNDis.png" Width="60" Height="60" Stretch="Uniform" Margin="0,25,20,25" VerticalAlignment="Top" HorizontalAlignment="Right" RenderTransformOrigin="2.63,0.644" MouseEnter="Image1_MouseEnter" MouseLeave="Image1_MouseLeave" MouseDown="Image1_MouseDown"/>
                                             <TextBlock HorizontalAlignment="Center" VerticalAlignment="Top"  FontWeight="Bold" FontSize="20" Foreground="White" FontFamily="Radian" Text="Fusion VPN" Margin="20,29,105,4" Height="26" Width="172" Grid.ColumnSpan="2"/>
-                                            <TextBlock x:Name="vpnstatus" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontWeight="SemiBold" FontSize="16" Foreground="#06D6A0" FontFamily="Radian" Text="Connect" Margin="20,59,163.667,30" Height="22" Width="111" Grid.ColumnSpan="2"></TextBlock>
+                                            <TextBlock x:Name="vpnstatus" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontWeight="SemiBold" FontSize="16" Foreground="#FB4B4E" FontFamily="Radian" Text="Disconnected" Margin="20,59,163.667,30" Height="22" Width="111" Grid.ColumnSpan="2"></TextBlock>
 
                                         </Grid>
                                     </Border>
@@ -1073,7 +1073,7 @@
 
 
 
-                                <Grid Grid.Column="1" Visibility="Hidden" x:Name="grdWithVPN" Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Top" Margin="0,117,0,0" Height="110" Width="820">
+                                <Grid Grid.Column="1" Visibility="Visible" x:Name="grdWithVPN" Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Top" Margin="0,117,0,0" Height="110" Width="820">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="Auto"/>
@@ -1164,7 +1164,7 @@
 
 
                                     <Border CornerRadius="10" Background="#0E2E5B"  Grid.Column="2" Width="303" Height="110" Margin="5,0,0,0">
-                                        <Grid RenderTransformOrigin="0.857,0.554">
+                                        <Grid RenderTransformOrigin="0.857,0.554" MouseDown="Grid_MouseDown">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="150"/>
                                                 <ColumnDefinition Width="150"/>
@@ -1180,12 +1180,12 @@
                                             <!-- TextBlock for displaying download status -->
                                             <TextBlock Grid.Row="1" Margin="0,0,80,0" HorizontalAlignment="Center" VerticalAlignment="Top" FontWeight="SemiBold" FontSize="16" x:Name="downloadStatus"   Text="Connecting..." Grid.ColumnSpan="2" Foreground="#FFC16B" Visibility="Collapsed" FontFamily="Radian" Height="22" Width="160"   />
 
-                                            <Image x:Name="VPNimage1" Grid.RowSpan="2" Grid.Column="1" Source="/Assets/GreenButton.png" Width="60" Height="71" Stretch="Uniform" Margin="0,21,20,10" VerticalAlignment="Center" HorizontalAlignment="Right" RenderTransformOrigin="2.63,0.644" MouseEnter="VPNImage1_MouseEnter" MouseLeave="VPNImage1_MouseLeave" MouseDown="VPNImage1_MouseDown"/>
+                                            <Image x:Name="VPNimage1" Grid.RowSpan="2" Grid.Column="1" Source="/Assets/VPNDis.png" Width="60" Height="71" Stretch="Uniform" Margin="0,21,20,10" VerticalAlignment="Center" HorizontalAlignment="Right" RenderTransformOrigin="2.63,0.644" MouseEnter="VPNImage1_MouseEnter" MouseLeave="VPNImage1_MouseLeave" MouseDown="VPNImage1_MouseDown"/>
                                             <TextBlock HorizontalAlignment="Center" Grid.Row="0" Grid.Column="0" VerticalAlignment="Bottom"  FontWeight="Bold" FontSize="20" Foreground="White" FontFamily="Radian" Text="Fusion VPN" Margin="20,29,0,0" Height="26" Width="113" />
-                                            <TextBlock x:Name="vpnstatus2" Grid.Row="1" HorizontalAlignment="Center" Visibility="Visible" VerticalAlignment="Top" FontWeight="SemiBold" FontSize="16" Foreground="#06D6A0" FontFamily="Radian" Text="Connect" Margin="20,0,0,29" Height="22" Width="111"  Grid.Column="0"></TextBlock>
-
+                                            <TextBlock x:Name="vpnstatus2" Grid.Row="1" HorizontalAlignment="Center" Visibility="Visible" VerticalAlignment="Top" FontWeight="SemiBold" FontSize="16" Foreground="#FB4B4E" FontFamily="Radian" Text="Disconnected" Margin="20,0,0,29" Height="22" Width="111"  Grid.Column="0"></TextBlock>
                                         </Grid>
                                     </Border>
+
                                 </Grid>
 
                                 <Grid Grid.Column="1" Visibility="Hidden" x:Name="currentServerHeader" HorizontalAlignment="Center" Height="18" Width="495" VerticalAlignment="Center" Margin="0,236,0,330" >

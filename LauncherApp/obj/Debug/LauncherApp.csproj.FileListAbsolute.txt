@@ -35,6 +35,6 @@ D:\14March\FDS\windowsapp\LauncherApp\bin\Debug\zh-CN\Microsoft.Win32.TaskSchedu
 D:\14March\FDS\windowsapp\LauncherApp\bin\Debug\zh-Hant\Microsoft.Win32.TaskScheduler.resources.dll
 D:\14March\FDS\windowsapp\LauncherApp\obj\Debug\LauncherApp.csproj.AssemblyReference.cache
 D:\14March\FDS\windowsapp\LauncherApp\obj\Debug\LauncherApp.csproj.CoreCompileInputs.cache
-D:\14March\FDS\windowsapp\LauncherApp\obj\Debug\LauncherApp.csproj.CopyComplete
 D:\14March\FDS\windowsapp\LauncherApp\obj\Debug\LauncherApp.exe
 D:\14March\FDS\windowsapp\LauncherApp\obj\Debug\LauncherApp.pdb
+D:\14March\FDS\windowsapp\LauncherApp\obj\Debug\Launcher.91152B33.Up2Date

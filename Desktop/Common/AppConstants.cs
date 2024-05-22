@@ -46,7 +46,8 @@ namespace FDS.Common
             public const string individual = "individual/";
             public const string healthscore = "healthscore/";
             public const string serviceinfo = "serviceinfo/";
-            public const string vpnConnect = "client/connect/";
+            public const string 
+                nect = "client/connect/";
 
         }
         public const string DeviceType = "1";
