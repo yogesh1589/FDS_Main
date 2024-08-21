@@ -1,22 +1,12 @@
 ﻿using FDS.Common;
 using FDS.DTO.Requests;
 using FDS.DTO.Responses;
-using FDS.Models;
 using Newtonsoft.Json;
-using OpenQA.Selenium;
-using OpenQA.Selenium.DevTools;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Messaging;
 using System.Net;
 using System.Net.Http;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace FDS.API_Service
 {
@@ -44,16 +34,15 @@ namespace FDS.API_Service
         }
 
 
-        public async Task<QRCodeResponse> CheckAuthAsync(string qrCodeToken, string codeVersion)
+        public QRCodeResponse CheckAuth(string qrCodeToken, string codeVersion)
         {
             try
             {
                 var formContent = new List<KeyValuePair<string, string>>
-            {
-                new KeyValuePair<string, string>("qr_code_token", qrCodeToken),
-                new KeyValuePair<string, string>("code_version", codeVersion),
-            };
-
+        {
+            new KeyValuePair<string, string>("qr_code_token", qrCodeToken),
+            new KeyValuePair<string, string>("code_version", codeVersion),
+        };
 
                 var handler = new HttpClientHandler
                 {
@@ -63,11 +52,11 @@ namespace FDS.API_Service
                 using (var client1 = new HttpClient(handler))
                 {
                     client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
-                    var response = await client1.PostAsync(AppConstants.EndPoints.CheckAuth, new FormUrlEncodedContent(formContent));
+                    var response = client1.PostAsync(AppConstants.EndPoints.CheckAuth, new FormUrlEncodedContent(formContent)).Result; // Use .Result to block until completion
 
                     if (response.IsSuccessStatusCode)
                     {
-                        var responseString = await response.Content.ReadAsStringAsync();
+                        var responseString = response.Content.ReadAsStringAsync().Result; // Use .Result to block until completion
                         var apiResponse = JsonConvert.DeserializeObject<QRCodeResponse>(responseString);
 
                         return apiResponse;
@@ -77,7 +66,6 @@ namespace FDS.API_Service
                         QRCodeResponse qRCodeResponse = new QRCodeResponse
                         {
                             StatusCode = response.StatusCode
-
                         };
                         return qRCodeResponse;
                     }
@@ -89,6 +77,7 @@ namespace FDS.API_Service
                 return null;
             }
         }
+
 
         public async Task<ResponseData> CheckLicenseAsync(string qrCodeToken, string licenseToken)
         {

@@ -1,30 +1,14 @@
-﻿using FDS.Common;
-using FDS.DTO.Responses;
+﻿using FDS.DTO.Responses;
 using FDS.Factories;
-using FDS.Logging;
 using FDS.Runners.Abstract;
-using FDS.Services;
 using FDS.Services.AbstractClass;
-using FDS.Services.Interface;
 using FDS.SingleTon;
-using OpenQA.Selenium.Internal;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.ServiceProcess;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using Windows.UI.Xaml;
 
 namespace FDS.Runners
 {
-     
+
     public class EventRunner : BaseBrowser
     {
         Dictionary<BaseService, ServiceTypeName> serviceTypeMapping = new Dictionary<BaseService, ServiceTypeName>();

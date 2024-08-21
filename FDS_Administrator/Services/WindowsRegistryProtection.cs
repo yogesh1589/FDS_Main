@@ -17,20 +17,14 @@ namespace FDS_Administrator
             try
             {
 
-                int localMachineCount = DeleteLocalMachineCount();
+                int localMachineCount = DeleteLocalMachineCount();               
 
-                WriteLog("localMachineCount = " + localMachineCount.ToString());
-
-                int currentMachineCount = DeleteCurrentUserCount();
-
-                WriteLog("currentMachineCount = " + currentMachineCount.ToString());
+                int currentMachineCount = DeleteCurrentUserCount();               
 
                 string AutoStartBaseDir = Generic.GetApplicationpath();
                 string resultFilePath = Path.Combine(AutoStartBaseDir, "result.txt");
 
-                int totalCount = localMachineCount + currentMachineCount;
-
-                WriteLog("totalCount = " + totalCount.ToString());
+                int totalCount = localMachineCount + currentMachineCount;               
 
                 File.WriteAllText(resultFilePath, totalCount.ToString());
             }
@@ -167,27 +161,27 @@ namespace FDS_Administrator
         }
 
 
-        private static void WriteLog(string logMessage)
-        {
-            try
-            {
-                string path = AppDomain.CurrentDomain.BaseDirectory + "AdminAppLogs";
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                }
+        //private static void WriteLog(string logMessage)
+        //{
+        //    try
+        //    {
+        //        string path = AppDomain.CurrentDomain.BaseDirectory + "AdminAppLogs";
+        //        if (!Directory.Exists(path))
+        //        {
+        //            Directory.CreateDirectory(path);
+        //        }
 
-                string filePath = Path.Combine(path, "AdminLogs_" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt");
+        //        string filePath = Path.Combine(path, "AdminLogs_" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt");
 
-                using (StreamWriter streamWriter = File.AppendText(filePath))
-                {
-                    streamWriter.WriteLine($"{DateTime.Now} - {logMessage}");
-                }
-            }
-            catch (Exception ex)
-            {
-                WriteLog("WriteLog " + ex.ToString());
-            }
-        }
+        //        using (StreamWriter streamWriter = File.AppendText(filePath))
+        //        {
+        //            streamWriter.WriteLine($"{DateTime.Now} - {logMessage}");
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        WriteLog("WriteLog " + ex.ToString());
+        //    }
+        //}
     }
 }

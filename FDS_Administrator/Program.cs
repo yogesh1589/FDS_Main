@@ -43,26 +43,8 @@ namespace FDS_Administrator
         public static string pipName = @"\\.\pipe\AdminPipes";
         static void Main(string[] args)
         {
-
-            //try
-            //{
-            // HideConsoleWindow();
-            //    using (NamedPipeClientStream pipeClient = new NamedPipeClientStream(".", pipName, PipeDirection.Out))
-            //    {
-            //        pipeClient.Connect(); // Connect to the service
-            //                              // Send a message/command to the service
-            //        byte[] buffer = Encoding.UTF8.GetBytes("WindowsRegistryProtection");
-            //        pipeClient.Write(buffer, 0, buffer.Length);
-            //    }
-            //}
-            //catch (Exception ex)
-            //{
-            //    Console.WriteLine("Exception occurred while connecting to the named pipe: " + ex.Message);
-            //    // Handle or log exception
-            //}
-            //args[0] = "Certificates,f769bb0beebd2f03f3ba26157251a657e39a01a5," + StoreLocation.CurrentUser + "," + StoreName.My;
-            Console.WriteLine("Starting");
-            WriteLog("Starting 1");
+ 
+            
             // Check for command-line arguments
             if (args.Length > 0)
             {
@@ -137,27 +119,27 @@ namespace FDS_Administrator
             windowsRegistryProtection.DeleteRegistriesKey();
         }
 
-        private static void WriteLog(string logMessage)
-        {
-            try
-            {
-                string path = AppDomain.CurrentDomain.BaseDirectory + "AdminAppLogs";
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                }
+        //private static void WriteLog(string logMessage)
+        //{
+        //    try
+        //    {
+        //        string path = AppDomain.CurrentDomain.BaseDirectory + "AdminAppLogs";
+        //        if (!Directory.Exists(path))
+        //        {
+        //            Directory.CreateDirectory(path);
+        //        }
 
-                string filePath = Path.Combine(path, "AdminLogs_" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt");
+        //        string filePath = Path.Combine(path, "AdminLogs_" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt");
 
-                using (StreamWriter streamWriter = File.AppendText(filePath))
-                {
-                    streamWriter.WriteLine($"{DateTime.Now} - {logMessage}");
-                }
-            }
-            catch (Exception ex)
-            {
-                WriteLog("WriteLog " + ex.ToString());
-            }
-        }
+        //        using (StreamWriter streamWriter = File.AppendText(filePath))
+        //        {
+        //            streamWriter.WriteLine($"{DateTime.Now} - {logMessage}");
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        WriteLog("WriteLog " + ex.ToString());
+        //    }
+        //}
     }
 }

@@ -11,7 +11,7 @@
         x:Name="frmFDSMain"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"  
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
-        Height="750" Width="1200" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="None" Loaded="FDSMain_Loaded" Closing="frmFDSMain_Closing"
+        Height="575" Width="920" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="None" Loaded="FDSMain_Loaded" Closing="frmFDSMain_Closing"
         >
 
     <Window.Resources>
@@ -51,9 +51,13 @@
         <VM:ViewModel/>
     </Window.DataContext>
 
-    <Border CornerRadius="10, 35, 35, 35" Background="Transparent"  Height="750">
+    <Border CornerRadius="10, 35, 35, 35" Background="Transparent"  Height="575">
         <Grid>
-            <Grid ClipToBounds="True">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="575*"/>
+                <RowDefinition Height="2*"/>
+            </Grid.RowDefinitions>
+            <Grid ClipToBounds="True" Grid.RowSpan="2">
                 <Grid.Background>
                     <ImageBrush ImageSource="Assets/backgroundN.png"/>
                 </Grid.Background>
@@ -61,41 +65,48 @@
             </Grid>
             <!--<Border CornerRadius="20" Background="Transparent"   BorderThickness="1"/>-->
 
-            <Grid Margin="0,0,0,0">
+            <Grid Grid.RowSpan="2">
 
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="52" />
-                    <RowDefinition Height="698" />
+                    <RowDefinition Height="48" />
+                    <RowDefinition Height="527" />
                 </Grid.RowDefinitions>
+ 
+                <Grid x:Name="MainContainer" Grid.Row="1" Width="920">
 
-                <!--<Grid Grid.Row="0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Grid Grid.Column="1">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Width="1090" >
-                            <Image x:Name="imgDesktop" Source="Assets/SystemIcon.png" Width="23" Margin="220,20,10,70" RenderTransformOrigin="0.536,-4.762" Visibility="Visible" />
-                            <TextBlock x:Name="lblUserName" Text="yogi" Margin="0,20,10,70" Visibility="Visible" FontSize="18"  Foreground="White"></TextBlock>
-                            <Image x:Name="imgDesktop2" Source="Assets/Organisation.png" Width="23" Margin="270,20,10,70" RenderTransformOrigin="0.536,-4.762" Visibility="Visible" />
-                            <TextBlock x:Name="txtOrganization" Margin="0,20,10,70" Visibility="Visible" FontSize="18" Text="" Foreground="White"></TextBlock>
-                        </StackPanel>
-
-                    </Grid>
-                </Grid>-->
-
-                <Grid x:Name="MainContainer" Grid.Row="1">
-
-
-                    <Grid Grid.Row="0">
+                    <Grid Grid.Row="0" Margin="0,10,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Grid Grid.Column="1">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Width="1090" >
-                                <Image x:Name="imgDesktop" Source="Assets/SystemIcon.png" Width="26" Height="26" Margin="225,11,10,70" RenderTransformOrigin="0.536,-4.762" Visibility="Visible" />
-                                <TextBlock x:Name="lblUserName" Text="" Margin="5,11,10,70" Width="400" Height="24" Visibility="Visible" FontSize="18" FontWeight="SemiBold" Foreground="White"></TextBlock>
-                                <Image x:Name="imgDesktop2" Source="Assets/Organisation.png" Width="26" Height="26" Margin="50,18,10,70" RenderTransformOrigin="0.536,-4.762" Visibility="Visible" />
-                                <TextBlock x:Name="txtOrganization" Margin="0,16,10,70" Visibility="Visible" FontWeight="SemiBold" FontSize="18" Text="CrawlApp Technologies Pvt. Ltd." Foreground="White"></TextBlock>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Width="864" Height="24" >
+                                <Image x:Name="imgDesktop" Source="Assets/SystemIcon.png" Width="24" Height="24" Margin="174,0,0,0" RenderTransformOrigin="0.536,-4.762" Visibility="Visible" />
+                                <!--<TextBlock x:Name="lblUserName" Text="Mike’s Desktop" Margin="8,0,0,0" Width="300" Height="24" Visibility="Visible" FontSize="14" FontWeight="SemiBold" Foreground="White"></TextBlock>-->
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock x:Name="lblUserName" Text="" Margin="8,0,0,0" Visibility="Visible" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+
+                                    <Button x:Name="dropdownButton" Click="DropdownButton_Click" Background="Transparent" BorderBrush="Transparent" Margin="4,0,0,0" Padding="0">
+                                        <Image Source="Assets/ChipDown.png" Width="16" Height="16" Margin="0,0,0,8"/>
+                                    </Button>
+
+                                    <Popup x:Name="popup" PlacementTarget="{Binding ElementName=lblUserName}" Placement="Bottom" StaysOpen="False">
+                                        <Border Background="White" BorderBrush="Gray" BorderThickness="1">
+                                            <StackPanel>
+                                                <Button x:Name="btnUninstall" ToolTip="Request Uninstall" Click="btnUninstall_Click" Width="120" Height="30" Background="Transparent" BorderBrush="Transparent">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Image Source="Assets/deleteIcon.png" Width="20" Height="16" Margin="-5,0,5,0"/>
+                                                        <TextBlock Text="Uninstall" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </Border>
+                                    </Popup>
+                                </StackPanel>
+
+
+
+                                <Image x:Name="imgDesktop2" Source="Assets/Organisation.png" Width="24" Height="24" Margin="220,0,0,0" RenderTransformOrigin="0.536,-4.762" Visibility="Visible" />
+                                <TextBlock x:Name="txtOrganization" Margin="8,3,0,0" Width="350" Height="24" Visibility="Visible" FontWeight="SemiBold" FontSize="14" Text="" Foreground="White"></TextBlock>
                             </StackPanel>
 
                         </Grid>
@@ -113,85 +124,152 @@
                         </Grid>
                     </Grid>
 
-                    <Grid x:Name="cntGetStart" HorizontalAlignment="Center" Visibility="Hidden">
+                    <Grid x:Name="cntGetStart" HorizontalAlignment="Center" Visibility="Hidden" Margin="0,0,0,0">
                         <!--Margin="0,0,55,0"-->
                         <!---->
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="80"/>
-                            <RowDefinition Height="50"/>
-                            <RowDefinition Height="410"/>
+                            <RowDefinition Height="55"/>
+                            <RowDefinition Height="35"/>
+                            <RowDefinition Height="354"/>
                             <RowDefinition Height="80"/>
                         </Grid.RowDefinitions>
-                        <TextBlock Name="lblMainLable1" Visibility="Hidden" Text="Protect Your Data With" HorizontalAlignment="Center" Grid.Row="0" FontSize="24" Margin="0,54,0,0" FontWeight="SemiBold" TextAlignment="Center" Foreground="White" Width="960" Height="36"/>
-                        <TextBlock Name="lblMainLable2" Text="Fusion Data Secure" HorizontalAlignment="Center" Grid.Row="1" FontWeight="Bold" FontSize="34" Margin="0,0,0,0" Width="960" Height="44" TextAlignment="Center" Foreground="White"/>
-                        <StackPanel   HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,0,0,0" Width="318" Height="410" Grid.Row="2">
-                            <Grid VerticalAlignment="Center" Height="410">
-                                <Image Source="Assets/DPP1.png" HorizontalAlignment="Center" VerticalAlignment="Top" Grid.Row="0" Width="318" Height="318" Margin="0,30,0,0" />
-                                <TextBlock Text="Data Privacy Protection" TextAlignment="Center" HorizontalAlignment="Center" Grid.Row="2" Width="273" Height="30" FontSize="24" FontWeight="SemiBold" Margin="0,360,0,10" Foreground="White"/>
+                        <TextBlock Name="lblMainLable1" Visibility="Visible" Text="Protect Your Data With" HorizontalAlignment="Center" Grid.Row="0" Width="199" Height="24" FontSize="18" Margin="360.5,32,360.5,0" FontStyle="Normal" LineHeight="20" FontFamily="Inter" FontWeight="SemiBold" TextAlignment="Center" Foreground="White"/>
+                        <TextBlock Name="lblMainLable2" Text="Fusion Data Secure" HorizontalAlignment="Center" Grid.Row="1" Width="224" Height="36" FontWeight="SemiBold" FontSize="24px" FontStyle="Normal" LineHeight="36px" Margin="348,0,348,0" TextAlignment="Center" Foreground="White"/>
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Width="318" Height="310" Margin="0,20,0,23" Grid.Row="2">
+                            <Grid Width="318" Height="310">
+                                <!-- Image -->
+                                <Image Source="Assets/DPP1.png" HorizontalAlignment="Center" VerticalAlignment="Top" Width="273" Height="273" Margin="0,0,0,20"/>
 
+                                <!-- TextBlock -->
+                                <TextBlock Text="Data Privacy Protection" HorizontalAlignment="Center" VerticalAlignment="Top" TextAlignment="Center" FontSize="24"
+                                FontWeight="SemiBold" Foreground="White" Margin="0,280,0,0" Height="30" Width="273"/>
+                                <!-- Adjust margin as needed -->
                             </Grid>
                         </StackPanel>
-                        <Button Background="#007AFF" Grid.Row="4" x:Name="btnGetStarted" Click="btnGetStarted_Click" VerticalAlignment="Top" Margin="0,10,0,0" Style="{StaticResource myButtonStyle}" Content="Get Started" FontFamily="Radian" FontStyle="Normal" Width="230" Height="56" FontSize="20"  FontWeight="SemiBold" Foreground="White" Cursor="Hand"/>
+                        <Button Background="#007AFF" Grid.Row="4" x:Name="btnGetStarted" Click="btnGetStarted_Click" VerticalAlignment="Top" Margin="23,0,22,32" Style="{StaticResource myButtonStyle}" Content="Get Started" FontFamily="Inter" FontStyle="Normal" Width="141" Height="46" FontSize="18"  FontWeight="SemiBold" Foreground="White" Cursor="Hand"/>
 
                     </Grid>
 
-                    <Border x:Name="AuthenticationMethods2" Visibility="Hidden" Background="#DCE4F0" BorderThickness="1" Margin="0,-21,0,0"  CornerRadius="30" Width="1000" Height="569">
-                        <Grid Margin="10,10,10,10" Background="#DCE4F0">
+                    <Border x:Name="AuthenticationMethods2" Visibility="Hidden" Background="#DCE4F0" BorderThickness="1" CornerRadius="30" Width="479" Height="337" VerticalAlignment="Top" Margin="220,95,220,95">
+                        <Grid Background="#DCE4F0" Margin="0,0,0,0" Width="460" Height="300" >
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Top" FontFamily="Radian" FontWeight="Bold" FontSize="30" Foreground="#3D4653" Text="Select Authentication Type" Margin="20,119.5,20,0" Width="960" Height="38" />
+                            <!-- Header Text -->
+                            <TextBlock Grid.Row="0" Text="Select Authentication Type"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Top"
+                                   FontFamily="Inter"
+                                   FontWeight="Bold"
+                                   FontSize="20"
+                                   Foreground="#3D4653"
+                                   TextAlignment="Center"
+                                   Margin="0,48,0,24"/>
 
-                            <Grid VerticalAlignment="Center" Background="Transparent" Height="242" Margin="275,207,250,0" HorizontalAlignment="Center" Width="480" >
+                            <!-- Authentication Buttons Grid -->
+                           
+                            <Grid Grid.Row="1" Margin="40,0,40,0" HorizontalAlignment="Center" VerticalAlignment="Top" Width="383">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
-                                <Button Grid.Column="0" x:Name="btnOrganization" Background="Transparent" Click="btnOrganisation_Click" BorderThickness="0" Cursor="Hand" Margin="5,0,-18,42" Width="200" Height="200">
-                                    <Button.Style >
+                                
+                                        
+                                    <!-- Organization Button -->
+                                <Button x:Name="btnOrganization"
+        Background="Transparent"
+        BorderThickness="0"
+        Cursor="Hand"
+        Width="172"
+        Height="187"
+        Click="btnOrganisation_Click"
+        Margin="0,0,24,0"
+        Grid.Column="0">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="30">
+                                                <!-- Adjust if needed -->
+                                                <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+
+                                    <Button.Style>
                                         <Style TargetType="Button">
+                                            <!-- Ensure no default button styling interferes -->
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="BorderBrush" Value="Transparent"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="Padding" Value="0"/>
+                                            <Setter Property="Margin" Value="0"/>
                                             <Setter Property="Content">
                                                 <Setter.Value>
-                                                    <Image Source="/Assets/Org1.png" Width="200" Height="200"/>
+                                                    <Image Source="/Assets/org1.png" Width="168" Height="187"/>
                                                 </Setter.Value>
                                             </Setter>
+
                                             <Style.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter Property="Content">
                                                         <Setter.Value>
-                                                            <Image Source="/Assets/ByOrganization.png" Width="200" Height="200" />
+                                                            <Image Source="/Assets/org2.png" Width="168" Height="187"/>
                                                         </Setter.Value>
                                                     </Setter>
-
-                                                    <!-- Change the background color on hover -->
                                                 </Trigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Button.Style>
                                 </Button>
 
-                                <TextBlock Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="18" Text="By Organization" Margin="50,20,30,0" FontFamily="Radian" FontWeight="Bold"/>
 
-                                <Button Grid.Column="1" x:Name="btnIndividual" Click="btnIndividual_Click" Background="Transparent" BorderThickness="0" Cursor="Hand" Margin="40.333,0,-18,42" Width="200" Height="200">
-                                    <Button.Style >
+
+                                <!-- Individual Button -->
+                                <Button x:Name="btnIndividual"
+        Background="Transparent"
+        BorderThickness="0"
+        Cursor="Hand"
+        Width="187"
+        Height="187"
+        Click="btnIndividual_Click"
+        Grid.Column="1">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="30">
+                                                <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+
+                                    <Button.Style>
                                         <Style TargetType="Button">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="BorderBrush" Value="Transparent"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="Padding" Value="0"/>
+                                            <Setter Property="Margin" Value="0"/>
                                             <Setter Property="Content">
                                                 <Setter.Value>
-                                                    <Image Source="/Assets/Ind1.png" Width="200" Height="200"/>
+                                                    <Image Source="/Assets/ind1.png" Width="178" Height="187" Margin="0,0,0,0"/>
                                                 </Setter.Value>
                                             </Setter>
+
                                             <Style.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter Property="Content">
                                                         <Setter.Value>
-                                                            <Image Source="/Assets/ByIndividuals.png" Width="200" Height="200" />
+                                                            <Image Source="/Assets/ind2.png" Width="178" Height="187" Margin="0,0,0,0"/>
                                                         </Setter.Value>
                                                     </Setter>
                                                 </Trigger>
@@ -199,88 +277,163 @@
                                         </Style>
                                     </Button.Style>
                                 </Button>
-                                <TextBlock Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="18" Text="By Individual" Margin="70,20,10,0" FontFamily="Radian" FontWeight="Bold"/>
+                            </Grid>
+                             
+                        </Grid>
+                    </Border>
+
+                    <Border x:Name="AuthenticationMethods" Visibility="Hidden" Background="#DCE4F0" BorderThickness="1" CornerRadius="30" Width="479" Height="429" VerticalAlignment="Top" Margin="220,49,220,49">
+                        <Grid Background="#DCE4F0" Margin="0,0,0,0" Width="460" Height="380" >
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Header Text -->
+                            <TextBlock Grid.Row="0" Text="Select Device Authentication Method"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                FontFamily="Inter"
+                FontWeight="Bold"
+                FontSize="20"
+                Foreground="#3D4653"
+                TextAlignment="Center"
+                Margin="0,48,0,24"/>
+
+                            <!-- Authentication Buttons Grid -->
+
+                            <Grid Grid.Row="1" Margin="0,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" Width="383" Background="Transparent">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+ 
+
+                                        <!-- Organization Button -->
+                                <Button x:Name="btnCredential"
+        Grid.Column="0"
+        Click="btnCredential_Click"
+        Margin="0,0,20,0"
+        Width="185"
+        Height="187"
+        Background="Transparent"
+        BorderThickness="0"
+        Cursor="Hand">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="30">
+                                                <!-- Adjust if needed -->
+                                                <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <!-- Ensure no default button styling interferes -->
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="BorderBrush" Value="Transparent"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="Padding" Value="0"/>
+                                            <Setter Property="Margin" Value="0"/>
+                                            <Setter Property="Content">
+                                                <Setter.Value>
+                                                    <Image Source="/Assets/cred1.png" Width="178" Height="187"/>
+                                                </Setter.Value>
+                                            </Setter>
+
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Content">
+                                                        <Setter.Value>
+                                                            <Image Source="/Assets/cred2.png" Width="178" Height="187"/>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+
+                                <!-- Individual Button -->
+                                <Button x:Name="btnQR"
+        Click="btnQR_Click"
+        Grid.Column="1"
+        Width="180"
+        Height="187"
+        BorderBrush="Transparent"
+        BorderThickness="0"
+        Cursor="Hand"
+        Background="Transparent">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="30">
+                                                <!-- Adjust CornerRadius if needed -->
+                                                <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <!-- Ensure no default button styling interferes -->
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="BorderBrush" Value="Transparent"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="Padding" Value="0"/>
+                                            <Setter Property="Margin" Value="0"/>
+                                            <Setter Property="Content">
+                                                <Setter.Value>
+                                                    <Image Source="/Assets/QR1.png" Width="170" Height="187"/>
+                                                </Setter.Value>
+                                            </Setter>
+
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Content">
+                                                        <Setter.Value>
+                                                            <Image Source="/Assets/QR2.png" Width="170" Height="187"/>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+
+
+
+
+
+                            </Grid>
+                            <Grid Grid.Row="2" Height="50">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="200"></ColumnDefinition>
+                                    <ColumnDefinition Width="auto"></ColumnDefinition>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.ColumnSpan="2" x:Name="txtBackAuth" 
+                                    Foreground="#3395FF" Margin="10,0,0,20" FontSize="16" FontWeight="SemiBold" FontFamily="Radian" PreviewMouseDown="txtBackAuth_PreviewMouseDown" Cursor="Hand" TextDecorations="None">
+                                    Go Back
+                                </TextBlock>
+                                <Image Grid.Column="0" Source="/Assets/backArrow.png" Margin="0,0,0,10" Height="22" Width="14" HorizontalAlignment="Right"/>
                             </Grid>
                         </Grid>
                     </Border>
-
-                    <Border x:Name="AuthenticationMethods" Background="#DCE4F0" BorderThickness="1" Visibility="Hidden" Margin="0,-21,0,0" CornerRadius="30" Width="1000" Height="569">
-                        <Grid Margin="10,10,10,10"  Width="1000" Height="569" Background="#DCE4F0">
+             
+                    <Border x:Name="AuthenticationStep3" Background="#DCE4F0" BorderThickness="1" Visibility="Hidden" Margin="0,0,0,0" CornerRadius="30" Width="456"  Height="422">
+                        <Grid Margin="10,10,10,10"  Width="456" Height="422" Background="#DCE4F0">
                             <StackPanel HorizontalAlignment="Stretch">
-                                <TextBlock HorizontalAlignment="Center" TextAlignment="Center" FontFamily="Radian" FontWeight="Bold" FontSize="30" Foreground="#3D4653" Text="Select Device Authentication Method" Margin="20,119,20,0" Width="960" Height="38" />
-                                <Grid VerticalAlignment="Top" HorizontalAlignment="Center" Background="#DCE4F0" Margin="200,50,275,0" Width="450" Height="243" >
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="auto"></ColumnDefinition>
-                                        <ColumnDefinition Width="auto"></ColumnDefinition>
-                                    </Grid.ColumnDefinitions>
-
-                                    <Button Grid.Column="0" x:Name="btnCredential" Click="btnCredential_Click" Background="Transparent" BorderThickness="0" BorderBrush="Transparent" Cursor="Hand" Margin="40.333,0,-18,42">
-                                        <Button.Style >
-                                            <Style TargetType="Button">
-                                                <Setter Property="Content">
-                                                    <Setter.Value>
-                                                        <Image Source="/Assets/withcred.png" Width="200" Height="200"/>
-                                                    </Setter.Value>
-                                                </Setter>
-                                                <Style.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Content">
-                                                            <Setter.Value>
-                                                                <Image Source="/Assets/Credential21.png" Width="200" Height="200" />
-                                                            </Setter.Value>
-                                                        </Setter>
-                                                    </Trigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Style>
-                                    </Button>
-                                    <TextBlock Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="18" Text="With Credential" Margin="60,20,0,0" FontFamily="Radian" FontWeight="Bold"/>
-                                    <Button Grid.Column="1" x:Name="btnQR" Click="btnQR_Click" Background="Transparent" BorderThickness="0" BorderBrush="Transparent" Cursor="Hand" Margin="40.333,0,-18,42">
-                                        <Button.Style >
-                                            <Style TargetType="Button">
-                                                <Setter Property="Content">
-                                                    <Setter.Value>
-                                                        <Image Source="/Assets/QRCode1.png" Width="200" Height="200"/>
-                                                    </Setter.Value>
-                                                </Setter>
-                                                <Style.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Content">
-                                                            <Setter.Value>
-                                                                <Image Source="/Assets/QR21.png" Width="200" Height="200" />
-                                                            </Setter.Value>
-                                                        </Setter>
-                                                    </Trigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Style>
-                                    </Button>
-                                    <TextBlock Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="18" Text="Scan QR Code" Margin="40,0,0,0" FontFamily="Radian" FontWeight="Bold"/>
-
-
-                                </Grid>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="470"></ColumnDefinition>
-                                        <ColumnDefinition Width="auto"></ColumnDefinition>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.ColumnSpan="2" x:Name="txtBackAuth" 
-                                               Foreground="#3395FF" Margin="0,60,50,37" FontSize="16" FontWeight="SemiBold" FontFamily="Radian" PreviewMouseDown="txtBackAuth_PreviewMouseDown" Cursor="Hand" TextDecorations="None">
-                                        Go Back
-                                    </TextBlock>
-                                    <Image Grid.Column="0" Source="/Assets/backArrow.png" Margin="0,55,4,35" Height="22" Width="14" HorizontalAlignment="Right"/>
-                                </Grid>
-
-                            </StackPanel>
-
-                        </Grid>
-                    </Border>
-
-                    <Border x:Name="AuthenticationStep3" Background="#DCE4F0" BorderThickness="1" Visibility="Hidden" Margin="0,-21,0,0" CornerRadius="30" Width="1000" Height="569">
-                        <Grid Margin="10,10,10,10"  Width="1000" Height="569" Background="#DCE4F0">
-                            <StackPanel HorizontalAlignment="Stretch">
-                                <Image Source="/Assets/licenseKey.png" Margin="466,92,466,0" Height="68" Width="68" HorizontalAlignment="Left"/>
-                                <TextBlock TextAlignment="Center" FontFamily="Radian" FontWeight="Bold" FontSize="30" Foreground="#3D4653"   Text="Please Enter License Key" Margin="0,25,0,0" Width="960" Height="38" />
+                                <Image Source="/Assets/licenseKey.png" Margin="204,48,204,0" Height="48" Width="48" HorizontalAlignment="Left"/>
+                                <TextBlock TextAlignment="Center" FontFamily="Radian" FontWeight="Bold" FontSize="20" Foreground="#3D4653"   Text="Please Enter License Key" Margin="106,24,106,0" Width="244" Height="30" />
                                 <Grid  HorizontalAlignment="Center" DataContext="{Binding}">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="auto"></RowDefinition>
@@ -293,8 +446,8 @@
                                         <ColumnDefinition ></ColumnDefinition>
                                         <ColumnDefinition ></ColumnDefinition>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock HorizontalAlignment="Left" FontFamily="Radian" FontWeight="Normal" FontSize="15" Grid.Row="0" Text="License Key" Margin="0,40,0,0" Grid.ColumnSpan="2" Width="360" Height="18"/>
-                                    <TextBox x:Name="txtlicenseToken" Text="" FontSize="15" FontWeight="Normal" Padding="13,0,0,0" VerticalContentAlignment="Center" HorizontalAlignment="Left" Grid.Row="1" Margin="0,10,0,0" Width="360" Background="#F3F9FF" Height="42" Grid.ColumnSpan="2">
+                                    <TextBlock HorizontalAlignment="Left" FontFamily="Inter" FontWeight="Normal" FontSize="15" Grid.Row="0" Text="License Key" Margin="48,24,48,0" Grid.ColumnSpan="2" Width="360" Height="18"/>
+                                    <TextBox x:Name="txtlicenseToken"  FontSize="15" Text="" FontWeight="Normal" Padding="12,14,12,14" VerticalContentAlignment="Center" HorizontalAlignment="Left" Grid.Row="1" Margin="48,10,48,0" Width="360" Background="#F3F9FF" Height="45" Grid.ColumnSpan="2">
                                         <TextBox.Style>
                                             <Style TargetType="TextBox">
                                                 <Setter Property="Template">
@@ -305,7 +458,7 @@
                                 CornerRadius="7">
                                                                 <Grid>
                                                                     <TextBlock Name="placeholderTextPhone" Background="#F3F9FF" Text="Please enter the license key"  FontSize="15" Padding="5,0,0,0" VerticalAlignment="Center"                                         
-                                            Foreground="#868C94" Margin="10,8,0,0" Height="31" Width="360" FontWeight="Medium">
+                                            Foreground="#868C94" Margin="10,4,0,0" Height="31" Width="360" FontWeight="Medium">
                                                                         <TextBlock.Style>
                                                                             <Style TargetType="TextBlock">
                                                                                 <Setter Property="Visibility" Value="Hidden"/>
@@ -335,9 +488,9 @@
                                     </TextBox>
 
 
-                                    <TextBlock x:Name="txtlicenseTokenValidation" FontFamily="Radian" Grid.Row="2" HorizontalAlignment="Left" Text="" Margin="0,0,0,0"  Foreground="Red" Visibility="Hidden" FontSize="13"/>
+                                    <TextBlock x:Name="txtlicenseTokenValidation" Margin="50,5,48,0" FontFamily="Radian" Grid.Row="2" HorizontalAlignment="Left" Text=""  Foreground="Red" Visibility="Visible" FontSize="12"/>
 
-                                    <Button x:Name="btnStep4Submit"  Grid.Row="3" Click="btnStep4Submit_Click" Grid.ColumnSpan="2" Style="{StaticResource sendOTPStyle}" Content="Submit" FontFamily="Radian" FontStyle="Normal" FontWeight="SemiBold" FontSize="18" Foreground="White" Margin="0,29,0,0" Width="360" Height="46">
+                                    <Button x:Name="btnStep4Submit"  Grid.Row="3" Click="btnStep4Submit_Click" Grid.ColumnSpan="2" Style="{StaticResource sendOTPStyle}" Content="Submit" FontFamily="Inter" FontStyle="Normal" FontWeight="SemiBold" FontSize="18" Foreground="White" Margin="48,15,48,0" Width="360" Height="46">
                                         <Button.Background>
                                             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                                 <GradientStop Color="#4080E1" Offset="0"/>
@@ -345,16 +498,12 @@
                                             </LinearGradientBrush>
                                         </Button.Background>
                                     </Button>
-                                    <StackPanel x:Name="ImageContainerlicense2"  Grid.Row="3" Margin="0,10,0,0" Grid.ColumnSpan="2" Width="20" Height="15"/>
-
-                                    <!--<TextBlock HorizontalAlignment="Center" Grid.Row="4" Grid.ColumnSpan="2" x:Name="txtBackLicense" Foreground="#319FE2" Margin="0,15,0,0" FontSize="16" FontWeight="Bold" FontFamily="Radian" PreviewMouseDown="txtBackLicense_PreviewMouseDown" Cursor="Hand">
-                                        <TextBlock.TextDecorations>
-                                            <TextDecoration/>
-                                        </TextBlock.TextDecorations> Go Back</TextBlock>-->
+                                    <StackPanel x:Name="ImageContainerlicense2"  Grid.Row="3" Margin="0,0,0,0" Grid.ColumnSpan="2" Width="20" Height="15"/> 
                                 </Grid>
+                                
                                 <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="480"></ColumnDefinition>
+                                        <ColumnDefinition Width="200"></ColumnDefinition>
                                         <ColumnDefinition Width="auto"></ColumnDefinition>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.ColumnSpan="2" x:Name="txtBackLicense" Foreground="#3395FF" Margin="0,0,0,47" FontSize="16" FontWeight="SemiBold" FontFamily="Radian" PreviewMouseDown="txtBackLicense_PreviewMouseDown" Cursor="Hand" TextDecorations="None">
@@ -366,8 +515,8 @@
                         </Grid>
                     </Border>
 
-                    <Border x:Name="AuthenticationStep1" Background="#DCE4F0" BorderThickness="1" Visibility="Hidden" Margin="0,-21,0,0" CornerRadius="30" Width="1000" Height="569">
-                        <Grid  Margin="10,10,10,10" Visibility="Visible" Width="1000" Height="569" Background="#DCE4F0">
+                    <Border x:Name="AuthenticationStep1" Background="#DCE4F0" BorderThickness="1" Visibility="Hidden" Margin="0,-21,0,0" CornerRadius="30" Width="456" Height="489">
+                        <Grid  Margin="10,10,10,10" Visibility="Visible" Width="456" Height="489" Background="#DCE4F0">
 
                             <StackPanel HorizontalAlignment="Stretch">
                                 <Grid>
@@ -375,11 +524,11 @@
                                         <ColumnDefinition Width="auto"/>
                                         <ColumnDefinition Width="auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <Image Source="/Assets/tokenKeys.png" Width="68" Height="68" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="352,40.5,120,0" Grid.Column="0"/>
-                                    <Image Source="/Assets/tokenDots.png" Width="68" Height="68" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,40.5,0,0" Grid.Column="1"/>
+                                    <Image Source="/Assets/tokenKeys.png" Width="48" Height="48" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="140,48,0,0" Grid.Column="0"/>
+                                    <Image Source="/Assets/tokenDots.png" Width="48" Height="48" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="80,48,0,0" Grid.Column="1"/>
                                 </Grid>
 
-                                <TextBlock HorizontalAlignment="Center" FontFamily="Radian" FontWeight="Bold" FontSize="30" Foreground="#3D4653" Text="Please Enter Your Details" Margin="0,20,0,0" />
+                                <TextBlock HorizontalAlignment="Center" FontFamily="Inter" FontWeight="Bold" FontSize="20" Foreground="#3D4653" Text="Please Enter Your Details" Margin="105,24,105,0" />
 
                                 <Grid HorizontalAlignment="Center" DataContext="{Binding}">
                                     <Grid.RowDefinitions>
@@ -399,8 +548,8 @@
                                         <ColumnDefinition></ColumnDefinition>
                                     </Grid.ColumnDefinitions>
 
-                                    <TextBlock HorizontalAlignment="Left" Grid.Row="0" Text="Token Code" Margin="15,40,0,0" Grid.ColumnSpan="2" FontSize="15"/>
-                                    <TextBox x:Name="txtEmailToken" Margin="10" FontSize="15" FontFamily="Radian" FontWeight="Normal" HorizontalContentAlignment="Left" Padding="11,2,0,0" Grid.Row="1" VerticalContentAlignment="Center" Width="360" Height="42">
+                                    <TextBlock HorizontalAlignment="Left" Grid.Row="0" Text="Token Code" Margin="0,24,48,0" Grid.ColumnSpan="2" FontSize="15"/>
+                                    <TextBox x:Name="txtEmailToken"  Margin="-20,10,0,0" Grid.ColumnSpan="2" FontSize="15" FontFamily="Radian" FontWeight="Normal" HorizontalContentAlignment="Left" Padding="11,2,0,0" Grid.Row="1" VerticalContentAlignment="Center" Width="360" Height="42">
                                         <TextBox.Style>
                                             <Style TargetType="TextBox">
                                                 <Setter Property="Template">
@@ -435,11 +584,11 @@
                                         </TextBox.Style>
                                     </TextBox>
 
-                                    <TextBlock x:Name="txtEmailTokenValidation" Grid.Row="2" HorizontalAlignment="Left" Text="" Margin="20,-10,0,0" Foreground="Red" Visibility="Hidden"/>
+                                    <TextBlock x:Name="txtEmailTokenValidation" Grid.Row="2" HorizontalAlignment="Left" Text="" Margin="5,0,0,0" Foreground="Red" Visibility="Hidden"/>
 
                                     <StackPanel x:Name="ImageContainerCountryCode" Grid.Row="4" Margin="-50,10,0,0" Width="20" Height="15"/>
 
-                                    <TextBlock HorizontalAlignment="Left" Grid.Row="3" FontSize="15" Text="Phone Number" Margin="15,3,0,0" Grid.ColumnSpan="2"/>
+                                    <TextBlock HorizontalAlignment="Left" Grid.Row="3" FontSize="15" Text="Phone Number" Margin="0,3,0,0" Grid.ColumnSpan="2"/>
 
 
 
@@ -462,7 +611,7 @@
           Padding="10" 
           HorizontalAlignment="Left" 
           Grid.Row="4" 
-          Margin="18,9,0,2.667" 
+          Margin="0,9,0,2.667" 
           Width="82" 
           Height="42"
           DisplayMemberPath="DisplayText"
@@ -555,7 +704,7 @@
                                     </ComboBox>
 
 
-                                    <TextBox x:Name="txtPhoneNumber" FontSize="14" Padding="10" Margin="83,8,17,1" MaxLength="14" Grid.Row="4" Width="300" Height="42"  TextAlignment="Left" VerticalContentAlignment="Center" TextChanged="txtPhoneNumber_TextChanged">
+                                    <TextBox x:Name="txtPhoneNumber" Grid.ColumnSpan="2" FontSize="14" Padding="10" Margin="75,8,17,1" MaxLength="14" Grid.Row="4" Width="290" Height="42"  TextAlignment="Left" VerticalContentAlignment="Center" TextChanged="txtPhoneNumber_TextChanged">
                                         <TextBox.Style>
                                             <Style TargetType="TextBox">
                                                 <Setter Property="Template">
@@ -591,9 +740,9 @@
                                         </TextBox.Style>
                                     </TextBox>
 
-                                    <TextBlock x:Name="txtPhoneValidation" Grid.Row="7" HorizontalAlignment="Left" Text="" Grid.ColumnSpan="2" Margin="20,0,0,0" Foreground="Red" Visibility="Hidden"/>
+                                    <TextBlock x:Name="txtPhoneValidation" Grid.Row="7" HorizontalAlignment="Left" Text="" Grid.ColumnSpan="2" Margin="5,0,0,0" Foreground="Red" Visibility="Hidden"/>
 
-                                    <Button x:Name="btnSendOTP"  Grid.Row="8" Click="btnSendOTP_Click" Grid.ColumnSpan="2" FontWeight="SemiBold" Style="{StaticResource sendOTPStyle}" Content="Send OTP" FontFamily="Radian" FontStyle="Normal"   FontSize="18" Foreground="White" Margin="0,30,0,0" Width="360" Height="46">
+                                    <Button x:Name="btnSendOTP"  Grid.Row="8" Click="btnSendOTP_Click" Grid.ColumnSpan="2" FontWeight="SemiBold" Style="{StaticResource sendOTPStyle}" Content="Send OTP" FontFamily="Radian" FontStyle="Normal"   FontSize="18" Foreground="White" Margin="-10,10,0,0" Width="370" Height="46">
                                         <Button.Background>
                                             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                                 <GradientStop Color="#4080E1" Offset="0"/>
@@ -602,15 +751,12 @@
                                         </Button.Background>
                                     </Button>
                                     <StackPanel x:Name="ImageContainerOTP" Grid.Row="8" Grid.ColumnSpan="2" HorizontalAlignment="Center" VerticalAlignment="Center" Width="20" 
-                                                Height="15" Margin="0,30,0,0"/>
-                                    <!--<TextBlock HorizontalAlignment="Center" Grid.Row="9" Grid.ColumnSpan="2" x:Name="txtBack" Foreground="#319FE2" Margin="0,20,0,0" FontSize="12" FontWeight="Bold" FontFamily="Radian" PreviewMouseDown="txtBack_PreviewMouseDown" Cursor="Hand">
-                                        <TextBlock.TextDecorations>
-                                            <TextDecoration/>
-                                        </TextBlock.TextDecorations> Go Back</TextBlock>-->
+                                                Height="15" Margin="0,0,0,0"/>
+                                  
                                 </Grid>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="480"></ColumnDefinition>
+                                        <ColumnDefinition Width="200"></ColumnDefinition>
                                         <ColumnDefinition Width="auto"></ColumnDefinition>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.ColumnSpan="2" x:Name="txtBack" Foreground="#3395FF" Margin="0,0,0,47" FontSize="16" FontWeight="SemiBold" FontFamily="Radian" PreviewMouseDown="txtBack_PreviewMouseDown" Cursor="Hand" TextDecorations="None">
@@ -623,8 +769,8 @@
                         </Grid>
                     </Border>
 
-                    <Border x:Name="AuthenticationStep2" Background="#DCE4F0" BorderThickness="1" Visibility="Hidden" Margin="0,-21,0,0" CornerRadius="30" Width="1000" Height="569">
-                        <Grid Margin="10,10,10,10"  Width="1000" Height="569" Background="#DCE4F0">
+                    <Border x:Name="AuthenticationStep2" Background="#DCE4F0" BorderThickness="1" Visibility="Hidden" Margin="0,-21,0,0" CornerRadius="30" Width="456" Height="362">
+                        <Grid Margin="10,10,10,10"  Width="456" Height="362" Background="#DCE4F0">
                             <StackPanel HorizontalAlignment="Stretch">
 
                                 <Grid>
@@ -632,11 +778,11 @@
                                         <ColumnDefinition Width="auto"></ColumnDefinition>
                                         <ColumnDefinition Width="auto"></ColumnDefinition>
                                     </Grid.ColumnDefinitions>
-                                    <Image Source="/Assets/tokenKeys.png" Width="68" Height="68" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="372,98,0,0" Grid.Column="1"/>
-                                    <Image Source="/Assets/verificationicon.png" Width="68" Height="68" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="560,98,352,0" Grid.Column="1"/>
+                                    <Image Source="/Assets/tokenKeys.png" Width="48" Height="48" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="140,48,0,0" Grid.Column="0"/>
+                                    <Image Source="/Assets/verificationicon.png" Width="48" Height="48" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="80,48,0,0" Grid.Column="1"/>
                                 </Grid>
 
-                                <TextBlock HorizontalAlignment="Center" TextAlignment="Center"  FontFamily="Radian" FontWeight="Bold" FontSize="30" Foreground="Black"  Text="Enter Verification Code" Margin="0,25,0,0" Width="960" Height="38"/>
+                                <TextBlock HorizontalAlignment="Center" TextAlignment="Center"  FontFamily="Inter" FontWeight="Bold" FontSize="20" Foreground="Black"  Text="Enter Verification Code" Margin="0,24,0,0" Width="228" Height="30"/>
                                 <Grid  HorizontalAlignment="Center" >
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="auto"></RowDefinition>
@@ -649,14 +795,14 @@
                                         <RowDefinition Height="auto"></RowDefinition>
                                     </Grid.RowDefinitions>
 
-                                    <TextBlock Visibility="Hidden" HorizontalAlignment="Right" Grid.Row="0" x:Name="txtResend" Foreground="#007AFF" Margin="40,40,5,0" FontSize="15" FontWeight="SemiBold" FontFamily="Radian" PreviewMouseDown="txtResend_PreviewMouseDown" Cursor="Hand">
+                                    <TextBlock Visibility="Hidden" HorizontalAlignment="Right" Grid.Row="0" x:Name="txtResend" Foreground="#007AFF" Margin="40,20,5,0" FontSize="15" FontWeight="SemiBold" FontFamily="Inter" PreviewMouseDown="txtResend_PreviewMouseDown" Cursor="Hand">
                                         <TextBlock.TextDecorations>
                                             <TextDecoration/>
                                         </TextBlock.TextDecorations> Resend</TextBlock>
-                                    <TextBlock x:Name="txtCodeVerification" Grid.Row="0" HorizontalAlignment="Center"  FontFamily="Radian" FontWeight="Bold" FontSize="12" Foreground="Black" Margin="0,40,0,5" />
-                                    <TextBlock Visibility="Visible" Name="lbltimerRemain" Text="Time Remaining " Grid.Row="0" HorizontalAlignment="Right"  FontFamily="Radian" FontWeight="Normal" FontSize="15" Foreground="Black" Margin="0,40,65,5" Grid.RowSpan="4" />
-                                    <TextBlock Visibility="Visible" Grid.Row="0" Grid.Column="1" x:Name="lblOtpTimer" Text="02:00 m" Foreground="#007AFF" FontSize="15" FontWeight="SemiBold" FontFamily="Radian" HorizontalAlignment="Right" Margin="0,40,10,5"/>
-                                    <TextBlock Grid.Row="0" Text="Verification Code" HorizontalAlignment="Left"  FontFamily="Radian" FontWeight="Normal" FontSize="15" Foreground="Black" Margin="5,40,0,5" />
+                                    <TextBlock x:Name="txtCodeVerification" Grid.Row="0" HorizontalAlignment="Center"  FontFamily="Radian" FontWeight="Bold" FontSize="12" Foreground="Black" Margin="0,20,0,5" />
+                                    <TextBlock Visibility="Visible" Name="lbltimerRemain" Text="Time Remaining " Grid.Row="0" HorizontalAlignment="Right"  FontFamily="Radian" FontWeight="Normal" FontSize="15" Foreground="Black" Margin="0,20,65,5" Grid.RowSpan="4" />
+                                    <TextBlock Visibility="Visible" Grid.Row="0" Grid.Column="1" x:Name="lblOtpTimer" Text="02:00 m" Foreground="#007AFF" FontSize="15" FontWeight="SemiBold" FontFamily="Radian" HorizontalAlignment="Right" Margin="0,20,10,5"/>
+                                    <TextBlock Grid.Row="0" Text="Verification Code" HorizontalAlignment="Left"  FontFamily="Radian" FontWeight="Normal" FontSize="15" Foreground="Black" Margin="5,20,0,5" />
 
                                     <TextBox x:Name="txtOTPVerification" FontSize="15" FontWeight="Normal" Padding="15,0,0,0" MaxLength="6" Margin="0,3,0,0.333" Grid.Row="2" VerticalContentAlignment="Center" TextChanged="txtOTPVerification_TextChanged" Grid.RowSpan="2">
                                         <TextBox.Style>
@@ -694,23 +840,18 @@
                                         </TextBox.Style>
                                     </TextBox>
 
-                                    <!--<TextBox x:Name="txtToken" HorizontalAlignment="Left" Grid.Row="1" Margin="0,10,0,0" Width="270" />-->
-                                    <TextBlock x:Name="txtTokenValidation" Grid.Row="4" HorizontalAlignment="Left" Text="" Margin="0,0,0,0"  Foreground="Red" Visibility="Hidden"/>
-                                    <!--<Button x:Name="btnStep2Next" Grid.Row="3" Click="btnStep2Next_Click" Style="{StaticResource sendOTPStyle}" Content="Next" FontFamily="Radian" FontStyle="Normal"  FontSize="14" Foreground="White" Margin="0,20,0,0"></Button>-->
+                                    
+                                    <TextBlock x:Name="txtTokenValidation" Grid.Row="4" HorizontalAlignment="Left" Text="" Margin="5,0,0,0"  Foreground="Red" Visibility="Hidden"/>
+                                  
 
-                                    <Border BorderThickness="1" CornerRadius="10" Width="170" Height="46" Grid.Row="6" Margin="0,75,0,98"   HorizontalAlignment="Left" BorderBrush="#4080E1">
+                                    <Border BorderThickness="1" CornerRadius="10" Width="170" Height="46" Grid.Row="6" Margin="0,15,0,98"   HorizontalAlignment="Left" BorderBrush="#4080E1">
                                         <Button x:Name="txtstep2Back" PreviewMouseDown="txtstep2Back_PreviewMouseDown" Grid.Row="6" Content="Go Back" FontFamily="Radian" FontStyle="Normal" FontWeight="SemiBold" FontSize="18" Foreground="#319FE2" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="0" BorderThickness="0"/>
                                     </Border>
-
-
-
-
-
-
+ 
 
                                     <Button x:Name="btnStep3Submit" Grid.Row="6" Click="btnStep3Submit_Click" Style="{StaticResource sendOTPStyle}" Content="Submit" 
                                             FontFamily="Radian" FontStyle="Normal"  FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Right" Foreground="White" 
-                                            Margin="12,75,12,98"   Width="170" Height="46">
+                                            Margin="12,15,12,98"   Width="170" Height="46">
                                         <Button.Background>
                                             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                                 <GradientStop Color="#4080E1" Offset="0"/>
@@ -805,618 +946,628 @@
                         </Grid>
                     </Grid>
 
-                    <Grid x:Name="MainHomePageUI2" Visibility="Hidden" Margin="38,72,25,30" Height="596">
-                        <Border Background="#094075"  BorderThickness="1,1,1,1"  CornerRadius="20" Margin="0,0,0,10">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="290"></ColumnDefinition>
-                                    <ColumnDefinition Width="480"></ColumnDefinition>
-                                    <ColumnDefinition Width="350"></ColumnDefinition>
-                                </Grid.ColumnDefinitions>
+                    <Border x:Name="MainHomePageUI2" Width="868" Height="455" CornerRadius="20" Background="#094075" Margin="18,16,16,0" Opacity="1" Visibility="Hidden">
+                        <Grid x:Name="parentMain" Background="Transparent" Opacity="1">
+                            
+                            
+                            <!-- Main container for padding and layout -->
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="265"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <!-- Left overlapping grid/border -->
+                            <Border Width="271" Height="423" Background="#0E2E5B" CornerRadius="12" Margin="-12,0,0,0"  Padding="12,8,20,8" HorizontalAlignment="Left"
+                                VerticalAlignment="Center"  Opacity="1">
+                                <!-- Content for the left grid/border -->
+                                <Grid x:Name="DPPServiceGrid">
+                                    <!-- Define row definitions to control layout -->
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="35"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Header TextBlock -->
+                                    <TextBlock Text="Data Privacy Protection"
+                   Margin="8,10,0,10"
+                   Height="18"
+                   FontWeight="SemiBold"
+                   Width="225"
+                   FontSize="12"
+                   Foreground="#868C94"
+                   VerticalAlignment="Top"
+                   HorizontalAlignment="Left" />
+
+                                    <!-- ListBox in the second row, it will take the remaining space -->
+                                    <ListBox x:Name="lstServices"
+         Grid.Row="1"
+         Loaded="lstServices_Loaded"
+         Padding="10,10,0,5"
+         ItemsSource="{Binding Services}"
+         Width="300"
+         Margin="-20,-20,0,0"
+         SelectionMode="Single"
+         IsEnabled="{Binding interactionsEnabled}"
+         PreviewMouseLeftButtonDown="lstServices_PreviewMouseLeftButtonDown">
+                                        <!-- Enable selection mode -->
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <ListBoxItem Margin="-20,-5,0,0" Width="260" Height="29">
+                                                    <ListBoxItem.Template>
+                                                        <ControlTemplate TargetType="ListBoxItem">
+                                                            <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="7">
+                                                                <!-- Set the corner radius here -->
+                                                                <Grid>
+                                                                    <Ellipse x:Name="bullet3" Width="12" Height="12" Fill="#06D6A0" HorizontalAlignment="Left" Margin="0,5,10,0"/>
+                                                                    <ContentPresenter/>
+                                                                </Grid>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <!-- Trigger to change the fill color based on IsActive property -->
+                                                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                    <Setter TargetName="bullet3" Property="Fill" Value="#06D6A0"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                                    <Setter TargetName="bullet3" Property="Fill" Value="#FB4B4E"/>
+                                                                </DataTrigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </ListBoxItem.Template>
+                                                    <TextBlock Foreground="White" FontWeight="SemiBold" FontSize="12" Text="{Binding ServiceName}" Margin="20,7,0,1"/>
+                                                </ListBoxItem>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+
+                                        <!-- ItemContainerStyle for ListBoxItem -->
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="ListBoxItem">
+                                                <Setter Property="Margin" Value="-15,8,0,0"/>
+                                                <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ListBoxItem_PreviewMouseLeftButtonDown"/>
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="ListBoxItem">
+                                                            <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="7" Margin="20,0,0,0">
+                                                                <Grid>
+                                                                    <ContentPresenter/>
+                                                                </Grid>
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <!-- Add Triggers for mouse hover and selection -->
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter  Property="Background" Value="#0C1828"/>
+                                                        <Setter  Property="Width" Value="310"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter Property="Background" Value="#0C1828"/>
+                                                        <Setter   Property="Width" Value="350"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+                                    </ListBox>
 
 
-                                <Grid x:Name="DPPServiceGrid" Grid.RowSpan="5" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,1.667" >
-                                    <StackPanel Margin="0,0,0,0" >
-                                        <Border Width="294" Grid.Column="0" Margin="-20,22.667,0,18" CornerRadius="10"  Background="#0E2E5B" Grid.ColumnSpan="2" HorizontalAlignment="Left" Height="541">
-                                            <Grid HorizontalAlignment="Left" Width="318" Margin="10,10,-34,0">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Text="Data Privacy Protection" Margin="30,10,0,0" Height="18" FontWeight="SemiBold" Width="242" FontSize="12" Foreground="#868C94" VerticalAlignment="Top" HorizontalAlignment="Left"  ></TextBlock>
+                                    <!-- First TextBlock in the third row -->
+                                    <TextBlock Grid.Row="2"
+                   Text="Device Location"
+                   Margin="0,0,40,10"
+                   FontStyle="Normal"
+                   TextAlignment="Center"
+                   Height="16"
+                   Width="239"
+                   FontSize="14"
+                   FontWeight="SemiBold"
+                   Foreground="#CED1D4"
+                   VerticalAlignment="Bottom"
+                   HorizontalAlignment="Center" />
 
+                                    <!-- Second TextBlock in the fourth row -->
+                                    <TextBlock Grid.Row="3"
+                   FontWeight="Medium"
+                   Text="Personal"
+                   Name="txtloc1"
+                   Margin="0,0,40,20"
+                   FontStyle="Normal"
+                   TextAlignment="Center"
+                   Height="12"
+                   Width="239"
+                   FontSize="10"
+                   Foreground="White"
+                   VerticalAlignment="Bottom"
+                   HorizontalAlignment="Center" />
+                                </Grid>
+                            </Border>
 
-                                                <ListBox x:Name="lstServices" Loaded="lstServices_Loaded"
-         Padding="5,18,5,5" 
-         ItemsSource="{Binding Services}" 
-         Width="275" 
-         Margin="-30,13,0,200"
-         SelectionMode="Single" IsEnabled="{Binding interactionsEnabled}" PreviewMouseLeftButtonDown="lstServices_PreviewMouseLeftButtonDown">
-                                                    <!-- Enable selection mode -->
-                                                    <ListBox.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <ListBoxItem Margin="10,-2,10,1" Width="272" Height="29">
-                                                                <ListBoxItem.Template>
-                                                                    <ControlTemplate TargetType="ListBoxItem">
-                                                                        <Border x:Name="border" 
-                                Background="{TemplateBinding Background}">
-                                                                            <!-- Set the corner radius here -->
-                                                                            <Grid>
-                                                                                <Ellipse x:Name="bullet3" Width="15" Height="15" Fill="#06D6A0" HorizontalAlignment="Left" Margin="0,5,10,0"/>
-                                                                                <ContentPresenter/>
-                                                                            </Grid>
-                                                                        </Border>
-                                                                        <ControlTemplate.Triggers>
-                                                                            <!-- Trigger to change the fill color based on IsActive property -->
-                                                                            <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                                                                <Setter TargetName="bullet3" Property="Fill" Value="#06D6A0"/>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding IsActive}" Value="False">
-                                                                                <Setter TargetName="bullet3" Property="Fill" Value="#FB4B4E"/>
-                                                                            </DataTrigger>
-                                                                        </ControlTemplate.Triggers>
-                                                                    </ControlTemplate>
-                                                                </ListBoxItem.Template>
-                                                                <TextBlock Foreground="White" FontWeight="SemiBold" FontSize="12" Text="{Binding ServiceName}" Margin="20,7,0,1"/>
-                                                            </ListBoxItem>
-                                                        </DataTemplate>
-                                                    </ListBox.ItemTemplate>
+                            <Border x:Name="grdBlurScreen" Visibility="Hidden" Grid.Column="1" Grid.ColumnSpan="2"   BorderThickness="1"   Margin="0,70,15,20" CornerRadius="30" Width="573" Height="369">
+                                <Border.Background>
+                                    <ImageBrush ImageSource="/Assets/SystemDeactivated.png"/>
+                                </Border.Background>
+                                <Grid Margin="0,0,0,0"  Width="267" Height="180">
+                                    <StackPanel Height="180" Width="266">
+                                        <Image Source="/Assets/SystemDeactivatedMain.png" Margin="0,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Height="180" Width="267" ></Image>
 
-                                                    <!-- ItemContainerStyle for ListBoxItem -->
-                                                    <ListBox.ItemContainerStyle>
-                                                        <Style TargetType="ListBoxItem">
-                                                            <Setter Property="Margin" Value="0,8,0,0"/>
-                                                            <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ListBoxItem_PreviewMouseLeftButtonDown"/>
-                                                            <Setter Property="Template">
-                                                                <Setter.Value>
-                                                                    <ControlTemplate TargetType="ListBoxItem">
-                                                                        <Border x:Name="border" 
-                                Background="{TemplateBinding Background}" 
-                                CornerRadius="7">
-                                                                            <ContentPresenter/>
-                                                                        </Border>
-                                                                    </ControlTemplate>
-                                                                </Setter.Value>
-                                                            </Setter>
-                                                            <!-- Add Trigger for mouse hover -->
-                                                            <Style.Triggers>
-                                                                <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter Property="Background" Value="#0C1828"/>
-                                                                </Trigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </ListBox.ItemContainerStyle>
-                                                </ListBox>
-
-
-
-
-
-
-                                                <TextBlock FontWeight="Medium" Text="Device Location" Margin="20,0,47,47" FontStyle="Normal" TextAlignment="Center" Height="16" Width="252" 
-                                                           FontSize="12" Foreground="#CED1D4" VerticalAlignment="Bottom" HorizontalAlignment="Center"  ></TextBlock>
-                                                <TextBlock Text="Personal" Name="txtloc1"  Margin="0,0,40,25" FontStyle="Normal"  TextAlignment="Center" Height="18" Width="252" FontSize="14" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Bottom" HorizontalAlignment="Center"  ></TextBlock>
-                                            </Grid>
-                                        </Border>
                                     </StackPanel>
                                 </Grid>
+                            </Border>
 
-
-                                <Border x:Name="grdBlurScreen" Visibility="Hidden" Grid.Column="1" Grid.ColumnSpan="2"   BorderThickness="1"   Margin="0,89,15,20" CornerRadius="30" Width="820">
-                                    <Border.Background>
-                                        <ImageBrush ImageSource="/Assets/SystemDeactivated.png"/>
-                                    </Border.Background>
-                                    <Grid Margin="0,0,0,0"  Width="813" Height="487">                                        
-                                        <StackPanel Height="420" Width="813">                                         
-                                            <Image Source="/Assets/SystemDeactivatedMain.png" Margin="0,86,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Height="215" Width="320" ></Image>
-
-                                        </StackPanel>
+                            <!-- Right main grid/border -->
+                            <Border Grid.Column="1" Background="Transparent" CornerRadius="20,0,0,0" Padding="16,0,0,0" Opacity="1">
+                                <!-- Content for the main grid/border -->
+                                <StackPanel>
+                                    <Grid Grid.Column="1"   Grid.ColumnSpan="2" Height="36" Width="573"  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,16,0,0" >
+                                        <Border x:Name="grdheaderColor" CornerRadius="10" Background="#06D6A0" Margin="0,0,0,0" VerticalAlignment="Top" Width="573" Height="36">
+                                            <TextBlock Text="Your device is protected." Name="lblMessageHeader" FontWeight="SemiBold" Foreground="#FFFFFF" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                                        </Border>
                                     </Grid>
-                                </Border>
+
+                                    <Grid Grid.Column="1" x:Name="headerWithVPN"  Visibility="Hidden" Grid.ColumnSpan="2" Height="20"  VerticalAlignment="Top" Margin="0,16,0,0"  >
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="334"/>
+                                            <ColumnDefinition Width="222"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="lblReportedIssue" Grid.Column="0" Text="Reported Issues" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Left"   Foreground="White" Width="99" Margin="0,0,0,0"></TextBlock>
+                                        <TextBlock x:Name="lblVPNHeading" Grid.Column="1" Text="Virtual Private Network (VPN)" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Left" Width="206"  Foreground="White"   Margin="24,0,10,0"></TextBlock>
+                                    </Grid>
+
+                                    <Grid Grid.Column="1" x:Name="headerWithoutVPN" Visibility="Hidden" Grid.ColumnSpan="2"  Height="20"  VerticalAlignment="Top" Margin="0,-20,0,0" >
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="334"/>
+                                            <ColumnDefinition Width="222"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="lblReportedIssue2" Grid.Column="0" Text="Reported Issues" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Left"   Foreground="White" Width="99" Margin="2,0,0,0"></TextBlock>
+
+                                    </Grid>
 
 
-                                <Grid Grid.Column="1"   Grid.ColumnSpan="2" Height="75" Width="850"  VerticalAlignment="Top" HorizontalAlignment="Left"  >
-                                    <Border x:Name="grdheaderColor" Height="54" CornerRadius="10" Background="#06D6A0" Margin="-10,20,20,0" Width="813" VerticalAlignment="Top">
-                                        <TextBlock Text="Your device is protected." Name="lblMessageHeader" FontWeight="SemiBold" Foreground="#FFFFFF" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
-                                    </Border>
-                                </Grid>
+                                    <Grid Grid.Column="1" Visibility="Hidden" x:Name="grdWithoutVPN" Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Top" Margin="0,0,0,0" Height="84" Width="585">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="auto"></RowDefinition>
+                                            <RowDefinition Height="auto"></RowDefinition>
+                                            <RowDefinition Height="auto"></RowDefinition>
+                                            <RowDefinition Height="auto"></RowDefinition>
+                                        </Grid.RowDefinitions>
 
-                                <Grid Grid.Column="1" x:Name="headerWithVPN" Width="813" Visibility="Hidden" Grid.ColumnSpan="2" HorizontalAlignment="Center" Height="20"  VerticalAlignment="Top" Margin="0,89,30,0"  >
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="450"/>
-                                        <ColumnDefinition Width="240"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock x:Name="lblReportedIssue" Grid.Column="0" Text="Reported Issues" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Left"   Foreground="White" Width="99" Margin="15,0,0,0"></TextBlock>
-                                    <TextBlock x:Name="lblVPNHeading" Grid.Column="1" Text="Virtual Private Network (VPN)" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Left" Width="303"  Foreground="White"   Margin="68,0,10,0"></TextBlock>
-                                </Grid>
+                                        <Border CornerRadius="10" Background="#0E2E5B" Grid.Column="0" Grid.ColumnSpan="2" Width="575" Height="84">
+                                            <Grid RenderTransformOrigin="0.857,0.554">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <!-- Vertical border -->
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
 
-                                <Grid Grid.Column="1" Visibility="Hidden" Width="813" x:Name="headerWithoutVPN" Grid.ColumnSpan="2" HorizontalAlignment="Center" Height="20"  VerticalAlignment="Top" Margin="5,89,30,0" >
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="450"/>
-                                        <ColumnDefinition Width="240"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock x:Name="lblReportedIssue2" Grid.Column="0" Text="Reported Issues" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Left"   Foreground="White" Width="99" Margin="20,0,0,0"></TextBlock>
+                                                <!-- Content on the left -->
+                                                <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Width="230" Margin="0,0,0,0">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                        </Grid.RowDefinitions>
+                                                        <Image Grid.Row="0" Source="/Assets/vector.png" Height="20" HorizontalAlignment="Left" Margin="66,15,8,0" Width="20" />
+                                                        <TextBlock  Grid.Row="0" Text="Reported Certificates" Foreground="#FFFFFF" FontSize="11" FontWeight="SemiBold" Margin="90,15,66,0" Width="120" 
+                                                            Height="16" />
+                                                        <TextBlock  Grid.Row="2" Text="0" x:Name="txtCertificatesCounts2" HorizontalAlignment="Center" VerticalAlignment="Bottom"  FontWeight="Bold" FontSize="16" Foreground="White" 
+                                                             FontFamily="Radian"  Margin="8,5,0,0" TextAlignment="Center" Width="40" Height="24"></TextBlock>
 
-                                </Grid>
+                                                    </Grid>
+                                                </StackPanel>
 
-                                <Grid Grid.Column="1" Visibility="Hidden" x:Name="grdWithoutVPN" Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Top" Margin="-5,115,0,0" Height="110" Width="820">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="auto"></RowDefinition>
-                                        <RowDefinition Height="auto"></RowDefinition>
-                                        <RowDefinition Height="auto"></RowDefinition>
-                                        <RowDefinition Height="auto"></RowDefinition>
-                                    </Grid.RowDefinitions>
-
-                                    <Border CornerRadius="10" Background="#0E2E5B" Grid.Column="0" Width="813" Height="110">
-                                        <Grid RenderTransformOrigin="0.857,0.554">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
                                                 <!-- Vertical border -->
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
+                                                <Border BorderBrush="#E7E8EA" BorderThickness="1" Opacity="0.20" Width="1" Height="72" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,10" />
 
-                                            <!-- Content on the left -->
-                                            <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Width="230" Margin="93,22,93,19">
-                                                <Grid>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                    </Grid.RowDefinitions>
-                                                    <Image Grid.Row="0" Source="/Assets/vector.png" Height="28" HorizontalAlignment="Left" Margin="5,0,8,0" Width="28" />
-                                                    <TextBlock  Grid.Row="0" Text="Reported Certificates" Foreground="#FFFFFF" FontSize="16" FontWeight="SemiBold" Margin="40,0,0,0" Width="168" 
+                                                <!-- Content on the right -->
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Width="230" Margin="0,22,0,19">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                        </Grid.RowDefinitions>
+                                                        <Image Grid.Row="0" Source="/Assets/SystemNetwork.png" Height="20" HorizontalAlignment="Left" Margin="77,0,8,0" Width="20" />
+                                                        <TextBlock  Grid.Row="0" Text="Reported Proxies" Foreground="#FFFFFF" FontSize="11" FontWeight="SemiBold" Margin="101,5,0,0" Width="120" 
                                                             Height="22" />
-                                                    <TextBlock  Grid.Row="2" Text="0" x:Name="txtCertificatesCounts2" HorizontalAlignment="Center" VerticalAlignment="Bottom"  FontWeight="Bold" FontSize="28" Foreground="White" 
-                                                           FontFamily="Radian"  Margin="8,5,0,0" TextAlignment="Center" Width="200" Height="34"></TextBlock>
+                                                        <TextBlock Grid.Row="2" Text="0" x:Name="txtProxyCount2" HorizontalAlignment="Center" VerticalAlignment="Bottom"  FontWeight="Bold" FontSize="16" Foreground="White" 
+                                                            FontFamily="Radian"  Margin="70,0,0,19" TextAlignment="Center"  Width="40" Height="24"></TextBlock>
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </Grid>
 
-                                                </Grid>
-                                            </StackPanel>
+                                                                       
+                                    <!--/////-->
 
-                                            <!-- Vertical border -->
-                                            <Border BorderBrush="#E7E8EA" BorderThickness="1" Opacity="0.20" Width="1" Height="72" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" 
-                                                    Margin="0,10" />
+                                    <Grid Grid.Column="1" Visibility="Hidden" x:Name="grdWithDeviceInfo" Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Top" Margin="0,-80,0,0" Height="84" Width="585">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="auto"></RowDefinition>
+                                            <RowDefinition Height="auto"></RowDefinition>
+                                            <RowDefinition Height="auto"></RowDefinition>
+                                            <RowDefinition Height="auto"></RowDefinition>
+                                        </Grid.RowDefinitions>
 
-                                            <!-- Content on the right -->
-                                            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="93,22,93,19">
-                                                <Grid>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                    </Grid.RowDefinitions>
-                                                    <Image Grid.Row="0" Source="/Assets/SystemNetwork.png" Height="28" HorizontalAlignment="Left" Margin="5,0,8,0" Width="28" />
-                                                    <TextBlock  Grid.Row="0" Text="Reported Proxies" Foreground="#FFFFFF" FontSize="16" FontWeight="SemiBold" Margin="40,0,0,0" Width="168" 
-                                                                Height="22" />
-                                                    <TextBlock Grid.Row="2" Text="0" x:Name="txtProxyCount2" HorizontalAlignment="Center" VerticalAlignment="Bottom"  FontWeight="Bold" FontSize="28" Foreground="White" 
-                                                           FontFamily="Radian"  Margin="8,5,0,19" TextAlignment="Center"  Width="200" Height="34"></TextBlock>
-                                                </Grid>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-                                </Grid>
+                                        <Border CornerRadius="10" Background="#0E2E5B" Grid.Column="0" Grid.ColumnSpan="2" Width="575" Height="84">
+                                            <Grid RenderTransformOrigin="0.857,0.554">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <!-- Vertical border -->
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
 
+                                                <!-- Content on the left -->
+                                                <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Width="230" Margin="0,0,0,0">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                        </Grid.RowDefinitions>
+                                                        <Image Grid.Row="0" Source="/Assets/locationCard.png" Height="20" HorizontalAlignment="Left" Margin="66,15,8,0" Width="20" />
+                                                        <TextBlock  Grid.Row="0" Text="Device Location" Foreground="#FFFFFF" FontSize="11" FontWeight="SemiBold" Margin="90,15,66,0" Width="120" 
+                                                            Height="16" />
+                                                        <TextBlock  Grid.Row="2" Text="Personal" x:Name="txtDeviceLocation" HorizontalAlignment="Center" VerticalAlignment="Bottom"  FontWeight="Bold" FontSize="16" Foreground="White" 
+                                                            FontFamily="Radian"  Margin="0,5,40,20" TextAlignment="Center" Width="150" Height="24"></TextBlock>
 
-                                <Grid Grid.Column="1" Visibility="Hidden" x:Name="grdWithDeviceInfo" Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Top" Margin="-5,115,0,0" Height="110" Width="820">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="auto"></RowDefinition>
-                                        <RowDefinition Height="auto"></RowDefinition>
-                                        <RowDefinition Height="auto"></RowDefinition>
-                                        <RowDefinition Height="auto"></RowDefinition>
-                                    </Grid.RowDefinitions>
+                                                    </Grid>
+                                                </StackPanel>
 
-                                    <Border CornerRadius="10" Background="#0E2E5B" Grid.Column="0" Width="813" Height="110">
-                                        <Grid RenderTransformOrigin="0.857,0.554">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
                                                 <!-- Vertical border -->
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
+                                                <Border BorderBrush="#E7E8EA" BorderThickness="1" Opacity="0.20" Width="1" Height="72" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,10" />
 
-                                            <!-- Content on the left -->
-                                            <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Width="230" Margin="93,22,93,19">
-                                                <Grid>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                    </Grid.RowDefinitions>
-                                                    <Image Grid.Row="0" Source="/Assets/locationCard.png" Height="28" HorizontalAlignment="Left" Margin="5,0,8,0" Width="28" />
-                                                    <TextBlock  Grid.Row="0" Text="Device Location" Foreground="#FFFFFF" FontSize="16" FontWeight="SemiBold" Margin="40,0,0,0" Width="168" 
-                                                            Height="22" />
-                                                    <TextBlock  Grid.Row="2" Text="Ahmedabad" x:Name="txtDeviceLocation" HorizontalAlignment="Center" VerticalAlignment="Bottom"  FontWeight="Bold" 
-                                                                FontSize="18" Foreground="White" 
-                                                           FontFamily="Radian"  Margin="-20,10,0,25" TextAlignment="Center" Width="240" Height="34"></TextBlock>
+                                                <!-- Content on the right -->
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Width="230" Margin="0,22,0,19">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                        </Grid.RowDefinitions>
+                                                        <Image Grid.Row="0" Source="/Assets/serialNoCard.png" Height="20" HorizontalAlignment="Left" Margin="77,0,8,5" Width="20" />
+                                                        <TextBlock  Grid.Row="0" Text="Serial Number" Foreground="#FFFFFF" FontSize="11" FontWeight="SemiBold" Margin="101,0,0,0" Width="120" 
+                                                             Height="22" />
+                                                        <TextBlock Grid.Row="2" Text="23561845956" x:Name="txtserialNumber" HorizontalAlignment="Center" VerticalAlignment="Bottom"  FontWeight="Bold" FontSize="16" Foreground="White" 
+                                                            FontFamily="Radian"  Margin="70,0,20,19" TextAlignment="Center"  Width="120" Height="24"></TextBlock>
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </Grid>
+                                    
+                                    <!--////-->
 
-                                                </Grid>
-                                            </StackPanel>
+                                    <Grid Grid.Column="1" Visibility="Hidden" x:Name="grdWithVPN" Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Top" Margin="0,-85,0,0" Height="84" Width="600">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="auto"></RowDefinition>
+                                            <RowDefinition Height="auto"></RowDefinition>
+                                            <RowDefinition Height="auto"></RowDefinition>
+                                            <RowDefinition Height="auto"></RowDefinition>
+                                        </Grid.RowDefinitions>
+                                        <Border CornerRadius="10" Background="#0E2E5B" Grid.Column="0" Width="335" Height="84">
+                                            <Grid RenderTransformOrigin="0.857,0.554">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <!-- Vertical border -->
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
 
-                                            <!-- Vertical border -->
-                                            <Border BorderBrush="#E7E8EA" BorderThickness="1" Opacity="0.20" Width="1" Height="72" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" 
-                                                    Margin="0,10" />
+                                                <!-- Content on the left -->
+                                                <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Width="136" Margin="0,22,0,19">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                        </Grid.RowDefinitions>
+                                                        <Image Grid.Row="0" Source="/Assets/vector.png" Height="14" HorizontalAlignment="Left" Margin="5,0,8,0" Width="16" />
+                                                        <TextBlock  Grid.Row="0" Text="Reported Certificates" Foreground="#FFFFFF" FontSize="11" FontWeight="SemiBold" Margin="28,0,50,0" Width="114" 
+                                                             Height="16" />
+                                                        <TextBlock  Grid.Row="2" Text="34" x:Name="txtCertificatesCounts" HorizontalAlignment="Center" VerticalAlignment="Bottom"  FontWeight="Bold" 
+                                                                FontSize="16" Foreground="White" 
+                                                            FontFamily="Radian"  Margin="0,10,50,19" TextAlignment="Center" Width="50" Height="34"></TextBlock>
 
-                                            <!-- Content on the right -->
-                                            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="93,22,93,19">
-                                                <Grid>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                    </Grid.RowDefinitions>
-                                                    <Image Grid.Row="0" Source="/Assets/serialNoCard.png" Height="28" HorizontalAlignment="Left" Margin="5,0,8,0" Width="28" />
-                                                    <TextBlock  Grid.Row="0" Text="Serial Number" Foreground="#FFFFFF" FontSize="16" FontWeight="SemiBold" Margin="40,0,0,0" Width="168" 
-                                                                Height="22" />
-                                                    <TextBlock Grid.Row="2" Text="23561845956" x:Name="txtserialNumber" HorizontalAlignment="Center" VerticalAlignment="Bottom"  FontWeight="Bold" 
-                                                               FontSize="18" Foreground="White" 
-                                                           FontFamily="Radian"  Margin="-60,10,0,25" TextAlignment="Center"  Width="260" Height="34"></TextBlock>
-                                                </Grid>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-                                </Grid>
+                                                    </Grid>
+                                                </StackPanel>
 
-
-
-
-                                <Grid Grid.Column="1" Visibility="Visible" x:Name="grdWithVPN" Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Top" Margin="0,117,0,0" Height="110" Width="820">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="auto"></RowDefinition>
-                                        <RowDefinition Height="auto"></RowDefinition>
-                                        <RowDefinition Height="auto"></RowDefinition>
-                                        <RowDefinition Height="auto"></RowDefinition>
-                                    </Grid.RowDefinitions>
-                                    <Border CornerRadius="10" Background="#0E2E5B" Grid.Column="0" Width="495" Height="110">
-                                        <Grid RenderTransformOrigin="0.857,0.554">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
                                                 <!-- Vertical border -->
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
+                                                <Border BorderBrush="#E7E8EA" BorderThickness="1" Opacity="0.20" Width="1" Height="72" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" 
+                                                     Margin="0,10" />
 
-                                            <!-- Content on the left -->
-                                            <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Width="230" Margin="0,22,0,19">
-                                                <Grid>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                    </Grid.RowDefinitions>
-                                                    <Image Grid.Row="0" Source="/Assets/vector.png" Height="28" HorizontalAlignment="Left" Margin="20,0,8,0" Width="28" />
-                                                    <TextBlock  Grid.Row="0" Text="Reported Certificates" Foreground="#FFFFFF" FontSize="16" FontWeight="SemiBold" Margin="40,0,0,0" Width="168" 
+                                                <!-- Content on the right -->
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,22,0,19">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                            <RowDefinition Height="auto"></RowDefinition>
+                                                        </Grid.RowDefinitions>
+                                                        <Image Grid.Row="0" Source="/Assets/SystemNetwork.png" Height="20" HorizontalAlignment="Left" Margin="17,0,8,0" Width="20" />
+                                                        <TextBlock  Grid.Row="0" Text="Reported Proxies" Foreground="#FFFFFF" FontSize="11" FontWeight="SemiBold" Margin="40,3,0,0" Width="91" 
                                                             Height="22" />
-                                                    <TextBlock  Grid.Row="2" Text="24" x:Name="txtCertificatesCounts" HorizontalAlignment="Center" VerticalAlignment="Bottom"  FontWeight="Bold" 
-                                                                FontSize="28" Foreground="White" 
-                                                           FontFamily="Radian"  Margin="0,10,0,19" TextAlignment="Center" Width="240" Height="34"></TextBlock>
+                                                        <TextBlock Grid.Row="2" Text="4" x:Name="txtProxyCount" HorizontalAlignment="Center" VerticalAlignment="Bottom"  FontWeight="Bold" 
+                                                            FontSize="16" Foreground="White" 
+                                                            FontFamily="Radian"  Margin="0,4,0,25" TextAlignment="Center"  Width="50" Height="20"></TextBlock>
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+ 
 
-                                                </Grid>
-                                            </StackPanel>
+                                        <Border CornerRadius="10" Background="#0E2E5B"  Grid.Column="2" Width="222" Height="84" Margin="0,0,10,0">
+                                            <Grid RenderTransformOrigin="0.857,0.554" MouseDown="Grid_MouseDown">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="150"/>
+                                                    <ColumnDefinition Width="150"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="40"></RowDefinition>
+                                                    <RowDefinition Height="45"></RowDefinition>
+                                                </Grid.RowDefinitions>
 
-                                            <!-- Vertical border -->
-                                            <Border BorderBrush="#E7E8EA" BorderThickness="1" Opacity="0.20" Width="1" Height="72" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" 
-                                                    Margin="0,10" />
+                                                <!-- Loader (ProgressBar as an example) -->
+                                                <ProgressBar Grid.RowSpan="2" Grid.Column="1" x:Name="loader" IsIndeterminate="True" Visibility="Collapsed" Width="40" Height="15" Margin="0,0,110,0" VerticalAlignment="Center" HorizontalAlignment="Right"/>
 
-                                            <!-- Content on the right -->
-                                            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,22,0,19">
-                                                <Grid>
+                                                <!-- TextBlock for displaying download status -->
+                                                <TextBlock Grid.Row="1" Grid.RowSpan="2" Margin="20,0,80,0" HorizontalAlignment="Center" VerticalAlignment="Top" FontWeight="SemiBold" FontSize="14" x:Name="downloadStatus"   Text="Connecting..." Grid.ColumnSpan="2" Foreground="#FFC16B" Visibility="Collapsed" FontFamily="Radian" Height="22" Width="160"   />
+
+                                                <Image x:Name="VPNimage1" Grid.RowSpan="2" Grid.Column="1" Source="/Assets/VPNDis.png" Width="40" Height="40" Stretch="Uniform" Margin="0,22,110,22" VerticalAlignment="Center" HorizontalAlignment="Right" RenderTransformOrigin="2.63,0.644" MouseEnter="VPNImage1_MouseEnter" MouseLeave="VPNImage1_MouseLeave" MouseDown="VPNImage1_MouseDown"/>
+                                                <TextBlock HorizontalAlignment="Center" Grid.Row="0" Grid.Column="0" VerticalAlignment="Bottom"  FontWeight="Bold" FontSize="16" Foreground="White" FontFamily="Radian" Text="Fusion VPN" Margin="20,0,0,0" Height="24" Width="90" />
+                                                <TextBlock x:Name="vpnstatus2" Grid.Row="1" HorizontalAlignment="Center" Visibility="Visible" VerticalAlignment="Top" FontWeight="SemiBold" FontSize="12" Foreground="#FB4B4E" FontFamily="Radian" Text="Disconnected" Margin="20,0,0,29" Height="16" Width="75"  Grid.Column="0"></TextBlock>
+                                            </Grid>
+                                        </Border>
+
+                                    </Grid>
+
+                                    <Grid Grid.Column="1" Visibility="Hidden" x:Name="currentServerHeader" HorizontalAlignment="Center" Height="18" Width="334" VerticalAlignment="Center" Margin="0,10,250,0" >
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="450"/>
+                                            <ColumnDefinition Width="240"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="lblheadingServer" Grid.Column="0" Text="Current Server" Margin="0,0,0,0" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Left"  Height="18" Foreground="White" Width="334" />                                        
+                                    </Grid>
+
+                                    <Grid Grid.Column="2" x:Name="healthScoreHeader" Visibility="Hidden" HorizontalAlignment="Center" Height="18" Width="222" VerticalAlignment="Center" Margin="310,-20,0,0" >
+                                        <TextBlock Text="Device Health Score" Margin="20,0,0,0" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Left"  Height="18" Foreground="White" Width="222" />
+                                    </Grid>
+
+                                    <Grid Grid.Column="1" Width="340" x:Name="grdMapGrid" Visibility="Hidden" Height="227" VerticalAlignment="Bottom" Margin="0,6,250,0" Grid.ColumnSpan="2">
+                                        <Border CornerRadius="10" Background="#0E2E5B"   Grid.Column="1" Width="335" Height="227">
+
+                                            <Grid RenderTransformOrigin="0.857,0.554">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="250"></RowDefinition>
+                                                    <RowDefinition Height="30"></RowDefinition>
+                                                </Grid.RowDefinitions>
+                                                <Grid x:Name="VPNMaps" Grid.Row="0">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Image Name="watingMapVPN" VerticalAlignment="Top" HorizontalAlignment="Center" Source="/Assets/wating.png" Width="248" Height="160" Margin="0,20,80,0"/>
+                                                    <Image Name="californiaMapVPN" VerticalAlignment="Top" HorizontalAlignment="Center" Source="/Assets/california.png"  Width="248" Height="160"  Margin="0,20,80,0" ></Image>
+                                                    <Image Name="northVerginiaMapVPN" VerticalAlignment="Top" HorizontalAlignment="Center" Source="/Assets/north verginia.png"  Width="248" Height="160"  Margin="0,20,80,0"></Image>
+                                                    <Image Name="ohioMapVPN" VerticalAlignment="Top" HorizontalAlignment="Center" Source="/Assets/ohio.png"  Width="248" Margin="0,20,80,0" Height="160"  ></Image>
+                                                    <TextBlock   x:Name="currentVPN"  Text="Current Server :" FontWeight="SemiBold" FontSize="10" HorizontalAlignment="Left"   Foreground="White" TextAlignment="Left" Width="97" Height="18" Margin="110,160,118,20"></TextBlock>
+                                                    <TextBlock x:Name="currentInfoVPN"  Grid.Column="1" Text="N/A" FontWeight="SemiBold" FontSize="10" HorizontalAlignment="Center" TextAlignment="Left"  Foreground="White" Width="97" Height="18" Margin="190,160,118,20"></TextBlock>
+                                                </Grid>                                              
+
+                                            </Grid>
+
+                                        </Border>
+                                    </Grid>
+
+                                    <Grid Grid.Column="1" Width="340" x:Name="grdGridEvents" Visibility="Hidden" Height="227" VerticalAlignment="Top" Margin="0,-230,250,0" Grid.ColumnSpan="2">
+                                        <Border CornerRadius="7" Background="#0E2E5B" Grid.Column="1" Width="335" Height="227">
+                                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                                <Grid x:Name="EventLogs" RenderTransformOrigin="0.857,0.554" Margin="0,0,0,0">
                                                     <Grid.RowDefinitions>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                        <RowDefinition Height="auto"></RowDefinition>
-                                                        <RowDefinition Height="auto"></RowDefinition>
+                                                        <RowDefinition Height="55"></RowDefinition>
+                                                        <RowDefinition Height="1"></RowDefinition>
+                                                        <RowDefinition Height="55"></RowDefinition>
+                                                        <RowDefinition Height="1"></RowDefinition>
+                                                        <RowDefinition Height="55"></RowDefinition>
+                                                        <RowDefinition Height="1"></RowDefinition>
+                                                        <RowDefinition Height="55"></RowDefinition>
+                                                        <RowDefinition Height="1"></RowDefinition>
+                                                        <RowDefinition Height="55"></RowDefinition>
                                                     </Grid.RowDefinitions>
-                                                    <Image Grid.Row="0" Source="/Assets/SystemNetwork.png" Height="28" HorizontalAlignment="Left" Margin="31.5,0,8,0" Width="28" />
-                                                    <TextBlock  Grid.Row="0" Text="Reported Proxies" Foreground="#FFFFFF" FontSize="16" FontWeight="SemiBold" Margin="40,0,0,0" Width="168" 
-                                                                Height="22" />
-                                                    <TextBlock Grid.Row="2" Text="18" x:Name="txtProxyCount" HorizontalAlignment="Center" VerticalAlignment="Bottom"  FontWeight="Bold" 
-                                                               FontSize="28" Foreground="White" 
-                                                           FontFamily="Radian"  Margin="0,10,0,25" TextAlignment="Center"  Width="260" Height="34"></TextBlock>
+                                                    <Grid Grid.Row="0">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Name="txtlogEventHeader" Visibility="Visible" Text="2 Days ago, 11:42 PM" Foreground="#868C94" FontSize="9" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Column="1" Margin="100,5,4,0" Width="70" Height="12"/>
+                                                        <TextBlock Name="txtlogEvent" Visibility="Visible" Text="Scheduled Execution Completed" Foreground="#FFFFFF" FontSize="12" FontWeight="DemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,0,50.333,20" Width="220"/>
+                                                        <TextBlock Foreground="#CED1D4" FontFamily="Inter" FontStyle="Normal" Name="txtlogsEvent" FontSize="10" FontWeight="Medium" HorizontalAlignment="Left" VerticalAlignment="Bottom" Grid.Column="1" Margin="15,30,0,0" Width="302" Height="26">
+                        Event has been triggered successfully after browser closed by FDS
+                        <LineBreak/> at 12:00 PM
+                                                        </TextBlock>
+                                                    </Grid>
+                                                    <Border x:Name="grdGridEventsG1" Visibility="Visible" Margin="0,0,0,0" BorderBrush="#E7E8EA" BorderThickness="0,1,0,0" Width="302" Opacity="0.1" Height="1" Grid.Row="1" Grid.Column="1"/>
+                                                    <Grid Grid.Row="2">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Name="txtlogEventHeader2" Visibility="Visible" Text="2 Days ago, 11:42 PM" Foreground="#868C94" FontSize="9" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Column="1" Margin="100,5,4,0" Width="70" Height="12"/>
+                                                        <TextBlock Name="txtlogEvent2" Visibility="Visible" Text="10 Files cleared" Foreground="#FFFFFF" FontSize="12" FontWeight="DemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,-5,50.333,15" Width="220"/>
+                                                        <TextBlock Foreground="#CED1D4" FontFamily="Inter" FontStyle="Normal" Name="txtlogsEvent2" FontSize="10" FontWeight="Medium" HorizontalAlignment="Left" VerticalAlignment="Bottom" Grid.Column="1" Margin="15,30,0,0" Width="302" Height="26">
+                        Event has been triggered successfully after browser closed by FDS
+                        <LineBreak/> at 12:00 PM
+                                                        </TextBlock>
+                                                    </Grid>
+                                                    <Border x:Name="grdGridEventsG2" Visibility="Visible" BorderBrush="#E7E8EA" BorderThickness="0,1,0,0" Width="302" Opacity="0.1" Height="1" Grid.Row="3" Grid.Column="1"/>
+                                                    <Grid Grid.Row="4">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Name="txtlogEventHeader3" Visibility="Visible" Text="2 Days ago, 11:42 PM" Foreground="#868C94" FontSize="9" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Column="1" Margin="100,5,4,0" Width="70" Height="12"/>
+                                                        <TextBlock Name="txtlogEvent3" Visibility="Visible" Text="10 Files cleared" Foreground="#FFFFFF" FontSize="12" FontWeight="DemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,-5,50.333,15" Width="220"/>
+                                                        <TextBlock Foreground="#CED1D4" FontFamily="Inter" FontStyle="Normal" Name="txtlogsEvent3" FontSize="10" FontWeight="Medium" HorizontalAlignment="Left" VerticalAlignment="Bottom" Grid.Column="1" Margin="15,30,0,0" Width="302" Height="26">
+                        Event has been triggered successfully after browser closed by FDS
+                        <LineBreak/> at 12:00 PM
+                                                        </TextBlock>
+                                                    </Grid>
+                                                    <Border x:Name="grdGridEventsG3" Visibility="Visible" BorderBrush="#E7E8EA" BorderThickness="0,1,0,0" Width="302" Opacity="0.1" Height="1" Grid.Row="5" Grid.Column="1"/>
+                                                    <Grid Grid.Row="6">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Name="txtlogEventHeader4" Visibility="Visible" Text="2 Days ago, 11:42 PM" Foreground="#868C94" FontSize="9" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Column="1" Margin="100,5,4,0" Width="70" Height="12"/>
+                                                        <TextBlock Name="txtlogEvent4" Visibility="Visible" Text="10 Files cleared" Foreground="#FFFFFF" FontSize="12" FontWeight="DemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,-5,50.333,15" Width="220"/>
+                                                        <TextBlock Foreground="#CED1D4" FontFamily="Inter" FontStyle="Normal" Name="txtlogsEvent4" FontSize="10" FontWeight="Medium" HorizontalAlignment="Left" VerticalAlignment="Bottom" Grid.Column="1" Margin="15,30,0,0" Width="302" Height="26">
+                        Event has been triggered successfully after browser closed by FDS
+                        <LineBreak/> at 12:00 PM
+                                                        </TextBlock>
+                                                    </Grid>
+
+                                                    <Border x:Name="grdGridEventsG4" Visibility="Visible" BorderBrush="#E7E8EA" BorderThickness="0,1,0,0" Width="302" Opacity="0.1" Height="1" Grid.Row="6" Grid.Column="1"/>
+                                                    <Grid Grid.Row="7">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Name="txtlogEventHeader5" Visibility="Visible" Text="2 Days ago, 11:42 PM" Foreground="#868C94" FontSize="9" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Column="1" Margin="100,5,4,0" Width="70" Height="12"/>
+                                                        <TextBlock Name="txtlogEvent5" Visibility="Visible" Text="10 Files cleared" Foreground="#FFFFFF" FontSize="12" FontWeight="DemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,-5,50.333,15" Width="220"/>
+                                                        <TextBlock Foreground="#CED1D4" FontFamily="Inter" FontStyle="Normal" Name="txtlogsEvent5" FontSize="10" FontWeight="Medium" HorizontalAlignment="Left" VerticalAlignment="Bottom" Grid.Column="1" Margin="15,30,0,0" Width="302" Height="26">
+Event has been triggered successfully after browser closed by FDS
+<LineBreak/> at 12:00 PM
+                                                        </TextBlock>
+                                                    </Grid>
                                                 </Grid>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
+                                            </ScrollViewer>
+                                        </Border>
+                                    </Grid>
 
 
-                                    <!--<Border CornerRadius="10" Background="#0E2E5B"   Grid.Column="0" Width="247" Height="110">
-                                        <Grid RenderTransformOrigin="0.857,0.554">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="60"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Image Source="/Assets/vector.png" Height="28" Grid.Column="0" Margin="38,19,0,63"  VerticalAlignment="Center" HorizontalAlignment="Center" Width="28"/>
-                                            <TextBlock Text="Reported Certificates" Foreground="#FFFFFF" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,22,6,66" Width="168" Height="23" Grid.Column="1"/>
-                                            <TextBlock Text="0" x:Name="txtCertificatesCounts" HorizontalAlignment="Center" VerticalAlignment="Bottom"  FontWeight="Bold" FontSize="28" Foreground="White" FontFamily="Radian"  Margin="0,57,0,19" TextAlignment="Center" Grid.ColumnSpan="2" Width="232" Height="34"></TextBlock>
-                                        </Grid>
-                                    </Border>
-                                    <Border CornerRadius="10" Background="#0E2E5B"  Grid.Column="1" Width="247"  Height="110" Margin="3,0,0,0">
-                                        <Grid RenderTransformOrigin="0.857,0.554">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="60"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <Image Source="/Assets/SystemNetwork.png" Height="28" Grid.Column="0" Margin="38,19,0,63"  VerticalAlignment="Center" HorizontalAlignment="Center" Width="28"/>
-                                            <TextBlock Text="Reported Proxies" Foreground="#FFFFFF" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="68,22,6,66" Width="168" Height="23" Grid.ColumnSpan="2"/>
-                                            <TextBlock Text="0" x:Name="txtProxyCount" HorizontalAlignment="Center" VerticalAlignment="Bottom"  FontWeight="Bold" FontSize="28" Foreground="White" FontFamily="Radian"  Margin="0,57,0,19" TextAlignment="Center"  Grid.ColumnSpan="2" Width="232" Height="34"></TextBlock>
-                                        </Grid>
-                                    </Border>-->
-
-
-                                    <Border CornerRadius="10" Background="#0E2E5B"  Grid.Column="2" Width="303" Height="110" Margin="5,0,0,0">
-                                        <Grid RenderTransformOrigin="0.857,0.554" MouseDown="Grid_MouseDown">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="150"/>
-                                                <ColumnDefinition Width="150"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="55"></RowDefinition>
-                                                <RowDefinition Height="45"></RowDefinition>
-                                            </Grid.RowDefinitions>
-
-                                            <!-- Loader (ProgressBar as an example) -->
-                                            <ProgressBar Grid.RowSpan="2" Grid.Column="1" x:Name="loader" IsIndeterminate="True" Visibility="Collapsed" Width="60" Height="20" Margin="0,21,20,10" VerticalAlignment="Center" HorizontalAlignment="Right"/>
-
-                                            <!-- TextBlock for displaying download status -->
-                                            <TextBlock Grid.Row="1" Margin="0,0,80,0" HorizontalAlignment="Center" VerticalAlignment="Top" FontWeight="SemiBold" FontSize="16" x:Name="downloadStatus"   Text="Connecting..." Grid.ColumnSpan="2" Foreground="#FFC16B" Visibility="Collapsed" FontFamily="Radian" Height="22" Width="160"   />
-
-                                            <Image x:Name="VPNimage1" Grid.RowSpan="2" Grid.Column="1" Source="/Assets/VPNDis.png" Width="60" Height="71" Stretch="Uniform" Margin="0,21,20,10" VerticalAlignment="Center" HorizontalAlignment="Right" RenderTransformOrigin="2.63,0.644" MouseEnter="VPNImage1_MouseEnter" MouseLeave="VPNImage1_MouseLeave" MouseDown="VPNImage1_MouseDown"/>
-                                            <TextBlock HorizontalAlignment="Center" Grid.Row="0" Grid.Column="0" VerticalAlignment="Bottom"  FontWeight="Bold" FontSize="20" Foreground="White" FontFamily="Radian" Text="Fusion VPN" Margin="20,29,0,0" Height="26" Width="113" />
-                                            <TextBlock x:Name="vpnstatus2" Grid.Row="1" HorizontalAlignment="Center" Visibility="Visible" VerticalAlignment="Top" FontWeight="SemiBold" FontSize="16" Foreground="#FB4B4E" FontFamily="Radian" Text="Disconnected" Margin="20,0,0,29" Height="22" Width="111"  Grid.Column="0"></TextBlock>
-                                        </Grid>
-                                    </Border>
-
-                                </Grid>
-
-                                <Grid Grid.Column="1" Visibility="Hidden" x:Name="currentServerHeader" HorizontalAlignment="Center" Height="18" Width="495" VerticalAlignment="Center" Margin="0,236,0,330" >
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="450"/>
-                                        <ColumnDefinition Width="240"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock x:Name="lblheadingServer" Grid.Column="0" Text="Current Server" Margin="20,0,0,0" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Left"  Height="18" Foreground="White" Width="485" />
-                                    <!--<TextBlock x:Name="lblheadingHealthScore" Grid.Column="1" Text="Device Health Score" FontSize="12" HorizontalAlignment="Left"   Foreground="White"   Margin="20,0,0,0"></TextBlock>-->
-                                </Grid>
-
-                                <Grid Grid.Column="2" x:Name="healthScoreHeader" Visibility="Hidden" HorizontalAlignment="Center" Height="18" Width="298" VerticalAlignment="Center" Margin="0,236,0,330" >
-                                    <TextBlock Text="Device Health Score" Margin="20,0,0,0" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Left"  Height="18" Foreground="White" Width="298" />
-                                </Grid>
-
-                                <Grid Grid.Column="1" Width="495" x:Name="grdMapGrid" Visibility="Hidden" Height="303" VerticalAlignment="Bottom" Margin="0,10,330,20" Grid.ColumnSpan="2">
-                                    <Border CornerRadius="10" Background="#0E2E5B"   Grid.Column="1" Width="495" Height="306">
-
-                                        <Grid RenderTransformOrigin="0.857,0.554">
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="250"></RowDefinition>
-                                                <RowDefinition Height="30"></RowDefinition>
-                                            </Grid.RowDefinitions>
-                                            <Grid x:Name="VPNMaps" Grid.Row="0">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <Image Name="watingMapVPN" VerticalAlignment="Top" HorizontalAlignment="Center" Source="/Assets/wating.png" Width="361" Height="233" Margin="67,20,67,0"/>
-                                                <Image Name="californiaMapVPN" VerticalAlignment="Top" HorizontalAlignment="Center" Source="/Assets/california.png"  Width="361" Height="233"  Margin="67,20,67,0" ></Image>
-                                                <Image Name="northVerginiaMapVPN" VerticalAlignment="Top" HorizontalAlignment="Center" Source="/Assets/north verginia.png"  Width="361" Height="233"  Margin="67,20,67,0"></Image>
-                                                <Image Name="ohioMapVPN" VerticalAlignment="Top" HorizontalAlignment="Center" Source="/Assets/ohio.png"  Width="361" Margin="67,20,67,0" Height="233"  ></Image>
+                                    <Grid Grid.Column="1" Visibility="Hidden" Width="340" x:Name="grdNoInternetGrid"  Height="227" VerticalAlignment="Bottom" Margin="0,-230,250,0" Grid.ColumnSpan="2">
+                                        <Border CornerRadius="10" Background="#0E2E5B"   Grid.Column="1" Width="335" Height="227">
+                                            <Grid RenderTransformOrigin="0.857,0.554">
+                                                <Grid>
+                                                    <Image Name="noInternet" VerticalAlignment="Center" HorizontalAlignment="Center" Source="/Assets/nointernet.png" Width="164" Height="137" Margin="0,0,0,0"/>
+                                                </Grid>
+                                                
                                             </Grid>
-                                            <Grid Grid.Row="1" Margin="0,10,0,0">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="250"/>
-                                                    <ColumnDefinition Width="250"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock   x:Name="currentVPN"  Text="Current Server :" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Right"   Foreground="White" TextAlignment="Right" Width="250" Margin="0,0,0,0"></TextBlock>
-                                                <TextBlock x:Name="currentInfoVPN"  Grid.Column="1" Text="N/A" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Center" TextAlignment="Left"  Foreground="White" Width="150" Margin="3,0,100,0"></TextBlock>
-                                            </Grid>
-
-                                        </Grid>
-
-                                    </Border>
-                                </Grid>
+                                        </Border>
+                                    </Grid>
 
 
-                                <Grid Grid.Column="1" Width="495" x:Name="grdGridEvents" Visibility="Hidden" Height="303" VerticalAlignment="Bottom" Margin="0,10,330,20" Grid.ColumnSpan="2">
-                                    <Border CornerRadius="7" Background="#0E2E5B" Grid.Column="1" Width="480" Height="300">
-                                        <Grid x:Name="EventLogs" RenderTransformOrigin="0.857,0.554" Margin="0,0,0,0">
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="59"></RowDefinition>
-                                                <RowDefinition Height="1"></RowDefinition>
-                                                <RowDefinition Height="59"></RowDefinition>
-                                                <RowDefinition Height="1"></RowDefinition>
-                                                <RowDefinition Height="59"></RowDefinition>
-                                                <RowDefinition Height="1"></RowDefinition>
-                                                <RowDefinition Height="59"></RowDefinition>
-                                                <RowDefinition Height="1"></RowDefinition>
-                                                <RowDefinition Height="59"></RowDefinition>
-                                            </Grid.RowDefinitions>
-                                            <Grid Grid.Row="0"  >
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Name="txtlogEventHeader" Visibility="Visible" Text="2 Days ago, 11:42 PM" Foreground="#868C94" FontSize="10" HorizontalAlignment="Right" 
-                                                           VerticalAlignment="Top"  Grid.Column="1" Margin="0,10,4,0" Width="100" Height="17"></TextBlock>
-                                                <TextBlock Name="txtlogEvent" Visibility="Visible" Text="Scheduled Execution Completed" Foreground="#FFFFFF" FontSize="14" FontWeight="DemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,-5,50.333,15" Width="220"></TextBlock>
-                                                <TextBlock Foreground="#CED1D4" FontFamily="Inter" FontStyle="Normal" Name="txtlogsEvent" Text="Event has be trigger successfully after browser closed by FDS at 12:00 PM"  FontSize="12" FontWeight="Medium" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,29,0,10" Width="465" Height="16"></TextBlock>
-                                            </Grid>
-                                            <Border x:Name="grdGridEventsG1" Visibility="Hidden" BorderBrush="#E7E8EA"  BorderThickness="0,1,0,0" Width="465" Opacity="0.1" Height="1" Grid.Row="1" Grid.Column="1" />
-                                            <Grid Grid.Row="2" >
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Name="txtlogEventHeader2" Visibility="Visible" Text="2 Days ago, 11:42 PM" Foreground="#868C94" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Top"  Grid.Column="1" Margin="0,10,4,0" Width="100" Height="17"></TextBlock>
-                                                <TextBlock Name="txtlogEvent2" Visibility="Visible" Text="10 Files cleared" Foreground="#FFFFFF" FontSize="14" FontWeight="DemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,-5,50.333,15" Width="220"></TextBlock>
-                                                <TextBlock Foreground="#CED1D4" FontFamily="Inter" FontStyle="Normal" Name="txtlogsEvent2" Text="Event has be trigger successfully after browser closed by FDS at 12:00 PM"   FontSize="12" FontWeight="Medium" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,29,0,10" Width="465" Height="16"></TextBlock>
-                                            </Grid>
-                                            <Border x:Name="grdGridEventsG2" Visibility="Hidden" BorderBrush="#E7E8EA" BorderThickness="0,1,0,0" Width="465" Opacity="0.1" Height="1" Grid.Row="3" Grid.Column="1" />
-                                            <Grid Grid.Row="4">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Name="txtlogEventHeader3" Visibility="Visible" Text="2 Days ago, 11:42 PM" Foreground="#868C94" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Top"  Grid.Column="1" Margin="0,10,4,0" Width="100" Height="17"></TextBlock>
-                                                <TextBlock Name="txtlogEvent3" Visibility="Visible"  Text="10 Files cleared" Foreground="#FFFFFF" FontSize="14" FontWeight="DemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,-5,50.333,15" Width="220"></TextBlock>
-                                                <TextBlock Name="txtlogsEvent3" Text="Event has be trigger successfully after browser closed by FDS at 12:00 PM" Foreground="#CED1D4" FontFamily="Inter" FontStyle="Normal" FontSize="12" FontWeight="Medium" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,29,0,10" Width="465" Height="16"></TextBlock>
-                                            </Grid>
-                                            <Border x:Name="grdGridEventsG3" Visibility="Hidden" BorderBrush="#E7E8EA" BorderThickness="0,1,0,0" Width="465" Opacity="0.1" Height="1" Grid.Row="5" Grid.Column="1" />
-
-                                            <Grid Grid.Row="6">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Name="txtlogEventHeader4" Visibility="Visible" Text="2 Days ago, 11:42 PM" Foreground="#868C94" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Top"  Grid.Column="1" Margin="0,10,4,0" Width="100" Height="17"></TextBlock>
-                                                <TextBlock Name="txtlogEvent4" Visibility="Visible"  Text="10 Files cleared" Foreground="#FFFFFF" FontSize="14" FontWeight="DemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,-5,50.333,15" Width="220"></TextBlock>
-                                                <TextBlock Name="txtlogsEvent4" Text="Event has be trigger successfully after browser closed by FDS at 12:00 PM" Foreground="#CED1D4" FontFamily="Inter" FontStyle="Normal" FontSize="12" FontWeight="Medium" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,29,0,10" Width="465" Height="16"></TextBlock>
-                                            </Grid>
-                                            <Border x:Name="grdGridEventsG4" Visibility="Hidden" BorderBrush="#E7E8EA" BorderThickness="0,1,0,0" Width="465" Opacity="0.1" Height="1" Grid.Row="7" Grid.Column="1" />
-                                            <Grid Grid.Row="8">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Name="txtlogEventHeader5" Visibility="Visible" Text="2 Days ago, 11:42 PM" Foreground="#868C94" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Top"  Grid.Column="1" Margin="0,10,4,0" Width="100" Height="17"></TextBlock>
-                                                <TextBlock Name="txtlogEvent5" Visibility="Visible"  Text="10 Files cleared" Foreground="#FFFFFF" FontSize="14" FontWeight="DemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,-5,50.333,15" Width="220"></TextBlock>
-                                                <TextBlock Name="txtlogsEvent5" Text="Event has be trigger successfully after browser closed by FDS at 12:00 PM" Foreground="#CED1D4" FontFamily="Inter" FontStyle="Normal" FontSize="12" FontWeight="Medium" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,29,0,10" Width="465" Height="16"></TextBlock>
-                                            </Grid>
-
-                                        </Grid>
-                                    </Border>
-                                </Grid>
-
-                                <Grid Grid.Column="1" Visibility="Hidden" Width="495" x:Name="grdNoInternetGrid"  Height="303" VerticalAlignment="Bottom" Margin="0,10,330,20" Grid.ColumnSpan="2">
-                                    <Border CornerRadius="10" Background="#0E2E5B"   Grid.Column="1" Width="495" Height="303">
-                                        <Grid RenderTransformOrigin="0.857,0.554">
+                                    <Grid Name="GrdhealthScore" Visibility="Hidden" Grid.Column="2" Height="227" Width="222" VerticalAlignment="Bottom" Margin="340,-230,0,20">
+                                        <Border CornerRadius="10" Background="#0E2E5B" Width="220" Height="225" Margin="0,0,0,0">
                                             <Grid>
-                                                <Image Name="noInternet" VerticalAlignment="Center" HorizontalAlignment="Center" Source="/Assets/NoInternetImg.png" Width="219" Height="137" Margin="137,59,137,109.45"/>
+                                                <TextBlock Text="Today's Health Score of Device" Foreground="#FFFFFF" FontSize="10" FontWeight="SemiBold" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="16,20,23,0" Width="190" Height="14"/>
+                                                <ed:Arc StartAngle="-120" EndAngle="120" Stretch="None" StrokeThickness="20"  
+                     StrokeDashArray=".50" Stroke="#FF484D5F" Margin="20,60,20,10"/>
+                                                <ed:Arc x:Name="arcColor" StartAngle="-120" EndAngle="120" Stretch="None" StrokeThickness="20"
+                     StrokeDashArray=".50" Stroke="{Binding ArcColor}" Margin="20,60,20,10"/>
+                                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"  Margin="0,90,20,0" Height="110" Width="123">
+
+                                                    <TextBlock Text="0" Name="txtHealthScore" Foreground="White" TextAlignment="Center" HorizontalAlignment="Center" FontWeight="Bold" FontSize="32"
+                            Margin="30,20,3.667,0" Height="49" Width="75"/>
+                                                    <TextBlock Text="Out of 10" Foreground="White"  HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" FontSize="12" Margin="30,0,0,0" Height="36" Width="90" />
+
+                                                </StackPanel>
                                             </Grid>
-                                            <Grid  Margin="0,10,0,0">
-                                                <TextBlock x:Name="lblNoActivity"  Text="No,activity reported yet." FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center" TextAlignment="Center" VerticalAlignment="Top"  Foreground="White" Width="168" Height="18" Margin="165,216,162,60"></TextBlock>
-                                            </Grid>
-                                        </Grid>
-                                    </Border>
-                                </Grid>
-
-                                <Grid Name="GrdhealthScore" Visibility="Visible" Grid.Column="2" Height="303" Width="303" VerticalAlignment="Bottom" Margin="19.667,0,0,20">
-                                    <Border CornerRadius="10" Background="#0E2E5B" Width="303" Height="306" Margin="0,0,0,0">
-                                        <Grid>
-                                            <TextBlock Text="Today's Health Score of Device" Foreground="#FFFFFF" FontSize="16" FontWeight="SemiBold" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="16,10,23,0" Width="273" Height="22"/>
-                                            <ed:Arc StartAngle="-120" EndAngle="120" Stretch="None" StrokeThickness="25"  
-                                                    StrokeDashArray=".50" Stroke="#FF484D5F" Margin="20,60,20,10"/>
-                                            <ed:Arc x:Name="arcColor" StartAngle="-120" EndAngle="120" Stretch="None" StrokeThickness="25"
-                                                    StrokeDashArray=".50" Stroke="{Binding ArcColor}" Margin="20,60,20,10"/>
-                                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"  Margin="0,90,20,0" Height="110" Width="123">
-
-                                                <TextBlock Text="0" Name="txtHealthScore" Foreground="White" HorizontalAlignment="Center" FontWeight="Bold" FontSize="36"
-                                                           Margin="30,20,3.667,0" Height="49" Width="40"/>
-                                                <TextBlock Text="Out of 10" Foreground="White"  HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" Margin="40,10,0,0" Height="36" Width="80" />
-
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-                                </Grid>
+                                        </Border>
+                                    </Grid>
 
 
-                            </Grid>
-                        </Border>
-                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>                    
 
-
-                    <Border x:Name="AuthenticationProcessing" Visibility="Hidden" Background="#DCE4F0" BorderThickness="1" Margin="0,-21,0,0"  CornerRadius="30" Width="1000" Height="569">
+                    <Border x:Name="AuthenticationProcessing" Visibility="Hidden" Background="#DCE4F0" BorderThickness="1" Margin="105,0,105,0"  CornerRadius="30" Width="410" Height="384">
                         <Grid Margin="10,10,10,10" Background="#DCE4F0">
-                            <StackPanel HorizontalAlignment="Center" Margin="0,0,0,0">
-                                <Image Source="Assets/newFDSGif.gif" Height="200" Width="200" Margin="390,120,399,238"></Image>
+                            <StackPanel HorizontalAlignment="Center" Margin="0,48,0,0">
+                                <Image Source="Assets/Inprogress.gif" Height="200" Width="200" Margin="0,0,0,0"></Image>
                                 <TextBlock x:Name="txtAuthProcesing"  
-                                    Margin="70,-370,20,0" HorizontalAlignment="Center" Foreground="Black" FontSize="34" FontWeight="Bold" Width="431" Height="44"> Authentication Processing
+                                    Margin="20,20,0,0" HorizontalAlignment="Center" Foreground="Black" FontSize="24" FontWeight="Bold" Width="314" Height="38"> Authentication Processing
                                 </TextBlock>
                             </StackPanel>
                         </Grid>
                     </Border>
 
-
-                    <Grid x:Name="AuthenticationSuccessfull" Margin="125,50,125,50" Visibility="Hidden" Background="#DCE4F0">
-                        <Border Background="#DCE4F0"  BorderThickness="1,1,1,1"  CornerRadius="30" Margin="-15,-13,-14,-14">
-                            <StackPanel HorizontalAlignment="Center" Margin="232.667,123.667,217,31.333" Width="427">
-                                <Image Source="Assets/success.gif" Height="200" Width="200"></Image>
-                                <TextBlock x:Name="txtAuthSuccess" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                    Margin="0,0,0,-30" Foreground="Black" FontSize="34" FontWeight="Bold"> Authentication Successful
+                    <Border x:Name="AuthenticationSuccessfull" Visibility="Hidden" Background="#DCE4F0" BorderThickness="1" Margin="105,0,105,0"  CornerRadius="30" Width="410" Height="384">
+                        <Grid Margin="10,10,10,10" Background="#DCE4F0">
+                            <StackPanel HorizontalAlignment="Center" Margin="0,48,0,0">
+                                <Image Source="Assets/success2.gif" Height="200" Width="200" Margin="0,0,0,0"></Image>
+                                <TextBlock x:Name="txtAuthSuccess"  
+                                    Margin="20,20,0,0" HorizontalAlignment="Center" Foreground="Black" FontSize="24" FontWeight="Bold" Width="314" Height="38"> Authentication Successful
                                 </TextBlock>
                             </StackPanel>
-                        </Border>
-                    </Grid>
+                        </Grid>
+                    </Border>
 
-
-                    <Grid x:Name="AuthenticationFailed" Margin="125,50,125,50" Visibility="Hidden" Background="#DCE4F0">
-                        <Border Background="#DCE4F0"  BorderThickness="1,1,1,1"  CornerRadius="30" Margin="-15,-13,-14,-14">
-                            <StackPanel HorizontalAlignment="Center" Margin="232.667,123.667,217,31.333" Width="427">
-                                <Image Source="Assets/failed.gif" Height="200" Width="200"></Image>
-                                <TextBlock x:Name="txtAuthFailed" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                    Margin="0,0,0,-30" Foreground="Black" FontSize="34" FontWeight="Bold"> Authentication Failed
+                    <Border x:Name="AuthenticationFailed" Visibility="Hidden" Background="#DCE4F0" BorderThickness="1" Margin="105,0,105,0"  CornerRadius="30" Width="410" Height="384">
+                        <Grid Margin="10,10,10,10" Background="#DCE4F0">
+                            <StackPanel HorizontalAlignment="Center" Margin="0,48,0,0">
+                                <Image Source="Assets/failed.gif" Height="200" Width="200" Margin="0,0,0,0"></Image>
+                                <TextBlock x:Name="txtAuthFailed"  
+                                Margin="20,20,0,0" HorizontalAlignment="Center" Foreground="Black" FontSize="24" FontWeight="Bold" Width="314" Height="38"> Authentication Successful
                                 </TextBlock>
                                 <TextBlock PreviewMouseDown="txtTryAgain_PreviewMouseDown" x:Name="txtTryAgain" HorizontalAlignment="Center"
-                                    VerticalAlignment="Bottom" Foreground="Blue" Margin="170,40,169.667,-50" FontSize="20" FontWeight="Bold"
+                                 VerticalAlignment="Bottom" Foreground="Blue" Margin="0,0,0,0" FontSize="18" FontWeight="Bold"
                                     FontFamily="Radian" Cursor="Hand" Height="28">
                                     <TextBlock.TextDecorations>
                                         <TextDecoration/>
                                     </TextBlock.TextDecorations>Try again</TextBlock>
                             </StackPanel>
-                        </Border>
-                    </Grid>
+                        </Grid>
+                    </Border>
 
-
-
-                    <Border x:Name="cntQRCode" Background="#DCE4F0" BorderThickness="1" Visibility="Hidden" Margin="0,-20,0,0" CornerRadius="30" Width="1000" Height="578">
-
-
-
-                        <Grid Margin="10,10,10,10"  Width="1000" Height="578" Background="#DCE4F0">
+                    <Border x:Name="cntQRCode" Background="#DCE4F0" BorderThickness="1" Visibility="Hidden" Margin="0,-20,0,0" CornerRadius="30" Width="754" Height="422">
+                        <Grid Margin="10,10,10,10"  Width="754" Height="422" Background="#DCE4F0">
                             <StackPanel HorizontalAlignment="Stretch">
-
+                                <Grid  Margin="205,32,205,0">
+                                    <TextBlock FontFamily="Inter" FontWeight="Bold" FontSize="20" Foreground="#3D4653" Text="Use FDS App On Your Computer" HorizontalAlignment="Center"  Width="360" Height="30" TextAlignment="Center" />
+                                </Grid>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="600" ></ColumnDefinition>
+                                        <ColumnDefinition Width="400" ></ColumnDefinition>
                                         <ColumnDefinition Width="380"></ColumnDefinition>
                                     </Grid.ColumnDefinitions>
+ 
 
-                                    <Grid Grid.ColumnSpan="2" Margin="93,30,230,461">
-                                        <TextBlock FontFamily="Radian" FontWeight="Bold" FontSize="30" Foreground="#3D4653" Text="Use FDS App On Your Computer" HorizontalAlignment="Center" Margin="-84,10,-179,11" Width="865" Height="38" TextAlignment="Center" />
-                                    </Grid>
-
-                                    <Grid Grid.Column="0" Width="512" Height="290" HorizontalAlignment="Left" Margin="75,-14,0,0">
-
-                                        <!--<Grid.ColumnDefinitions>
-                                        <ColumnDefinition ></ColumnDefinition>
-                                        <ColumnDefinition Width="380"></ColumnDefinition>
-                                    </Grid.ColumnDefinitions>-->
+                                    <Grid Grid.Column="0" Width="389" Height="242" HorizontalAlignment="Left" Margin="30,30,0,50">
+ 
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="30"></RowDefinition>
-                                            <RowDefinition Height="80"></RowDefinition>
+                                            <RowDefinition Height="18"></RowDefinition>
+                                            <RowDefinition Height="70"></RowDefinition>
+                                            <RowDefinition Height="40"></RowDefinition>
                                             <RowDefinition Height="50"></RowDefinition>
-                                            <RowDefinition Height="50"></RowDefinition>
-                                            <RowDefinition Height="90"></RowDefinition>
+                                            <RowDefinition Height="55"></RowDefinition>
                                         </Grid.RowDefinitions>
 
-                                        <TextBlock Grid.Column="0" Grid.Row="0"  FontFamily="Radian" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Top" Foreground="Black" HorizontalAlignment="Left" Margin="0,0,0,0" Width="260" Height="20">
+                                        <TextBlock Grid.Column="0" Grid.Row="0"  FontFamily="Radian" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Top" Foreground="Black" HorizontalAlignment="Left" Margin="0,0,0,0" Width="260" Height="20">
                                             <Run FontWeight="Bold">1. </Run>
                                             <Run>Open FDS App on your phone</Run>
                                         </TextBlock>
 
-                                        <TextBlock Grid.Row="1" FontFamily="Radian" FontWeight="SemiBold" FontSize="16" Foreground="Black" HorizontalAlignment="Left" Margin="0,15,0,0" Width="485" Height="62">
+                                        <TextBlock Grid.Row="1" FontFamily="Radian" FontWeight="SemiBold" FontSize="14" Foreground="Black" HorizontalAlignment="Left" Margin="0,15,0,0" Width="389" Height="62">
     <Span FontWeight="Bold">2. </Span>
     <Span>Home screen</Span>
     <!-- Use StackPanel to align the image and text vertically -->
@@ -1439,20 +1590,20 @@
 
 
 
-                                        <TextBlock Grid.Column="0" Grid.Row="2" FontFamily="Radian" FontWeight="SemiBold" FontSize="16" Foreground="Black" HorizontalAlignment="Left" Margin="0,25,0,0"   Width="202" Height="30">
+                                        <TextBlock Grid.Column="0" Grid.Row="2" FontFamily="Radian" FontWeight="SemiBold" FontSize="14" Foreground="Black" HorizontalAlignment="Left" Margin="0,15,0,0"   Width="202" Height="24">
                                             <Run FontWeight="Bold">3. </Run>
                                             <Run>Select device location</Run>
                                         </TextBlock>
-                                        <TextBlock Grid.Column="0" Grid.Row="3" FontFamily="Radian" FontWeight="SemiBold" FontSize="16" Foreground="Black" HorizontalAlignment="Left" Margin="0,25,0,0" Width="401" Height="30">
+                                        <TextBlock Grid.Column="0" Grid.Row="3" FontFamily="Radian" FontWeight="SemiBold" FontSize="14" Foreground="Black" HorizontalAlignment="Left" Margin="0,5,0,0" Width="401" Height="24">
                                             <Run FontWeight="Bold">4. </Run>
                                             <Run>Point your phone to this screen to capture the code</Run>
                                         </TextBlock>
-                                        <TextBlock Grid.Row="4"  FontFamily="Radian" FontWeight="Bold" FontSize="24" Foreground="#3D4653" TextWrapping="WrapWithOverflow" Text="Scan QR code to login" HorizontalAlignment="Left" Width="512" Height="70" Margin="0,35,0,0"  />
+                                        <TextBlock Grid.Row="4"  FontFamily="Radian" FontWeight="Bold" FontSize="18" Foreground="#3D4653" TextWrapping="WrapWithOverflow" Text="Scan QR code to login" HorizontalAlignment="Left" Width="201" Height="36" Margin="0,35,0,0"  />
 
                                     </Grid>
 
-                                    <Grid Width="300" Grid.Column="1" Margin="10,123,40,-26">
-                                        <Border Margin="10,-240,20,-50" Background="#DEE3EE"  BorderThickness="4,4,4,4"  CornerRadius="28" Height="270">
+                                    <Grid Width="300" Grid.Column="1" Margin="10,150,40,-26">
+                                        <Border Margin="10,-280,20,-50" Background="#DEE3EE"  BorderThickness="4,4,4,4"  CornerRadius="28" Height="212" Width="212">
                                             <Border.BorderBrush>
                                                 <RadialGradientBrush RadiusX="0.6" RadiusY="0.6">
                                                     <GradientStop Color="#80BDFF" Offset="1"/>
@@ -1461,12 +1612,12 @@
                                             </Border.BorderBrush>
                                             <StackPanel Grid.Column="1" Grid.RowSpan="1" Margin="0,0,0,0">
 
-                                                <Image  x:Name="imgQR"  Margin="10,0,10,0" Height="260"/>
+                                                <Image  x:Name="imgQR"  Margin="5,10,10,5" Height="180" Width="180"/>
 
                                             </StackPanel>
                                         </Border>
-                                        <TextBlock  Text="Code expires in :" FontSize="18" Foreground="#0C1828" FontFamily="Radian" FontWeight="Bold" Margin="10,240,0,0" Height="22"/>
-                                        <TextBlock  x:Name="lblTimer" Text="10:00 minutes" Foreground="#67AEFB" FontWeight="Bold" FontSize="18" FontFamily="Radian" HorizontalAlignment="Right" Margin="0,240,20,0" Height="22"/>
+                                        <TextBlock  Text="Code expires in :" FontSize="14" Foreground="#0C1828" FontFamily="Radian" FontWeight="Bold" Margin="10,40,0,0" Height="22"/>
+                                        <TextBlock  x:Name="lblTimer" Text="10:00 minutes" Foreground="#67AEFB" FontWeight="Bold" FontSize="14" FontFamily="Radian" HorizontalAlignment="Right" Margin="0,40,20,0" Height="22"/>
 
                                     </Grid>
                                 </Grid>
@@ -1474,23 +1625,19 @@
 
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="500"></ColumnDefinition>
+                                    <ColumnDefinition Width="300"></ColumnDefinition>
                                     <ColumnDefinition Width="auto"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.ColumnSpan="2" x:Name="txtQRBack" Foreground="#3395FF" Margin="-13,55,0,45" FontSize="16" FontWeight="SemiBold" FontFamily="Radian" PreviewMouseDown="txtBack_PreviewMouseDown" Cursor="Hand" TextDecorations="None">
                                         Go Back
                                 </TextBlock>
-                                <Image Grid.Column="0" Source="/Assets/backArrow.png" Margin="0,502,20,35" Height="22" Width="14" HorizontalAlignment="Right"/>
+                                <Image Grid.Column="0" Source="/Assets/backArrow.png" Margin="0,350,20,35" Height="22" Width="14" HorizontalAlignment="Right"/>
                             </Grid>
-                            <!--<TextBlock HorizontalAlignment="Center" VerticalAlignment="Bottom" x:Name="txtQRBack" Foreground="Blue" Margin="0,0,40,50" FontSize="12" FontWeight="Bold" FontFamily="Radian" PreviewMouseDown="txtBack_PreviewMouseDown" Cursor="Hand">
-                                <TextBlock.TextDecorations>
-                                    <TextDecoration/>
-                                </TextBlock.TextDecorations>Go Back</TextBlock>-->
-                            <StackPanel x:Name="ImageContainerQR" HorizontalAlignment="Right" Margin="0,0,200,120" VerticalAlignment="Center" Width="35" Height="40"/>
+                       
+                            <StackPanel x:Name="ImageContainerQR" HorizontalAlignment="Right" Margin="0,90,170,120" VerticalAlignment="Center" Width="35" Height="40"/>
 
                         </Grid>
                     </Border>
-
 
                     <Grid x:Name="cntLanding" Visibility="Hidden" Margin="30,0,30,0">
                         <Image x:Name="imgCompliant" Source="Assets/checkcircle.png" Height="160" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,40,0,0" Width="162" />
@@ -1651,17 +1798,17 @@
                     </Grid>
                 </Grid>
 
-                <Grid x:Name="header" MouseDown="header_MouseDown" Height="54" VerticalAlignment="Top">
+                <Grid x:Name="header" MouseDown="header_MouseDown" Height="54" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
 
-                        <Button x:Name="btnClose" ToolTip="Minimize Application"  Click="btnClose_Click" Style="{StaticResource MaterialDesignFloatingActionButton}" Width="26" Height="26" Foreground="White" BorderThickness="1" Margin="0,13,15,13" Background="{x:Null}" BorderBrush="{x:Null}">
+                        <Button x:Name="btnClose" ToolTip="Minimize Application"  Click="btnClose_Click" Style="{StaticResource MaterialDesignFloatingActionButton}" Width="40" Height="26" Foreground="White" BorderThickness="1" Margin="0,13,10,0" Background="{x:Null}" BorderBrush="{x:Null}">
                             <!--<materialDesign:PackIcon Kind="ArrowCompress" VerticalAlignment="Center" />-->
-                            <Image Source="Assets/MinimizeIcon.png" Height="18.2" Width="18.2"></Image>
+                            <Image Source="Assets/minimize.png" Height="26" Width="20" Margin="0,0,10,0"></Image>
                         </Button>
-                        <Button x:Name="btnUninstall" Visibility="Hidden" ToolTip="Request Uninstall" Click="btnUninstall_Click" Style="{StaticResource MaterialDesignFloatingActionButton}" Width="26" Height="26" Foreground="Red" BorderThickness="1" Margin="0,13,18,13" Background="{x:Null}" BorderBrush="{x:Null}">
-                            <!--<materialDesign:PackIcon Kind="DeleteCircle" VerticalAlignment="Center" />-->
+                        <!--<Button x:Name="btnUninstall" Visibility="Hidden" ToolTip="Request Uninstall" Click="btnUninstall_Click" Style="{StaticResource MaterialDesignFloatingActionButton}" Width="26" Height="26" Foreground="Red" BorderThickness="1" Margin="0,13,18,13" Background="{x:Null}" BorderBrush="{x:Null}">
+                             
                             <Image Source="Assets/deleteIcon.png" Height="18.19" Width="12.97"></Image>
-                        </Button>
+                        </Button>-->
 
                     </StackPanel>
                     <!--<Image Source="Assets/TitleIcons.png" HorizontalAlignment="Left" Height="50" Width="120" Margin="18,0,0,0"></Image>-->
@@ -1684,7 +1831,6 @@
                 </Grid>
 
             </Grid>
-
         </Grid>
     </Border>
 </Window>

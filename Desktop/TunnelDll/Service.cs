@@ -15,7 +15,7 @@ namespace Tunnel
 {
     public class Service
     {
-        private const string LongName = "WireGuard Demo Box";
+        private const string LongName = "FDS VPN";
         private const string Description = "Demonstration tunnel for testing WireGuard";
 
         [DllImport("tunnel.dll", EntryPoint = "WireGuardTunnelService", CallingConvention = CallingConvention.Cdecl)]

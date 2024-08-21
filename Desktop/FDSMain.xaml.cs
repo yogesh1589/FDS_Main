@@ -11,15 +11,12 @@ using FDS.WindowService;
 using Microsoft.Win32;
 using NCrontab;
 using Newtonsoft.Json;
-using OpenQA.Selenium;
-using OpenQA.Selenium.DevTools;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
-using System.Drawing.Drawing2D;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -27,7 +24,6 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
-using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
@@ -130,7 +126,7 @@ namespace FDS
         string encryptOutPutFile = @"\Main";
         System.Windows.Controls.Image imgLoader;
         bool deviceDeletedFlag = false;
-        bool showMessageBoxes = false;//true for staging and false for production
+        bool showMessageBoxes = true;//true for staging and false for production
         ApiService apiService = new ApiService();
         public static byte[] EncKey { get; set; }
         public bool deviceActive = true;
@@ -149,7 +145,7 @@ namespace FDS
         public bool chkFlgClick = false;
         public bool isInternetReconnect = false;
         public string currentServerName = string.Empty;
-
+   
         private bool connectedVPN;
 
         public FDSMain()
@@ -169,7 +165,7 @@ namespace FDS
                 DataContext = new ViewModel();
                 thisWindow = GetWindow(this);
 
-
+ 
 
                 DataContext = this;
             }
@@ -560,6 +556,11 @@ namespace FDS
                         try { File.Delete(configFile); } catch { }
                     });
                     connectedVPN = false;
+                    string binPath = String.Format("{0}log.bin", AppDomain.CurrentDomain.BaseDirectory);
+                    if (File.Exists(binPath))
+                    {
+                        File.Delete(binPath);
+                    }
                     return true;
                 }
             }
@@ -605,6 +606,20 @@ namespace FDS
         }
 
 
+        
+
+        private void LoadServices()
+        {
+            Services.Add(new ServiceDPP { ServiceName = "Web Tracking Protection", IsActive = true });
+            Services.Add(new ServiceDPP { ServiceName = "Web Session Protection", IsActive = true });
+            Services.Add(new ServiceDPP { ServiceName = "Web Chache Protection", IsActive = false });
+            Services.Add(new ServiceDPP { ServiceName = "DNS Chache Protection", IsActive = true });
+            Services.Add(new ServiceDPP { ServiceName = "Windows Registry Protection", IsActive = false });
+            Services.Add(new ServiceDPP { ServiceName = "Free Storage Protection", IsActive = false });
+            Services.Add(new ServiceDPP { ServiceName = "Trash Data Protection", IsActive = true });
+            Services.Add(new ServiceDPP { ServiceName = "System Network Monitering Protection", IsActive = true });
+        }
+
 
         public void LoadFDS()
         {
@@ -612,6 +627,7 @@ namespace FDS
             {
                 try
                 {
+                    LoadServices();
                     string LauncherAppPath = String.Format("{0}LauncherApp.exe", AppDomain.CurrentDomain.BaseDirectory);
                     SetShortCut(LauncherAppPath);
                     WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
@@ -705,7 +721,7 @@ namespace FDS
                 cntServiceSettingPart2.Visibility = Visibility.Hidden;
                 cntBackdrop.Visibility = Visibility.Hidden;
                 cntPopup.Visibility = Visibility.Hidden;
-                lblUserName.Visibility = Visibility.Visible;
+              
                 switch (screen)
                 {
                     case Screens.GetOTP:
@@ -715,7 +731,12 @@ namespace FDS
                         strScreenVals = "GetStart";
                         //imgPantgone.Visibility = Visibility.Hidden;
                         header.Visibility = Visibility.Visible;
+                       
+                        imgDesktop.Visibility = Visibility.Hidden;
                         lblUserName.Visibility = Visibility.Hidden;
+                        popup.Visibility = Visibility.Hidden;
+                        imgDesktop2.Visibility = Visibility.Hidden;
+                        txtOrganization.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
                         imgDesktop2.Visibility = Visibility.Hidden;
                         txtOrganization.Visibility = Visibility.Hidden;
@@ -809,12 +830,7 @@ namespace FDS
                         imgDesktop2.Visibility = Visibility.Hidden;
                         txtOrganization.Visibility = Visibility.Hidden;
                         btnUninstall.Visibility = Visibility.Hidden;
-                        //txtDigit1.Text = string.Empty;
-                        //txtDigit2.Text = string.Empty;
-                        //txtDigit3.Text = string.Empty;
-                        //txtDigit4.Text = string.Empty;
-                        //txtDigit5.Text = string.Empty;
-                        //txtDigit6.Text = string.Empty;
+ 
                         lblMainLable1.Visibility = Visibility.Hidden;
                         lblMainLable2.Visibility = Visibility.Hidden;
                         txtPhoneValidation.Text = string.Empty;
@@ -892,8 +908,8 @@ namespace FDS
                         imgDesktop.Visibility = Visibility.Hidden;
                         imgDesktop2.Visibility = Visibility.Hidden;
                         txtOrganization.Visibility = Visibility.Hidden;
-                        System.Windows.Controls.Image imgSuccess = SetGIF("\\Assets\\success.gif");
-                        AuthenticationSuccessfull.Children.Add(imgSuccess);
+                        //System.Windows.Controls.Image imgSuccess = SetGIF("\\Assets\\success.gif");
+                        //AuthenticationSuccessfull.Add(imgSuccess);
                         lblMainLable1.Visibility = Visibility.Hidden;
                         lblMainLable2.Visibility = Visibility.Hidden;
                         header.Background = newBrush;
@@ -912,14 +928,17 @@ namespace FDS
                         imgDesktop.Visibility = Visibility.Hidden;
                         imgDesktop2.Visibility = Visibility.Hidden;
                         txtOrganization.Visibility = Visibility.Hidden;
-                        System.Windows.Controls.Image imgfailed = SetGIF("\\Assets\\failed.gif");
-                        AuthenticationFailed.Children.Add(imgfailed);
+                        //System.Windows.Controls.Image imgfailed = SetGIF("\\Assets\\failed.gif");
+                        //AuthenticationFailed.Children.Add(imgfailed);
                         lblMainLable1.Visibility = Visibility.Hidden;
                         lblMainLable2.Visibility = Visibility.Hidden;
                         header.Background = newBrush;
                         titleFusion.Visibility = Visibility.Visible;
                         break;
                     case Screens.QRCode:
+                        AuthenticationMethods.Visibility = Visibility.Hidden;
+                        AuthenticationMethods2.Visibility = Visibility.Hidden;
+                        AuthenticationStep3.Visibility = Visibility.Hidden;
                         cntQRCode.Visibility = Visibility.Visible;
                         //imgPantgone.Visibility = Visibility.Visible;
                         header.Visibility = Visibility.Visible;
@@ -1817,7 +1836,7 @@ namespace FDS
             {
                 string qrCodeToken = (DeviceResponse == null) ? qr_code_token : DeviceResponse.qr_code_token;
                 //DeviceResponse.qr_code_token = string.IsNullOrEmpty(DeviceResponse.qr_code_token) ? qr_code_token : DeviceResponse.qr_code_token;
-                var QRCodeResponse = await apiService.CheckAuthAsync(qrCodeToken, AppConstants.CodeVersion);
+                var QRCodeResponse = apiService.CheckAuth(qrCodeToken, AppConstants.CodeVersion);
 
                 if ((QRCodeResponse.StatusCode == HttpStatusCode.OK) || (QRCodeResponse.Public_key != null))
                 {
@@ -2140,7 +2159,7 @@ namespace FDS
                         deviceOffline = true;
                         timerLastUpdate.IsEnabled = true;
                         lblMessageHeader.Text = "Your Device is Disabled. Contact to Administrator";
-                        grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                        grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFC16B"));
                         string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
                         BitmapImage DeviceDeactive = new BitmapImage();
                         DeviceDeactive.BeginInit();
@@ -2233,6 +2252,8 @@ namespace FDS
             txtlogEventHeader4.Text = string.Empty;
             txtlogEventHeader5.Text = string.Empty;
         }
+
+      
 
 
         public (string, string) GetLogTitles(string logTitle, string logEntryChangedby, string logEntryTime)
@@ -2346,14 +2367,14 @@ namespace FDS
 
                     //Defaults----Title and Description-----
                     string eventTitle = logEntry.file_deleted.ToString() + " Files cleared";
-                    string eventDesc = "Event has be trigger successfully after browser closed by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                    string eventDesc = "Event has be trigger successfully after browser closed by " + logEntry.changed_by.ToString() + Environment.NewLine + " at " + logTime.ToString();
 
                     if (logEntry.service_name == "Web Cache Protection")
                     {
                         eventTitle = logEntry.file_deleted.ToString() + " B cleared";
                         if (logEntry.title.Contains("Event"))
                         {
-                            eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                            eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + Environment.NewLine + " at " + logTime.ToString();
                         }
                         else
                         {
@@ -2367,7 +2388,7 @@ namespace FDS
                         eventTitle = logEntry.file_deleted.ToString() + " Cookies cleared";
                         if (logEntry.title.Contains("Event"))
                         {
-                            eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                            eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + Environment.NewLine + " at " + logTime.ToString();
                         }
                         else
                         {
@@ -2381,7 +2402,7 @@ namespace FDS
 
                         if (logEntry.title.Contains("Event"))
                         {
-                            eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                            eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + Environment.NewLine + " at " + logTime.ToString();
                         }
                         else
                         {
@@ -2398,16 +2419,16 @@ namespace FDS
                     }
                     else if (logEntry.service_name == "Windows Registry Protection")
                     {
-                        eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                        eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + Environment.NewLine + " at " + logTime.ToString();
                     }
                     else if (logEntry.service_name == "Free Storage Protection")
                     {
                         eventTitle = logEntry.title;
-                        eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                        eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + Environment.NewLine + " at " + logTime.ToString();
                     }
                     else if (logEntry.service_name == "Trash Data Protection")
                     {
-                        eventDesc = logEntry.title + " completed by " + logEntry.changed_by.ToString() + " at " + logTime.ToString();
+                        eventDesc = logEntry.title + " completed by " + logEntry.changed_by.ToString() + Environment.NewLine + " at " + logTime.ToString();
                     }
                     else if (logEntry.service_name == "System Network Monitoring Protection")
                     {
@@ -2827,6 +2848,7 @@ namespace FDS
                         grdNoInternetGrid.Visibility = Visibility.Visible;
                         grdWithVPN.Visibility = Visibility.Hidden;
                         grdWithoutVPN.Visibility = Visibility.Visible;
+                        headerWithVPN.Visibility = Visibility.Hidden;
                         headerWithoutVPN.Visibility = Visibility.Visible;
                         txtCertificatesCounts2.Text = "0";
                         txtProxyCount2.Text = "0";
@@ -3004,7 +3026,7 @@ namespace FDS
                     deviceOffline = true;
                     timerLastUpdate.IsEnabled = true;
                     lblMessageHeader.Text = "Your Device is Disabled. Contact to Administrator";
-                    grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                    grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFC16B"));
                     string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
                     BitmapImage DeviceDeactive = new BitmapImage();
                     DeviceDeactive.BeginInit();
@@ -3014,7 +3036,7 @@ namespace FDS
                     return;
                 }
 
-                if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
+                if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) && (apiResponse.Success = true))
                 {
 
                     var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.Data);
@@ -3031,6 +3053,13 @@ namespace FDS
                     {
 
                         lblSerialNumber.Text = lblPopSerialNumber.Text = deviceDetail.serial_number;
+
+                        imgDesktop.Visibility=Visibility.Visible;
+                        lblUserName.Visibility= Visibility.Visible;
+                        popup.Visibility = Visibility.Visible;
+                        imgDesktop2.Visibility = Visibility.Visible;
+                        txtOrganization.Visibility = Visibility.Visible;
+
                         lblUserName.Text = lblDeviceName.Text = deviceDetail.device_name;
                         lblUserName.Text = lblUserName.Text + "’s Desktop";
                         lblLocation.Text = deviceDetail.device_location != null ? deviceDetail.device_location.ToString() : "";
@@ -3137,6 +3166,11 @@ namespace FDS
 
                 if (deviceDetail != null)
                 {
+                    imgDesktop.Visibility = Visibility.Visible;
+                    lblUserName.Visibility = Visibility.Visible;
+                    popup.Visibility = Visibility.Visible;
+                    imgDesktop2.Visibility = Visibility.Visible;
+                    txtOrganization.Visibility = Visibility.Visible;
 
                     lblSerialNumber.Text = lblPopSerialNumber.Text = deviceDetail.serial_number;
                     lblUserName.Text = lblDeviceName.Text = deviceDetail.device_name;
@@ -3587,12 +3621,19 @@ namespace FDS
             {
             }
         }
+
+        private void DropdownButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Toggle the popup's visibility
+            popup.IsOpen = !popup.IsOpen;
+        }
         private async void btnUninstall_Click(object sender, RoutedEventArgs e)
         {
             btnUninstall.IsEnabled = false;
 
             if (!Generic.IsUserAdministrator())
             {
+                popup.IsOpen = false;
                 btnUninstall.IsEnabled = true;
                 MessageBox.Show("You can't uninstall, Please contact admin to uninstall.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
@@ -4008,7 +4049,7 @@ namespace FDS
         {
             if (values == null || values.Length != 3)
                 return DependencyProperty.UnsetValue;
-
+            
             string phoneCode = values[0] as string;
             string countryCode = values[1] as string;
             string countryName = values[2] as string;
