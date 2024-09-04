@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Windows.Markup;
 
 namespace FDS.API_Service
 {
@@ -542,6 +543,7 @@ namespace FDS.API_Service
                         var responseString = await response.Content.ReadAsStringAsync();
                         var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
                         apiResponse.Success = true;
+                        apiResponse.HttpStatusCode = HttpStatusCode.OK;
                         return apiResponse;
                     }
                     else
@@ -603,6 +605,7 @@ namespace FDS.API_Service
                         var responseString = await response.Content.ReadAsStringAsync();
                         var responseData = JsonConvert.DeserializeObject<DTO.Responses.ResponseData>(responseString);
                         responseData.Success = true;
+                        response.StatusCode = HttpStatusCode.OK;
                         return responseData;
                     }
                     else
@@ -947,48 +950,43 @@ namespace FDS.API_Service
         }
 
 
-        public async Task<List<DTO.Responses.LogEntry>> GetServiceInfoAsync(int serviceID)
+        
+
+        public async Task<List<DTO.Responses.LogEntry>> GetServiceInfoAsync(int serviceID, int pageSize, int page)
         {
             try
             {
-                var handler = new HttpClientHandler
-                {
-                    UseProxy = false // Disable using the system proxy
-                };
-                List<DTO.Responses.LogEntry> logEntries = new List<DTO.Responses.LogEntry>();
+                var handler = new HttpClientHandler { UseProxy = false };
                 using (var client1 = new HttpClient(handler))
                 {
                     client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
-                    var getresponse = await client1.GetAsync(AppConstants.EndPoints.serviceinfo + "?device_uuid=" + AppConstants.UUId + "&subservices_id=" + serviceID.ToString());
+                    var getresponse = await client1.GetAsync($"{AppConstants.EndPoints.serviceinfo}?device_uuid={AppConstants.UUId}&subservices_id={serviceID}&page_size={pageSize}&page={page}");
                     if (getresponse.IsSuccessStatusCode)
                     {
                         var responseString = await getresponse.Content.ReadAsStringAsync();
-
                         LogResponse logResponse = JsonConvert.DeserializeObject<LogResponse>(responseString);
 
-                        // Access the list of log entries
-                        logEntries = logResponse.log;
-                         
-                      
-                        return logEntries;
-                    }
-                    else
-                    {
-                         
-                        return logEntries;
+                        if (logResponse != null && logResponse.data != null)
+                        {
+                            var logEntries = logResponse.data.logs;
+                            // Now you can work with logEntries, which is a List<LogEntry>
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                        return logResponse.data.logs;
                     }
                 }
             }
-
-
             catch (Exception ex)
             {
-                // Handle exceptions and log errors if needed.
-                return null;
+                // Handle exceptions appropriately (e.g., logging)
             }
-
-            return null;
+            return new List<DTO.Responses.LogEntry>();
         }
+
+
 
 
         public async Task<ResponseData> QRGeneratortimerAsync(string emailToken, string phone, string countryCode, string varificationCode, string qrCodeToken)

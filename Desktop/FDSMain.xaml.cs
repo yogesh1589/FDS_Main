@@ -6,6 +6,8 @@ using FDS.DTO.Responses;
 using FDS.Factories;
 using FDS.Logging;
 using FDS.Runners;
+
+using FDS.ViewModels;
 using FDS.WindowService;
 
 using Microsoft.Win32;
@@ -126,7 +128,7 @@ namespace FDS
         string encryptOutPutFile = @"\Main";
         System.Windows.Controls.Image imgLoader;
         bool deviceDeletedFlag = false;
-        bool showMessageBoxes = true;//true for staging and false for production
+        public bool showMessageBoxes = true;//true for staging and false for production
         ApiService apiService = new ApiService();
         public static byte[] EncKey { get; set; }
         public bool deviceActive = true;
@@ -145,7 +147,9 @@ namespace FDS
         public bool chkFlgClick = false;
         public bool isInternetReconnect = false;
         public string currentServerName = string.Empty;
-   
+        public LogEntryViewModel ViewModel { get; set; }
+        private int CurrentServiceID = 0;
+        public ObservableCollection<LogEntry> LogEntries;
         private bool connectedVPN;
 
         public FDSMain()
@@ -164,10 +168,10 @@ namespace FDS
                 InitializeFDS();
                 DataContext = new ViewModel();
                 thisWindow = GetWindow(this);
+                ViewModel = new LogEntryViewModel();
+                this.DataContext = ViewModel;
 
- 
-
-                DataContext = this;
+              
             }
             catch (Exception ex)
             {
@@ -433,13 +437,13 @@ namespace FDS
                 if (result)
                 {
                     VPNService vpnService = new VPNService();
-                    string publicIp = await vpnService.GetPublicIpAddressAsync();         
+                    string publicIp = await vpnService.GetPublicIpAddressAsync();
 
                     if (!string.IsNullOrEmpty(publicIp))
                     {
                         var location = await vpnService.GetIpLocationAsync(publicIp);
                         currentServerName = location;
-                        ShowMap(); 
+                        ShowMap();
                     }
 
                     VPNimage1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
@@ -476,13 +480,13 @@ namespace FDS
                 vpnstatus2.Visibility = Visibility.Hidden;
                 VPNimage1.Visibility = Visibility.Hidden;
 
-                 
+
 
                 bool result = await ConnectVPN();
 
                 if (result)
                 {
-                     
+
 
                     // After files are downloaded, hide the loader and download status text
                     loader.Visibility = Visibility.Collapsed;
@@ -533,7 +537,7 @@ namespace FDS
                     if (vpnData != null)
                     {
                         var configData = vpnData.Data.Config;
- 
+
 
                         if (File.Exists(configFile))
                         {
@@ -541,7 +545,7 @@ namespace FDS
                         }
                         File.WriteAllText(configFile, configData);
 
-                        Tunnel.Service.Run(configFile);                        
+                        Tunnel.Service.Run(configFile);
                         await WriteAllBytesAsync(configFile, Encoding.UTF8.GetBytes(configData));
                         await Task.Run(() => Tunnel.Service.Add(configFile, true));
                         connectedVPN = true;
@@ -606,7 +610,7 @@ namespace FDS
         }
 
 
-        
+
 
         private void LoadServices()
         {
@@ -721,7 +725,7 @@ namespace FDS
                 cntServiceSettingPart2.Visibility = Visibility.Hidden;
                 cntBackdrop.Visibility = Visibility.Hidden;
                 cntPopup.Visibility = Visibility.Hidden;
-              
+
                 switch (screen)
                 {
                     case Screens.GetOTP:
@@ -731,9 +735,10 @@ namespace FDS
                         strScreenVals = "GetStart";
                         //imgPantgone.Visibility = Visibility.Hidden;
                         header.Visibility = Visibility.Visible;
-                       
+
                         imgDesktop.Visibility = Visibility.Hidden;
                         lblUserName.Visibility = Visibility.Hidden;
+                        dropdownButton.Visibility = Visibility.Hidden;
                         popup.Visibility = Visibility.Hidden;
                         imgDesktop2.Visibility = Visibility.Hidden;
                         txtOrganization.Visibility = Visibility.Hidden;
@@ -830,7 +835,7 @@ namespace FDS
                         imgDesktop2.Visibility = Visibility.Hidden;
                         txtOrganization.Visibility = Visibility.Hidden;
                         btnUninstall.Visibility = Visibility.Hidden;
- 
+
                         lblMainLable1.Visibility = Visibility.Hidden;
                         lblMainLable2.Visibility = Visibility.Hidden;
                         txtPhoneValidation.Text = string.Empty;
@@ -964,6 +969,7 @@ namespace FDS
                         lblUserName.Visibility = Visibility.Visible;
                         imgDesktop.Visibility = Visibility.Visible;
                         imgDesktop2.Visibility = Visibility.Visible;
+                        dropdownButton.Visibility = Visibility.Visible;
                         txtOrganization.Visibility = Visibility.Visible;
                         GetOTP.Visibility = Visibility.Hidden;
                         AuthenticationProcessing.Visibility = Visibility.Hidden;
@@ -1630,7 +1636,7 @@ namespace FDS
                     string newCountryCode = parts[0].ToString().Trim();
 
                     var apiResponse = await apiService.QRGeneratortimerAsync(txtEmailToken.Text, phnumber, newCountryCode, VerificationCode, DeviceResponse.qr_code_token);
-                    if ((apiResponse.HttpStatusCode == HttpStatusCode.OK) || (apiResponse.Success = true))
+                    if ((apiResponse.HttpStatusCode == HttpStatusCode.OK))
                     {
                         Dispatcher.Invoke(() =>
                         {
@@ -2071,7 +2077,7 @@ namespace FDS
                         GetServiceHealthReport();
                     }
 
-                    
+
                     var apiResponse = await apiService.CheckDeviceHealthAsync();
 
                     if (apiResponse == null)
@@ -2198,7 +2204,7 @@ namespace FDS
         }
 
         private ListBoxItem lastSelectedItem = null;
-        private void ListBoxItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private async void ListBoxItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             // Handle the click event here
             var listBoxItem = sender as ListBoxItem;
@@ -2227,275 +2233,27 @@ namespace FDS
                 {
                     // Retrieve Id property of the service
                     int id = service.ServiceID;
-
-                    GetEventDetails(id);
+                    CurrentServiceID = id;
+                    EventLogsScrollViewer.ScrollToVerticalOffset(0);
+                    await ViewModel.LoadMoreLogEntries(id);                    
+                    grdGridEvents.Visibility = Visibility.Visible;
+                    Console.WriteLine($"Number of LogEntries: {ViewModel.LogEntries.Count}");
                 }
             }
         }
+         
 
+       
 
-        public void clearEventLogs()
+        private async void ScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            txtlogEvent.Text = string.Empty;
-            txtlogEvent2.Text = string.Empty;
-            txtlogEvent3.Text = string.Empty;
-            txtlogEvent4.Text = string.Empty;
-            txtlogEvent5.Text = string.Empty;
-            txtlogsEvent.Text = string.Empty;
-            txtlogsEvent2.Text = string.Empty;
-            txtlogsEvent3.Text = string.Empty;
-            txtlogsEvent4.Text = string.Empty;
-            txtlogsEvent5.Text = string.Empty;
-            txtlogEventHeader.Text = string.Empty;
-            txtlogEventHeader2.Text = string.Empty;
-            txtlogEventHeader3.Text = string.Empty;
-            txtlogEventHeader4.Text = string.Empty;
-            txtlogEventHeader5.Text = string.Empty;
-        }
-
-      
-
-
-        public (string, string) GetLogTitles(string logTitle, string logEntryChangedby, string logEntryTime)
-        {
-            string eventTitle = string.Empty;
-            string eventDesc = string.Empty;
-            if (logTitle.Contains("completed"))
+            if (e.VerticalOffset == e.ExtentHeight - e.ViewportHeight)
             {
-                eventTitle = logTitle;
-                eventDesc = logTitle + " by " + logEntryChangedby + " at " + logEntryTime;
-            }
-            else
-            {
-                eventTitle = logTitle + " completed";
-                eventDesc = logTitle + " completed by " + logEntryChangedby + " at " + logEntryTime;
-            }
-            return (eventTitle, eventDesc);
-        }
-
-        public async Task GetEventDetails(int id)
-        {
-            chkFlgClick = true;
-            lblheadingServer.Text = "Activity Logs";
-            grdGridEvents.Visibility = Visibility.Visible;
-            grdMapGrid.Visibility = Visibility.Hidden;
-            grdNoInternetGrid.Visibility = Visibility.Hidden;
-            grdGridEventsG1.Visibility = Visibility.Hidden;
-            grdGridEventsG2.Visibility = Visibility.Hidden;
-            grdGridEventsG3.Visibility = Visibility.Hidden;
-            grdGridEventsG4.Visibility = Visibility.Hidden;
-
-            clearEventLogs();
-            List<DTO.Responses.LogEntry> Response = await apiService.GetServiceInfoAsync(id);
-
-            if ((Response != null) && (Response.Count != 0))
-            {
-
-                int counter = 1;
-                foreach (var logEntry in Response)
-                {
-                    if (counter == 1)
-                    {
-                        grdGridEventsG1.Visibility = Visibility.Visible;
-                    }
-                    else if (counter == 2)
-                    {
-                        grdGridEventsG2.Visibility = Visibility.Visible;
-                    }
-                    else if (counter == 3)
-                    {
-                        grdGridEventsG3.Visibility = Visibility.Visible;
-                    }
-                    else if (counter == 4)
-                    {
-                        grdGridEventsG4.Visibility = Visibility.Visible;
-                    }
-
-                    counter++;
-                    string utcDateTimeString = logEntry.time;
-
-                    string logTime = string.Empty;
-                    string dataTimeVal = string.Empty;
-                    try
-                    {
-
-                        // Parse the UTC datetime string to DateTime object
-                        DateTime utcDateTime = DateTime.ParseExact(utcDateTimeString, "yyyy-MM-ddTHH:mm:ss.ffffffZ", null, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal);
-
-                        // Get the local time zone of the system
-                        TimeZoneInfo localTimeZone = TimeZoneInfo.Local;
-
-                        // Convert to local time zone
-                        DateTime localDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, localTimeZone);
-
-                        // Convert to EST if in USA, otherwise keep in local time zone
-                        DateTime convertedDateTime;
-                        if (localTimeZone.Id == "Eastern Standard Time")
-                        {
-                            // Already in EST
-                            convertedDateTime = localDateTime;
-                        }
-                        else
-                        {
-                            // Convert to EST
-                            TimeZoneInfo estTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
-                            convertedDateTime = TimeZoneInfo.ConvertTime(localDateTime, localTimeZone, estTimeZone);
-                        }
-
-
-
-
-
-
-                        //string time = logEntry.time.ToString();
-                        //DateTime dateTime = DateTime.Parse(time);
-                        logTime = convertedDateTime.ToString("hh:mm tt");
-                        dataTimeVal = convertedDateTime.ToString();
-
-                    }
-                    catch (Exception ex)
-                    {
-                        ex.ToString();
-                    }
-
-
-                    if (logEntry.changed_by == "_")
-                    {
-                        logEntry.changed_by = "FDS";
-                    }
-
-
-                    //Defaults----Title and Description-----
-                    string eventTitle = logEntry.file_deleted.ToString() + " Files cleared";
-                    string eventDesc = "Event has be trigger successfully after browser closed by " + logEntry.changed_by.ToString() + Environment.NewLine + " at " + logTime.ToString();
-
-                    if (logEntry.service_name == "Web Cache Protection")
-                    {
-                        eventTitle = logEntry.file_deleted.ToString() + " B cleared";
-                        if (logEntry.title.Contains("Event"))
-                        {
-                            eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + Environment.NewLine + " at " + logTime.ToString();
-                        }
-                        else
-                        {
-                            var eventDetails = GetLogTitles(logEntry.title, logEntry.changed_by.ToString(), logTime.ToString());
-                            eventTitle = eventDetails.Item1;
-                            eventDesc = eventDetails.Item2;
-                        }
-                    }
-                    else if (logEntry.service_name == "Web Session Protection")
-                    {
-                        eventTitle = logEntry.file_deleted.ToString() + " Cookies cleared";
-                        if (logEntry.title.Contains("Event"))
-                        {
-                            eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + Environment.NewLine + " at " + logTime.ToString();
-                        }
-                        else
-                        {
-                            var eventDetails = GetLogTitles(logEntry.title, logEntry.changed_by.ToString(), logTime.ToString());
-                            eventTitle = eventDetails.Item1;
-                            eventDesc = eventDetails.Item2;
-                        }
-                    }
-                    else if (logEntry.service_name == "Web Tracking Protection")
-                    {
-
-                        if (logEntry.title.Contains("Event"))
-                        {
-                            eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + Environment.NewLine + " at " + logTime.ToString();
-                        }
-                        else
-                        {
-                            var eventDetails = GetLogTitles(logEntry.title, logEntry.changed_by.ToString(), logTime.ToString());
-                            eventTitle = eventDetails.Item1;
-                            eventDesc = eventDetails.Item2;
-                        }
-                    }
-                    else if (logEntry.service_name == "DNS Cache Protection")
-                    {
-                        var eventDetails = GetLogTitles(logEntry.title, logEntry.changed_by.ToString(), logTime.ToString());
-                        eventTitle = eventDetails.Item1;
-                        eventDesc = eventDetails.Item2;
-                    }
-                    else if (logEntry.service_name == "Windows Registry Protection")
-                    {
-                        eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + Environment.NewLine + " at " + logTime.ToString();
-                    }
-                    else if (logEntry.service_name == "Free Storage Protection")
-                    {
-                        eventTitle = logEntry.title;
-                        eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString() + Environment.NewLine + " at " + logTime.ToString();
-                    }
-                    else if (logEntry.service_name == "Trash Data Protection")
-                    {
-                        eventDesc = logEntry.title + " completed by " + logEntry.changed_by.ToString() + Environment.NewLine + " at " + logTime.ToString();
-                    }
-                    else if (logEntry.service_name == "System Network Monitoring Protection")
-                    {
-
-                        if (logEntry.title.Contains("Requested"))
-                        {
-                            eventTitle = logEntry.file_deleted + " Issues requested to delete";
-                            eventDesc = logEntry.title;
-                        }
-                        else if (logEntry.title.Contains("Whitelisted"))
-                        {
-                            eventTitle = logEntry.file_deleted + " Issues whitelisted";
-                            eventDesc = logEntry.title;
-                        }
-                        else
-                        {
-                            eventTitle = logEntry.file_deleted + " Issues deleted";
-                            eventDesc = logEntry.title + " by " + logEntry.changed_by.ToString();
-                        }
-                    }
-
-
-
-                    string eventHeader = Generic.FormatDateTime(dataTimeVal);
-
-
-                    if (string.IsNullOrEmpty(txtlogEvent.Text))
-                    {
-                        txtlogEvent.Text = eventTitle;
-                        txtlogsEvent.Text = eventDesc;
-                        txtlogEventHeader.Text = eventHeader;
-                    }
-                    else if (string.IsNullOrEmpty(txtlogEvent2.Text))
-                    {
-                        txtlogEvent2.Text = eventTitle;
-                        txtlogsEvent2.Text = eventDesc;
-                        txtlogEventHeader2.Text = eventHeader;
-                    }
-                    else if (string.IsNullOrEmpty(txtlogEvent3.Text))
-                    {
-                        txtlogEvent3.Text = eventTitle;
-                        txtlogsEvent3.Text = eventDesc;
-                        txtlogEventHeader3.Text = eventHeader;
-                    }
-                    else if (string.IsNullOrEmpty(txtlogEvent4.Text))
-                    {
-                        txtlogEvent4.Text = eventTitle;
-                        txtlogsEvent4.Text = eventDesc;
-                        txtlogEventHeader4.Text = eventHeader;
-                    }
-                    else if (string.IsNullOrEmpty(txtlogEvent5.Text))
-                    {
-                        txtlogEvent5.Text = eventTitle;
-                        txtlogsEvent5.Text = eventDesc;
-                        txtlogEventHeader5.Text = eventHeader;
-                    }
-
-                }
-            }
-            else
-            {
-                grdNoInternetGrid.Visibility = Visibility.Visible;
-                grdGridEvents.Visibility = Visibility.Hidden;
+                // Load more items when scrolled to the bottom
+                await ViewModel.LoadMoreLogEntries(CurrentServiceID);
             }
         }
-
-        // Helper method to find a child of a specific type within a Visual
+ 
         private T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
         {
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
@@ -2802,7 +2560,7 @@ namespace FDS
             }
         }
 
-        public void ServiceGridDetails(ServiceResponseNew Response)
+        public async void ServiceGridDetails(ServiceResponseNew Response)
         {
             int falseCount = 0;
             if (Response.Data[0].Services.Count > 0)
@@ -2954,7 +2712,7 @@ namespace FDS
                         {
                             InitializeListBox();
                             int id = firstService.ServiceID;
-                            GetEventDetails(id);
+                            await ViewModel.LoadMoreLogEntries(id);
                         }
                     }
 
@@ -3054,8 +2812,8 @@ namespace FDS
 
                         lblSerialNumber.Text = lblPopSerialNumber.Text = deviceDetail.serial_number;
 
-                        imgDesktop.Visibility=Visibility.Visible;
-                        lblUserName.Visibility= Visibility.Visible;
+                        imgDesktop.Visibility = Visibility.Visible;
+                        lblUserName.Visibility = Visibility.Visible;
                         popup.Visibility = Visibility.Visible;
                         imgDesktop2.Visibility = Visibility.Visible;
                         txtOrganization.Visibility = Visibility.Visible;
@@ -3267,66 +3025,66 @@ namespace FDS
                     lstCronEvent.Clear();
                     foreach (var services in servicesResponse.Services)
                     {
-                         
 
-                            foreach (var subservice in services.Subservices)
+
+                        foreach (var subservice in services.Subservices)
+                        {
+
+                            if (subservice.Sub_service_active)
                             {
 
-                                if (subservice.Sub_service_active)
+                                if (subservice.Sub_service_name == "system_network_monitoring_protection")
+                                {
+                                    isNetworkServiceRun = true;
+                                }
+                                string transformed = TransformString(subservice.Sub_service_name);
+                                if ((transformed == ServiceTypeName.WebSessionProtection.ToString()) || (transformed == ServiceTypeName.WebCacheProtection.ToString()) || (transformed == ServiceTypeName.WebTrackingProtection.ToString()))
+                                {
+                                    isEventServiceRun = true;
+                                }
+
+
+
+                                if (subservice.Execute_now)
+                                {
+                                    //MessageBox.Show("Manual Execution :" + subservice.Sub_service_name);
+                                    ExecuteSubService(subservice, "M");
+                                }
+                                else if ((subservice.Execute_Skipped_Service) && (subservice.Sub_service_name != "system_network_monitoring_protection"))
+                                {
+                                    //MessageBox.Show("Skipped Execution :" + subservice.Sub_service_name);
+                                    ExecuteSubService(subservice, "SK");
+                                }
+                                else
                                 {
 
-                                    if (subservice.Sub_service_name == "system_network_monitoring_protection")
+                                    if (!string.IsNullOrEmpty(subservice.Execution_period))
                                     {
-                                        isNetworkServiceRun = true;
-                                    }
-                                    string transformed = TransformString(subservice.Sub_service_name);
-                                    if ((transformed == ServiceTypeName.WebSessionProtection.ToString()) || (transformed == ServiceTypeName.WebCacheProtection.ToString()) || (transformed == ServiceTypeName.WebTrackingProtection.ToString()))
-                                    {
-                                        isEventServiceRun = true;
+                                        var schedule = CrontabSchedule.Parse(subservice.Execution_period);
+                                        DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
+                                        lstCron.Add(subservice, nextRunTime);
                                     }
 
+                                    lstCronEvent.Add(subservice, DateTime.MinValue);
 
-
-                                    if (subservice.Execute_now)
-                                    {
-                                        //MessageBox.Show("Manual Execution :" + subservice.Sub_service_name);
-                                        ExecuteSubService(subservice, "M");
-                                    }
-                                    else if ((subservice.Execute_Skipped_Service) && (subservice.Sub_service_name != "system_network_monitoring_protection"))
-                                    {
-                                        //MessageBox.Show("Skipped Execution :" + subservice.Sub_service_name);
-                                        ExecuteSubService(subservice, "SK");
-                                    }
-                                    else
-                                    {
-
-                                        if (!string.IsNullOrEmpty(subservice.Execution_period))
-                                        {
-                                            var schedule = CrontabSchedule.Parse(subservice.Execution_period);
-                                            DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
-                                            lstCron.Add(subservice, nextRunTime);
-                                        }
-
-                                        lstCronEvent.Add(subservice, DateTime.MinValue);
-
-                                    }
                                 }
                             }
+                        }
 
 
-                            CronLastUpdate.Start();
+                        CronLastUpdate.Start();
 
-                            if (isEventServiceRun)
-                            {
-                                timerEventBasedService.Start();
-                            }
+                        if (isEventServiceRun)
+                        {
+                            timerEventBasedService.Start();
+                        }
 
-                            if (isNetworkServiceRun)
-                            {
-                                timerNetworkMonitering.Start();
-                            }
+                        if (isNetworkServiceRun)
+                        {
+                            timerNetworkMonitering.Start();
+                        }
 
-                      
+
                     }
 
                 }
@@ -3722,7 +3480,7 @@ namespace FDS
                         LoadMenu(Screens.GetStart);
                         Generic.UninstallFDS();
 
-                        
+
 
 
                     }
@@ -4049,7 +3807,7 @@ namespace FDS
         {
             if (values == null || values.Length != 3)
                 return DependencyProperty.UnsetValue;
-            
+
             string phoneCode = values[0] as string;
             string countryCode = values[1] as string;
             string countryName = values[2] as string;

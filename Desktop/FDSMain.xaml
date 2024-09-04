@@ -83,9 +83,9 @@
                                 <Image x:Name="imgDesktop" Source="Assets/SystemIcon.png" Width="24" Height="24" Margin="174,0,0,0" RenderTransformOrigin="0.536,-4.762" Visibility="Visible" />
                                 <!--<TextBlock x:Name="lblUserName" Text="Mike’s Desktop" Margin="8,0,0,0" Width="300" Height="24" Visibility="Visible" FontSize="14" FontWeight="SemiBold" Foreground="White"></TextBlock>-->
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock x:Name="lblUserName" Text="" Margin="8,0,0,0" Visibility="Visible" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                                    <TextBlock x:Name="lblUserName" Text="" Margin="8,0,0,0" Visibility="Hidden" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
 
-                                    <Button x:Name="dropdownButton" Click="DropdownButton_Click" Background="Transparent" BorderBrush="Transparent" Margin="4,0,0,0" Padding="0">
+                                    <Button x:Name="dropdownButton" Visibility="Hidden" Click="DropdownButton_Click" Background="Transparent" BorderBrush="Transparent" Margin="4,0,0,0" Padding="0">
                                         <Image Source="Assets/ChipDown.png" Width="16" Height="16" Margin="0,0,0,8"/>
                                     </Button>
 
@@ -515,7 +515,7 @@
                         </Grid>
                     </Border>
 
-                    <Border x:Name="AuthenticationStep1" Background="#DCE4F0" BorderThickness="1" Visibility="Hidden" Margin="0,-21,0,0" CornerRadius="30" Width="456" Height="489">
+                    <Border x:Name="AuthenticationStep1" Background="#DCE4F0" BorderThickness="1" Visibility="Hidden" Margin="0,0,0,0" CornerRadius="30" Width="456" Height="489">
                         <Grid  Margin="10,10,10,10" Visibility="Visible" Width="456" Height="489" Background="#DCE4F0">
 
                             <StackPanel HorizontalAlignment="Stretch">
@@ -1381,86 +1381,34 @@
                                         </Border>
                                     </Grid>
 
-                                    <Grid Grid.Column="1" Width="340" x:Name="grdGridEvents" Visibility="Hidden" Height="227" VerticalAlignment="Top" Margin="0,-230,250,0" Grid.ColumnSpan="2">
-                                        <Border CornerRadius="7" Background="#0E2E5B" Grid.Column="1" Width="335" Height="227">
-                                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                                                <Grid x:Name="EventLogs" RenderTransformOrigin="0.857,0.554" Margin="0,0,0,0">
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="55"></RowDefinition>
-                                                        <RowDefinition Height="1"></RowDefinition>
-                                                        <RowDefinition Height="55"></RowDefinition>
-                                                        <RowDefinition Height="1"></RowDefinition>
-                                                        <RowDefinition Height="55"></RowDefinition>
-                                                        <RowDefinition Height="1"></RowDefinition>
-                                                        <RowDefinition Height="55"></RowDefinition>
-                                                        <RowDefinition Height="1"></RowDefinition>
-                                                        <RowDefinition Height="55"></RowDefinition>
-                                                    </Grid.RowDefinitions>
-                                                    <Grid Grid.Row="0">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <TextBlock Name="txtlogEventHeader" Visibility="Visible" Text="2 Days ago, 11:42 PM" Foreground="#868C94" FontSize="9" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Column="1" Margin="100,5,4,0" Width="70" Height="12"/>
-                                                        <TextBlock Name="txtlogEvent" Visibility="Visible" Text="Scheduled Execution Completed" Foreground="#FFFFFF" FontSize="12" FontWeight="DemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,0,50.333,20" Width="220"/>
-                                                        <TextBlock Foreground="#CED1D4" FontFamily="Inter" FontStyle="Normal" Name="txtlogsEvent" FontSize="10" FontWeight="Medium" HorizontalAlignment="Left" VerticalAlignment="Bottom" Grid.Column="1" Margin="15,30,0,0" Width="302" Height="26">
-                        Event has been triggered successfully after browser closed by FDS
-                        <LineBreak/> at 12:00 PM
-                                                        </TextBlock>
-                                                    </Grid>
-                                                    <Border x:Name="grdGridEventsG1" Visibility="Visible" Margin="0,0,0,0" BorderBrush="#E7E8EA" BorderThickness="0,1,0,0" Width="302" Opacity="0.1" Height="1" Grid.Row="1" Grid.Column="1"/>
-                                                    <Grid Grid.Row="2">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <TextBlock Name="txtlogEventHeader2" Visibility="Visible" Text="2 Days ago, 11:42 PM" Foreground="#868C94" FontSize="9" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Column="1" Margin="100,5,4,0" Width="70" Height="12"/>
-                                                        <TextBlock Name="txtlogEvent2" Visibility="Visible" Text="10 Files cleared" Foreground="#FFFFFF" FontSize="12" FontWeight="DemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,-5,50.333,15" Width="220"/>
-                                                        <TextBlock Foreground="#CED1D4" FontFamily="Inter" FontStyle="Normal" Name="txtlogsEvent2" FontSize="10" FontWeight="Medium" HorizontalAlignment="Left" VerticalAlignment="Bottom" Grid.Column="1" Margin="15,30,0,0" Width="302" Height="26">
-                        Event has been triggered successfully after browser closed by FDS
-                        <LineBreak/> at 12:00 PM
-                                                        </TextBlock>
-                                                    </Grid>
-                                                    <Border x:Name="grdGridEventsG2" Visibility="Visible" BorderBrush="#E7E8EA" BorderThickness="0,1,0,0" Width="302" Opacity="0.1" Height="1" Grid.Row="3" Grid.Column="1"/>
-                                                    <Grid Grid.Row="4">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <TextBlock Name="txtlogEventHeader3" Visibility="Visible" Text="2 Days ago, 11:42 PM" Foreground="#868C94" FontSize="9" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Column="1" Margin="100,5,4,0" Width="70" Height="12"/>
-                                                        <TextBlock Name="txtlogEvent3" Visibility="Visible" Text="10 Files cleared" Foreground="#FFFFFF" FontSize="12" FontWeight="DemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,-5,50.333,15" Width="220"/>
-                                                        <TextBlock Foreground="#CED1D4" FontFamily="Inter" FontStyle="Normal" Name="txtlogsEvent3" FontSize="10" FontWeight="Medium" HorizontalAlignment="Left" VerticalAlignment="Bottom" Grid.Column="1" Margin="15,30,0,0" Width="302" Height="26">
-                        Event has been triggered successfully after browser closed by FDS
-                        <LineBreak/> at 12:00 PM
-                                                        </TextBlock>
-                                                    </Grid>
-                                                    <Border x:Name="grdGridEventsG3" Visibility="Visible" BorderBrush="#E7E8EA" BorderThickness="0,1,0,0" Width="302" Opacity="0.1" Height="1" Grid.Row="5" Grid.Column="1"/>
-                                                    <Grid Grid.Row="6">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <TextBlock Name="txtlogEventHeader4" Visibility="Visible" Text="2 Days ago, 11:42 PM" Foreground="#868C94" FontSize="9" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Column="1" Margin="100,5,4,0" Width="70" Height="12"/>
-                                                        <TextBlock Name="txtlogEvent4" Visibility="Visible" Text="10 Files cleared" Foreground="#FFFFFF" FontSize="12" FontWeight="DemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,-5,50.333,15" Width="220"/>
-                                                        <TextBlock Foreground="#CED1D4" FontFamily="Inter" FontStyle="Normal" Name="txtlogsEvent4" FontSize="10" FontWeight="Medium" HorizontalAlignment="Left" VerticalAlignment="Bottom" Grid.Column="1" Margin="15,30,0,0" Width="302" Height="26">
-                        Event has been triggered successfully after browser closed by FDS
-                        <LineBreak/> at 12:00 PM
-                                                        </TextBlock>
-                                                    </Grid>
-
-                                                    <Border x:Name="grdGridEventsG4" Visibility="Visible" BorderBrush="#E7E8EA" BorderThickness="0,1,0,0" Width="302" Opacity="0.1" Height="1" Grid.Row="6" Grid.Column="1"/>
-                                                    <Grid Grid.Row="7">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <TextBlock Name="txtlogEventHeader5" Visibility="Visible" Text="2 Days ago, 11:42 PM" Foreground="#868C94" FontSize="9" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Column="1" Margin="100,5,4,0" Width="70" Height="12"/>
-                                                        <TextBlock Name="txtlogEvent5" Visibility="Visible" Text="10 Files cleared" Foreground="#FFFFFF" FontSize="12" FontWeight="DemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="15,-5,50.333,15" Width="220"/>
-                                                        <TextBlock Foreground="#CED1D4" FontFamily="Inter" FontStyle="Normal" Name="txtlogsEvent5" FontSize="10" FontWeight="Medium" HorizontalAlignment="Left" VerticalAlignment="Bottom" Grid.Column="1" Margin="15,30,0,0" Width="302" Height="26">
-Event has been triggered successfully after browser closed by FDS
-<LineBreak/> at 12:00 PM
-                                                        </TextBlock>
-                                                    </Grid>
-                                                </Grid>
+                                    <Grid Grid.Column="1" Width="340" x:Name="grdGridEvents" Visibility="Visible" Height="227" VerticalAlignment="Top" Margin="0,-230,250,0" Grid.ColumnSpan="2">
+                                        <Border CornerRadius="7" Background="#0E2E5B" Width="335" Height="227">
+                                            <ScrollViewer x:Name="EventLogsScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" ScrollChanged="ScrollViewer_ScrollChanged">
+                                                <ItemsControl ItemsSource="{Binding ViewModel.LogEntries}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <VirtualizingStackPanel />
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid Margin="0,0,0,0">
+                                                                <Grid.RowDefinitions>
+                                                                    <RowDefinition Height="55" />
+                                                                    <RowDefinition Height="1" />
+                                                                </Grid.RowDefinitions>
+                                                                <TextBlock Text="{Binding Header}" Foreground="#868C94" FontSize="9" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="30,5,0,0" Width="90" Height="12"/>
+                                                                <TextBlock Text="{Binding Title}" Foreground="#FFFFFF" FontSize="12" FontWeight="DemiBold" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15,0,50.333,20" Width="220"/>
+                                                                <TextBlock Text="{Binding Description}" Foreground="#CED1D4" FontFamily="Inter" FontSize="10" FontWeight="Medium" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="15,30,0,0" Width="302" Height="26"  TextWrapping="Wrap"/>
+                                                                <Border BorderBrush="#E7E8EA" BorderThickness="0,1,0,0" Width="302" Opacity="0.1" Height="1" Grid.Row="1" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
                                             </ScrollViewer>
                                         </Border>
                                     </Grid>
+
 
 
                                     <Grid Grid.Column="1" Visibility="Hidden" Width="340" x:Name="grdNoInternetGrid"  Height="227" VerticalAlignment="Bottom" Margin="0,-230,250,0" Grid.ColumnSpan="2">

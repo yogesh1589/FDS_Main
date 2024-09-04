@@ -228,6 +228,7 @@
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Models\CertificateData.cs" />
     <Compile Include="Models\CertificationLists.cs" />
+    <Compile Include="Models\LogEntryModel.cs" />
     <Compile Include="Models\Payload.cs" />
     <Compile Include="Models\ProxyData.cs" />
     <Compile Include="Models\ProxyLists.cs" />
@@ -260,6 +261,7 @@
     <Compile Include="TunnelDll\Service.cs" />
     <Compile Include="TunnelDll\Win32.cs" />
     <Compile Include="User32API.cs" />
+    <Compile Include="ViewModels\LogEntryViewModel.cs" />
     <Compile Include="WindowService\WindowServiceInstaller.cs" />
     <Page Include="css\sendOTPStyle.xaml">
       <Generator>MSBuild:Compile</Generator>
