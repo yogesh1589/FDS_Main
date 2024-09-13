@@ -28,7 +28,7 @@ namespace FDS.ViewModels
         }
 
         public int CurrentPage { get; set; } = 1;
-        private const int PageSize = 5; // Adjust as needed
+        private const int PageSize = 5;  
         public int ServiceID { get; set; }
 
         public LogEntryViewModel()
