@@ -171,7 +171,7 @@ namespace FDS
                 ViewModel = new LogEntryViewModel();
                 this.DataContext = ViewModel;
 
-              
+
             }
             catch (Exception ex)
             {
@@ -340,87 +340,7 @@ namespace FDS
             ShowMap();
         }
 
-        private void Image1_MouseEnter(object sender, MouseEventArgs e)
-        {
-            image1.Opacity = 0.6;
-        }
-
-        private void Image1_MouseLeave(object sender, MouseEventArgs e)
-        {
-            image1.Opacity = 1.0;
-        }
-
-        private async void Image1_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            if (image1.Source.ToString().Contains("/Assets/VPNDis.png"))
-            {
-                downloadStatusVPN.Text = "Connecting...";
-                loaderVPN.Visibility = Visibility.Visible;
-                downloadStatusVPN.Visibility = Visibility.Visible;
-                vpnstatus.Visibility = Visibility.Hidden;
-                image1.Visibility = Visibility.Hidden;
-
-                bool result = await ConnectVPN();
-
-                if (result)
-                {
-
-                    loaderVPN.Visibility = Visibility.Collapsed;
-                    downloadStatusVPN.Visibility = Visibility.Collapsed;
-                    vpnstatus.Visibility = Visibility.Visible;
-                    image1.Visibility = Visibility.Visible;
-
-
-                    image1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
-                    vpnstatus.Text = "Disconnected";
-                    vpnstatus.Foreground = Brushes.Green;
-                    sytemInfo2.Text = "Unprotected";
-                    sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-                    sytemInfo4.Text = "N/A";
-                }
-            }
-            else
-            {
-                downloadStatusVPN.Text = "Disconnecting...";
-                // Show the loader and download status text
-                loaderVPN.Visibility = Visibility.Visible;
-                downloadStatusVPN.Visibility = Visibility.Visible;
-                vpnstatus.Visibility = Visibility.Hidden;
-                image1.Visibility = Visibility.Hidden;
-
-
-                bool result = await ConnectVPN();
-
-                if (result)
-                {
-
-                    // After files are downloaded, hide the loader and download status text
-                    loaderVPN.Visibility = Visibility.Collapsed;
-                    downloadStatusVPN.Visibility = Visibility.Collapsed;
-                    vpnstatus.Visibility = Visibility.Visible;
-                    image1.Visibility = Visibility.Visible;
-
-                    image1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
-                    vpnstatus.Text = "Connected";
-                    vpnstatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-                    sytemInfo2.Text = "Protected";
-                    sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
-                    sytemInfo4.Text = "InstanceA";
-                }
-            }
-
-            image1.Opacity = 6.0;
-        }
-
-        private void VPNImage1_MouseEnter(object sender, MouseEventArgs e)
-        {
-            image1.Opacity = 0.6;
-        }
-
-        private void VPNImage1_MouseLeave(object sender, MouseEventArgs e)
-        {
-            image1.Opacity = 1.0;
-        }
+    
 
         private async void VPNImage1_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -449,9 +369,7 @@ namespace FDS
                     VPNimage1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
                     vpnstatus2.Text = "Connected";
                     vpnstatus2.Foreground = Brushes.Green;
-                    sytemInfo2.Text = "Protected";
-                    sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-                    sytemInfo4.Text = "InstanceA";
+                    
                     loader.Visibility = Visibility.Hidden;
                     downloadStatus.Visibility = Visibility.Hidden;
                     vpnstatus2.Visibility = Visibility.Visible;
@@ -466,9 +384,7 @@ namespace FDS
                     VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
                     vpnstatus2.Text = "Disconnected";
                     vpnstatus2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-                    sytemInfo2.Text = "Unprotected";
-                    sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
-                    sytemInfo4.Text = "N/A";
+                    
                 }
             }
             else
@@ -496,9 +412,7 @@ namespace FDS
                     VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
                     vpnstatus2.Text = "Disconnected";
                     vpnstatus2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-                    sytemInfo2.Text = "Unprotected";
-                    sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
-                    sytemInfo4.Text = "N/A";
+             
                     currentServerName = string.Empty;
                     ShowMap();
                 }
@@ -507,9 +421,7 @@ namespace FDS
                     VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
                     vpnstatus2.Text = "Disconnected";
                     vpnstatus2.Foreground = Brushes.Green;
-                    sytemInfo2.Text = "Unprotected";
-                    sytemInfo2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-                    sytemInfo4.Text = "N/A";
+                
                     loader.Visibility = Visibility.Hidden;
                     downloadStatus.Visibility = Visibility.Hidden;
                     vpnstatus2.Visibility = Visibility.Visible;
@@ -517,7 +429,7 @@ namespace FDS
                 }
             }
 
-            image1.Opacity = 6.0;
+ 
             ShowMap();
         }
 
@@ -612,17 +524,17 @@ namespace FDS
 
 
 
-        private void LoadServices()
-        {
-            Services.Add(new ServiceDPP { ServiceName = "Web Tracking Protection", IsActive = true });
-            Services.Add(new ServiceDPP { ServiceName = "Web Session Protection", IsActive = true });
-            Services.Add(new ServiceDPP { ServiceName = "Web Chache Protection", IsActive = false });
-            Services.Add(new ServiceDPP { ServiceName = "DNS Chache Protection", IsActive = true });
-            Services.Add(new ServiceDPP { ServiceName = "Windows Registry Protection", IsActive = false });
-            Services.Add(new ServiceDPP { ServiceName = "Free Storage Protection", IsActive = false });
-            Services.Add(new ServiceDPP { ServiceName = "Trash Data Protection", IsActive = true });
-            Services.Add(new ServiceDPP { ServiceName = "System Network Monitering Protection", IsActive = true });
-        }
+        //private void LoadServices()
+        //{
+        //    Services.Add(new ServiceDPP { ServiceName = "Web Tracking Protection", IsActive = true });
+        //    Services.Add(new ServiceDPP { ServiceName = "Web Session Protection", IsActive = true });
+        //    Services.Add(new ServiceDPP { ServiceName = "Web Chache Protection", IsActive = false });
+        //    Services.Add(new ServiceDPP { ServiceName = "DNS Chache Protection", IsActive = true });
+        //    Services.Add(new ServiceDPP { ServiceName = "Windows Registry Protection", IsActive = false });
+        //    Services.Add(new ServiceDPP { ServiceName = "Free Storage Protection", IsActive = false });
+        //    Services.Add(new ServiceDPP { ServiceName = "Trash Data Protection", IsActive = true });
+        //    Services.Add(new ServiceDPP { ServiceName = "System Network Monitering Protection", IsActive = true });
+        //}
 
 
         public void LoadFDS()
@@ -631,7 +543,7 @@ namespace FDS
             {
                 try
                 {
-                    LoadServices();
+                    //LoadServices();
                     string LauncherAppPath = String.Format("{0}LauncherApp.exe", AppDomain.CurrentDomain.BaseDirectory);
                     SetShortCut(LauncherAppPath);
                     WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
@@ -752,7 +664,7 @@ namespace FDS
                         AuthenticationStep3.Visibility = Visibility.Hidden;
                         lblMainLable1.Visibility = Visibility.Visible;
                         lblMainLable2.Visibility = Visibility.Visible;
-                        MainHomePageUI.Visibility = Visibility.Hidden;
+                       
 
                         titleFusion.Visibility = Visibility.Hidden;
                         AuthenticationMethods2.Visibility = Visibility.Hidden;
@@ -2235,15 +2147,15 @@ namespace FDS
                     int id = service.ServiceID;
                     CurrentServiceID = id;
                     EventLogsScrollViewer.ScrollToVerticalOffset(0);
-                    await ViewModel.LoadMoreLogEntries(id);                    
+                    await ViewModel.LoadMoreLogEntries(id);
                     grdGridEvents.Visibility = Visibility.Visible;
                     Console.WriteLine($"Number of LogEntries: {ViewModel.LogEntries.Count}");
                 }
             }
         }
-         
 
-       
+
+
 
         private async void ScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
@@ -2253,7 +2165,7 @@ namespace FDS
                 await ViewModel.LoadMoreLogEntries(CurrentServiceID);
             }
         }
- 
+
         private T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
         {
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
@@ -2284,7 +2196,7 @@ namespace FDS
                 if (!loadFDS)
                 {
                     MainHomePageUI2.Visibility = Visibility.Hidden;
-                    MainHomePageUI.Visibility = Visibility.Hidden;
+                    
 
                     MessageBox.Show("Your device has been deleted", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
@@ -2319,8 +2231,12 @@ namespace FDS
         private void GetHealthScoreMain()
         {
             HealthScoreDetails healthScoreDetails = apiService.GetHealthscore();
+            if (healthScoreDetails == null)
+            {
+                return;
+            }
 
-            // Check if the list is not null and contains any records
+
             if (healthScoreDetails.Success == true)
             {
                 // Iterate over each HealthScoreDetails record in the list
@@ -2488,11 +2404,7 @@ namespace FDS
                 californiaMapVPN.Visibility = Visibility.Hidden;
                 currentInfoVPN.Text = "NA";
 
-                watingMap.Visibility = Visibility.Visible;
-                ohioMap.Visibility = Visibility.Hidden;
-                northVerginiaMap.Visibility = Visibility.Hidden;
-                californiaMap.Visibility = Visibility.Hidden;
-                sytemInfo4.Text = "NA";
+              
             }
             else if (currentServerName.ToLower().Contains("california"))
             {
@@ -2502,11 +2414,7 @@ namespace FDS
                 californiaMapVPN.Visibility = Visibility.Visible;
                 currentInfoVPN.Text = "California";
 
-                watingMap.Visibility = Visibility.Hidden;
-                ohioMap.Visibility = Visibility.Hidden;
-                northVerginiaMap.Visibility = Visibility.Hidden;
-                californiaMap.Visibility = Visibility.Visible;
-                sytemInfo4.Text = "California";
+                
 
             }
             else if (currentServerName.ToLower().Contains("ohio"))
@@ -2517,38 +2425,33 @@ namespace FDS
                 californiaMapVPN.Visibility = Visibility.Hidden;
                 currentInfoVPN.Text = "Ohio";
 
-                watingMap.Visibility = Visibility.Hidden;
-                ohioMap.Visibility = Visibility.Visible;
-                northVerginiaMap.Visibility = Visibility.Hidden;
-                californiaMap.Visibility = Visibility.Hidden;
-                sytemInfo4.Text = "Ohio";
-
+               
             }
             else if (currentServerName.ToLower().Contains("virginia"))
             {
                 watingMapVPN.Visibility = Visibility.Hidden;
-                watingMap.Visibility = Visibility.Hidden;
+               
                 ohioMapVPN.Visibility = Visibility.Hidden;
-                ohioMap.Visibility = Visibility.Hidden;
+              
                 northVerginiaMapVPN.Visibility = Visibility.Visible;
-                northVerginiaMap.Visibility = Visibility.Visible;
+              
                 californiaMapVPN.Visibility = Visibility.Hidden;
-                californiaMap.Visibility = Visibility.Hidden;
+              
                 currentInfoVPN.Text = "North Virginia";
-                sytemInfo4.Text = "North Virginia";
+                
             }
             else
             {
                 watingMapVPN.Visibility = Visibility.Visible;
-                watingMap.Visibility = Visibility.Visible;
+                 
                 ohioMapVPN.Visibility = Visibility.Hidden;
-                ohioMap.Visibility = Visibility.Hidden;
+                 
                 northVerginiaMapVPN.Visibility = Visibility.Hidden;
-                northVerginiaMap.Visibility = Visibility.Hidden;
+                
                 californiaMapVPN.Visibility = Visibility.Hidden;
-                californiaMap.Visibility = Visibility.Hidden;
+                
                 currentInfoVPN.Text = "NA";
-                sytemInfo4.Text = "NA";
+                 
             }
         }
 
@@ -2647,7 +2550,7 @@ namespace FDS
                     headerWithVPN.Visibility = Visibility.Visible;
                     grdWithVPN.Visibility = Visibility.Visible;
                     //MainHomePageDPP.Visibility = Visibility.Hidden;
-                    MainHomePageUI.Visibility = Visibility.Hidden;
+                   
 
                     grdGridEvents.Visibility = Visibility.Hidden;
                     grdNoInternetGrid.Visibility = Visibility.Hidden;
@@ -2683,7 +2586,7 @@ namespace FDS
                     headerWithVPN.Visibility = Visibility.Hidden;
                     grdWithVPN.Visibility = Visibility.Hidden;
                     //MainHomePageDPP.Visibility = Visibility.Hidden;
-                    MainHomePageUI.Visibility = Visibility.Hidden;
+                  
 
                     grdMapGrid.Visibility = Visibility.Hidden;
                     grdGridEvents.Visibility = Visibility.Visible;
@@ -2726,7 +2629,7 @@ namespace FDS
                     headerWithVPN.Visibility = Visibility.Hidden;
                     grdWithVPN.Visibility = Visibility.Hidden;
                     //MainHomePageDPP.Visibility = Visibility.Hidden;
-                    MainHomePageUI.Visibility = Visibility.Visible;
+                   
 
                     ShowMap();
 
@@ -2809,8 +2712,7 @@ namespace FDS
 
                     if (deviceDetail != null)
                     {
-
-                        lblSerialNumber.Text = lblPopSerialNumber.Text = deviceDetail.serial_number;
+                        lblSerialNumber2.Text = lblPopSerialNumber.Text = deviceDetail.serial_number;
 
                         imgDesktop.Visibility = Visibility.Visible;
                         lblUserName.Visibility = Visibility.Visible;
@@ -2820,9 +2722,9 @@ namespace FDS
 
                         lblUserName.Text = lblDeviceName.Text = deviceDetail.device_name;
                         lblUserName.Text = lblUserName.Text + "’s Desktop";
-                        lblLocation.Text = deviceDetail.device_location != null ? deviceDetail.device_location.ToString() : "";
-                        txtDeviceLocation.Text = lblLocation.Text;
-                        txtloc1.Text = lblLocation.Text;
+                        lblLocation2.Text = deviceDetail.device_location != null ? deviceDetail.device_location.ToString() : "";
+                        txtDeviceLocation.Text = lblLocation2.Text;
+                        txtloc1.Text = lblLocation2.Text;
                         txtOrganization.Text = deviceDetail.org_name != null ? deviceDetail.org_name.ToString() : txtOrganization.Text;
 
                         DateTime localDate = DateTime.Now.ToLocalTime();
@@ -2930,12 +2832,12 @@ namespace FDS
                     imgDesktop2.Visibility = Visibility.Visible;
                     txtOrganization.Visibility = Visibility.Visible;
 
-                    lblSerialNumber.Text = lblPopSerialNumber.Text = deviceDetail.serial_number;
+                    lblSerialNumber2.Text = lblPopSerialNumber.Text = deviceDetail.serial_number;
                     lblUserName.Text = lblDeviceName.Text = deviceDetail.device_name;
                     lblUserName.Text = lblUserName.Text + "’s Desktop";
-                    lblLocation.Text = deviceDetail.device_location != null ? deviceDetail.device_location.ToString() : "";
-                    txtDeviceLocation.Text = lblLocation.Text;
-                    txtloc1.Text = lblLocation.Text;
+                    lblLocation2.Text = deviceDetail.device_location != null ? deviceDetail.device_location.ToString() : "";
+                    txtDeviceLocation.Text = lblLocation2.Text;
+                    txtloc1.Text = lblLocation2.Text;
                     txtOrganization.Text = deviceDetail.org_name != null ? deviceDetail.org_name.ToString() : txtOrganization.Text;
 
                     DateTime localDate = DateTime.Now.ToLocalTime();

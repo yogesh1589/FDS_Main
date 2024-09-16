@@ -527,9 +527,6 @@
     <Resource Include="Assets\backgroundN.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Assets\SystemIcon.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Assets\VPNDis.png" />
   </ItemGroup>
   <ItemGroup>
@@ -552,9 +549,6 @@
   <ItemGroup>
     <Resource Include="Assets\tokenDots.png" />
     <Resource Include="Assets\tokenKeys.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Assets\Organisation.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Assets\verificationicon.png" />
@@ -598,6 +592,10 @@
     <Resource Include="Assets\nointernet.png" />
     <Resource Include="Assets\minimize.png" />
     <Resource Include="Assets\ChipDown.png" />
+    <Resource Include="Assets\SystemIcon.png" />
+    <Resource Include="Assets\Organisation.png" />
+    <Resource Include="Assets\fail.png" />
+    <Resource Include="Assets\successN.png" />
     <Content Include="wireguard.h" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
