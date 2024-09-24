@@ -24,7 +24,7 @@ namespace FDS.API_Service
             {
 
                 var client = new HttpClient();
-                var request = new HttpRequestMessage(HttpMethod.Post, "https://vcs.fusiondatasecure.com/api/client/connect");
+                var request = new HttpRequestMessage(HttpMethod.Post, "https://z4ulpx0055.execute-api.us-east-2.amazonaws.com/api/client/connect");
                 request.Headers.Add("x-api-region", "us-east-1");
                 var content = new StringContent("{\n    \"device_id\": \"" + AppConstants.UUId + "\"\n}", null, "application/json");
                 request.Content = content;

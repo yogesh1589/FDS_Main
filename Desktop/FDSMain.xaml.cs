@@ -340,7 +340,7 @@ namespace FDS
             ShowMap();
         }
 
-    
+
 
         private async void VPNImage1_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -369,7 +369,7 @@ namespace FDS
                     VPNimage1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
                     vpnstatus2.Text = "Connected";
                     vpnstatus2.Foreground = Brushes.Green;
-                    
+
                     loader.Visibility = Visibility.Hidden;
                     downloadStatus.Visibility = Visibility.Hidden;
                     vpnstatus2.Visibility = Visibility.Visible;
@@ -384,7 +384,7 @@ namespace FDS
                     VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
                     vpnstatus2.Text = "Disconnected";
                     vpnstatus2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-                    
+
                 }
             }
             else
@@ -412,7 +412,7 @@ namespace FDS
                     VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
                     vpnstatus2.Text = "Disconnected";
                     vpnstatus2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-             
+
                     currentServerName = string.Empty;
                     ShowMap();
                 }
@@ -421,7 +421,7 @@ namespace FDS
                     VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
                     vpnstatus2.Text = "Disconnected";
                     vpnstatus2.Foreground = Brushes.Green;
-                
+
                     loader.Visibility = Visibility.Hidden;
                     downloadStatus.Visibility = Visibility.Hidden;
                     vpnstatus2.Visibility = Visibility.Visible;
@@ -429,7 +429,7 @@ namespace FDS
                 }
             }
 
- 
+
             ShowMap();
         }
 
@@ -557,7 +557,7 @@ namespace FDS
 
 
 
-                btnUninstall.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                //btnUninstall.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
                 loadFDS = true;
 
                 //// -------Actual Code --------------------------------
@@ -647,7 +647,7 @@ namespace FDS
                         strScreenVals = "GetStart";
                         //imgPantgone.Visibility = Visibility.Hidden;
                         header.Visibility = Visibility.Visible;
-
+                        txtCodeVersion.Visibility = Visibility.Hidden;
                         imgDesktop.Visibility = Visibility.Hidden;
                         lblUserName.Visibility = Visibility.Hidden;
                         dropdownButton.Visibility = Visibility.Hidden;
@@ -658,13 +658,14 @@ namespace FDS
                         imgDesktop2.Visibility = Visibility.Hidden;
                         txtOrganization.Visibility = Visibility.Hidden;
                         cntGetStart.Visibility = Visibility.Visible;
-                        btnUninstall.Visibility = Visibility.Hidden;
+                        dropdownButton.Visibility = Visibility.Hidden;
+                        //btnUninstall.Visibility = Visibility.Hidden;
                         AuthenticationStep1.Visibility = Visibility.Hidden;
                         AuthenticationStep2.Visibility = Visibility.Hidden;
                         AuthenticationStep3.Visibility = Visibility.Hidden;
                         lblMainLable1.Visibility = Visibility.Visible;
                         lblMainLable2.Visibility = Visibility.Visible;
-                       
+
 
                         titleFusion.Visibility = Visibility.Hidden;
                         AuthenticationMethods2.Visibility = Visibility.Hidden;
@@ -673,6 +674,7 @@ namespace FDS
                         break;
                     case Screens.AuthenticationMethods2:
                         strScreenVals = "AuthenticationMethods2";
+                        txtCodeVersion.Visibility = Visibility.Visible;
                         AuthenticationMethods2.Visibility = Visibility.Visible;
                         AuthenticationMethods.Visibility = Visibility.Hidden;
                         AuthenticationStep1.Visibility = Visibility.Hidden;
@@ -696,7 +698,8 @@ namespace FDS
                         imgDesktop.Visibility = Visibility.Hidden;
                         imgDesktop2.Visibility = Visibility.Hidden;
                         txtOrganization.Visibility = Visibility.Hidden;
-                        btnUninstall.Visibility = Visibility.Hidden;
+                        dropdownButton.Visibility = Visibility.Hidden;
+                        //btnUninstall.Visibility = Visibility.Hidden;
                         lblMainLable1.Visibility = Visibility.Hidden;
                         lblMainLable2.Visibility = Visibility.Hidden;
                         header.Background = newBrush;
@@ -704,6 +707,7 @@ namespace FDS
                         break;
                     case Screens.AuthenticationMethods:
                         strScreenVals = "AuthenticationMethods";
+                        txtCodeVersion.Visibility = Visibility.Visible;
                         AuthenticationMethods.Visibility = Visibility.Visible;
                         AuthenticationMethods2.Visibility = Visibility.Hidden;
                         AuthenticationStep1.Visibility = Visibility.Hidden;
@@ -727,7 +731,8 @@ namespace FDS
                         imgDesktop.Visibility = Visibility.Hidden;
                         imgDesktop2.Visibility = Visibility.Hidden;
                         txtOrganization.Visibility = Visibility.Hidden;
-                        btnUninstall.Visibility = Visibility.Hidden;
+                        dropdownButton.Visibility = Visibility.Hidden;
+                        //btnUninstall.Visibility = Visibility.Hidden;
                         lblMainLable1.Visibility = Visibility.Hidden;
                         lblMainLable2.Visibility = Visibility.Hidden;
                         header.Background = newBrush;
@@ -735,6 +740,7 @@ namespace FDS
                         break;
                     case Screens.AuthenticationStep1:
                         strScreenVals = "AuthenticationStep1";
+                        txtCodeVersion.Visibility = Visibility.Visible;
                         AuthenticationStep1.Visibility = Visibility.Visible;
                         AuthenticationMethods.Visibility = Visibility.Hidden;
                         AuthenticationMethods2.Visibility = Visibility.Hidden;
@@ -746,7 +752,8 @@ namespace FDS
                         imgDesktop.Visibility = Visibility.Hidden;
                         imgDesktop2.Visibility = Visibility.Hidden;
                         txtOrganization.Visibility = Visibility.Hidden;
-                        btnUninstall.Visibility = Visibility.Hidden;
+                        dropdownButton.Visibility = Visibility.Hidden;
+                        //btnUninstall.Visibility = Visibility.Hidden;
 
                         lblMainLable1.Visibility = Visibility.Hidden;
                         lblMainLable2.Visibility = Visibility.Hidden;
@@ -761,6 +768,7 @@ namespace FDS
 
                         timerOTPCode.IsEnabled = true;
                         strScreenVals = "AuthenticationStep2";
+                        txtCodeVersion.Visibility = Visibility.Visible;
                         AuthenticationStep2.Visibility = Visibility.Visible;
                         AuthenticationStep3.Visibility = Visibility.Hidden;
                         AuthenticationStep1.Visibility = Visibility.Hidden;
@@ -772,7 +780,8 @@ namespace FDS
                         imgDesktop.Visibility = Visibility.Hidden;
                         imgDesktop2.Visibility = Visibility.Hidden;
                         txtOrganization.Visibility = Visibility.Hidden;
-                        btnUninstall.Visibility = Visibility.Hidden;
+                        dropdownButton.Visibility = Visibility.Hidden;
+                        //btnUninstall.Visibility = Visibility.Hidden;
                         lblMainLable1.Visibility = Visibility.Hidden;
                         lblMainLable2.Visibility = Visibility.Hidden;
                         header.Background = newBrush;
@@ -780,6 +789,7 @@ namespace FDS
                         break;
                     case Screens.AuthenticationStep3:
                         strScreenVals = "AuthenticationStep3";
+                        txtCodeVersion.Visibility = Visibility.Visible;
                         AuthenticationStep3.Visibility = Visibility.Visible;
                         txtlicenseToken.Text = "";
                         AuthenticationStep2.Visibility = Visibility.Hidden;
@@ -792,13 +802,15 @@ namespace FDS
                         imgDesktop.Visibility = Visibility.Hidden;
                         imgDesktop2.Visibility = Visibility.Hidden;
                         txtOrganization.Visibility = Visibility.Hidden;
-                        btnUninstall.Visibility = Visibility.Hidden;
+                        dropdownButton.Visibility = Visibility.Hidden;
+                        //btnUninstall.Visibility = Visibility.Hidden;
                         lblMainLable1.Visibility = Visibility.Hidden;
                         lblMainLable2.Visibility = Visibility.Hidden;
                         header.Background = newBrush;
                         titleFusion.Visibility = Visibility.Visible;
                         break;
                     case Screens.AuthenticationProcessing:
+                        txtCodeVersion.Visibility = Visibility.Visible;
                         AuthenticationProcessing.Visibility = Visibility.Visible;
                         AuthenticationStep2.Visibility = Visibility.Hidden;
                         AuthenticationStep3.Visibility = Visibility.Hidden;
@@ -807,14 +819,15 @@ namespace FDS
                         imgDesktop.Visibility = Visibility.Hidden;
                         imgDesktop2.Visibility = Visibility.Hidden;
                         txtOrganization.Visibility = Visibility.Hidden;
-                        //System.Windows.Controls.Image imgProcessing = SetGIF("\\Assets\\loader.gif");
-                        //AuthenticationProcessing.Children.Add(imgProcessing);
+                        dropdownButton.Visibility = Visibility.Hidden;
+                        //btnUninstall.Visibility = Visibility.Hidden;
                         lblMainLable1.Visibility = Visibility.Hidden;
                         lblMainLable2.Visibility = Visibility.Hidden;
                         header.Background = newBrush;
                         titleFusion.Visibility = Visibility.Visible;
                         break;
                     case Screens.AuthSuccessfull:
+                        txtCodeVersion.Visibility = Visibility.Visible;
                         AuthenticationSuccessfull.Visibility = Visibility.Visible;
                         AuthenticationStep2.Visibility = Visibility.Hidden;
                         AuthenticationStep3.Visibility = Visibility.Hidden;
@@ -825,14 +838,15 @@ namespace FDS
                         imgDesktop.Visibility = Visibility.Hidden;
                         imgDesktop2.Visibility = Visibility.Hidden;
                         txtOrganization.Visibility = Visibility.Hidden;
-                        //System.Windows.Controls.Image imgSuccess = SetGIF("\\Assets\\success.gif");
-                        //AuthenticationSuccessfull.Add(imgSuccess);
+                        dropdownButton.Visibility = Visibility.Hidden;
+                        //btnUninstall.Visibility = Visibility.Hidden;
                         lblMainLable1.Visibility = Visibility.Hidden;
                         lblMainLable2.Visibility = Visibility.Hidden;
                         header.Background = newBrush;
                         titleFusion.Visibility = Visibility.Visible;
                         break;
                     case Screens.AuthFailed:
+                        txtCodeVersion.Visibility = Visibility.Visible;
                         AuthenticationMethods.Visibility = Visibility.Hidden;
                         AuthenticationMethods2.Visibility = Visibility.Hidden;
                         AuthenticationStep3.Visibility = Visibility.Hidden;
@@ -845,14 +859,15 @@ namespace FDS
                         imgDesktop.Visibility = Visibility.Hidden;
                         imgDesktop2.Visibility = Visibility.Hidden;
                         txtOrganization.Visibility = Visibility.Hidden;
-                        //System.Windows.Controls.Image imgfailed = SetGIF("\\Assets\\failed.gif");
-                        //AuthenticationFailed.Children.Add(imgfailed);
+                        dropdownButton.Visibility = Visibility.Hidden;
+                        // btnUninstall.Visibility = Visibility.Hidden;
                         lblMainLable1.Visibility = Visibility.Hidden;
                         lblMainLable2.Visibility = Visibility.Hidden;
                         header.Background = newBrush;
                         titleFusion.Visibility = Visibility.Visible;
                         break;
                     case Screens.QRCode:
+                        txtCodeVersion.Visibility = Visibility.Visible;
                         AuthenticationMethods.Visibility = Visibility.Hidden;
                         AuthenticationMethods2.Visibility = Visibility.Hidden;
                         AuthenticationStep3.Visibility = Visibility.Hidden;
@@ -863,13 +878,17 @@ namespace FDS
                         imgDesktop.Visibility = Visibility.Hidden;
                         imgDesktop2.Visibility = Visibility.Hidden;
                         txtOrganization.Visibility = Visibility.Hidden;
-                        btnUninstall.Visibility = Visibility.Hidden;
+                        dropdownButton.Visibility = Visibility.Hidden;
+                        // btnUninstall.Visibility = Visibility.Hidden;
                         lblMainLable1.Visibility = Visibility.Hidden;
                         lblMainLable2.Visibility = Visibility.Hidden;
                         header.Background = newBrush;
                         titleFusion.Visibility = Visibility.Visible;
                         break;
                     case Screens.Landing:
+
+
+                        txtCodeVersion.Visibility = Visibility.Visible;
                         AuthenticationStep3.Visibility = Visibility.Hidden;
                         lblMainLable2.Visibility = Visibility.Hidden;
                         lblMainLable1.Visibility = Visibility.Hidden;
@@ -882,6 +901,9 @@ namespace FDS
                         imgDesktop.Visibility = Visibility.Visible;
                         imgDesktop2.Visibility = Visibility.Visible;
                         dropdownButton.Visibility = Visibility.Visible;
+                        //btnUninstall.Visibility = Visibility.Visible;
+                        //btnUninstall.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+
                         txtOrganization.Visibility = Visibility.Visible;
                         GetOTP.Visibility = Visibility.Hidden;
                         AuthenticationProcessing.Visibility = Visibility.Hidden;
@@ -889,8 +911,7 @@ namespace FDS
                         AuthenticationSuccessfull.Visibility = Visibility.Hidden;
                         AuthenticationMethods.Visibility = Visibility.Hidden;
                         AuthenticationMethods2.Visibility = Visibility.Hidden;
-                        btnUninstall.Visibility = Visibility.Visible;
-                        btnUninstall.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+
                         lblMainLable1.Visibility = Visibility.Hidden;
                         lblMainLable2.Visibility = Visibility.Hidden;
                         //MainHomePageUI.Visibility = Visibility.Visible;
@@ -1548,7 +1569,7 @@ namespace FDS
                     string newCountryCode = parts[0].ToString().Trim();
 
                     var apiResponse = await apiService.QRGeneratortimerAsync(txtEmailToken.Text, phnumber, newCountryCode, VerificationCode, DeviceResponse.qr_code_token);
-                    if ((apiResponse.HttpStatusCode == HttpStatusCode.OK))
+                    if ((apiResponse.Success == true))
                     {
                         Dispatcher.Invoke(() =>
                         {
@@ -2143,12 +2164,20 @@ namespace FDS
                 ServiceDPP service = listBoxItem.DataContext as ServiceDPP;
                 if (service != null)
                 {
+                    lblheadingServer.Text = "Activity Logs";
                     // Retrieve Id property of the service
                     int id = service.ServiceID;
                     CurrentServiceID = id;
                     EventLogsScrollViewer.ScrollToVerticalOffset(0);
                     await ViewModel.LoadMoreLogEntries(id);
-                    grdGridEvents.Visibility = Visibility.Visible;
+                    if (ViewModel.LogEntries.Count > 0)
+                    {
+                        grdGridEvents.Visibility = Visibility.Visible;
+                    }
+                    else
+                    {
+                        grdNoInternetGrid.Visibility = Visibility.Visible;
+                    }
                     Console.WriteLine($"Number of LogEntries: {ViewModel.LogEntries.Count}");
                 }
             }
@@ -2196,7 +2225,7 @@ namespace FDS
                 if (!loadFDS)
                 {
                     MainHomePageUI2.Visibility = Visibility.Hidden;
-                    
+
 
                     MessageBox.Show("Your device has been deleted", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
@@ -2404,7 +2433,7 @@ namespace FDS
                 californiaMapVPN.Visibility = Visibility.Hidden;
                 currentInfoVPN.Text = "NA";
 
-              
+
             }
             else if (currentServerName.ToLower().Contains("california"))
             {
@@ -2414,7 +2443,7 @@ namespace FDS
                 californiaMapVPN.Visibility = Visibility.Visible;
                 currentInfoVPN.Text = "California";
 
-                
+
 
             }
             else if (currentServerName.ToLower().Contains("ohio"))
@@ -2425,33 +2454,33 @@ namespace FDS
                 californiaMapVPN.Visibility = Visibility.Hidden;
                 currentInfoVPN.Text = "Ohio";
 
-               
+
             }
             else if (currentServerName.ToLower().Contains("virginia"))
             {
                 watingMapVPN.Visibility = Visibility.Hidden;
-               
+
                 ohioMapVPN.Visibility = Visibility.Hidden;
-              
+
                 northVerginiaMapVPN.Visibility = Visibility.Visible;
-              
+
                 californiaMapVPN.Visibility = Visibility.Hidden;
-              
+
                 currentInfoVPN.Text = "North Virginia";
-                
+
             }
             else
             {
                 watingMapVPN.Visibility = Visibility.Visible;
-                 
+
                 ohioMapVPN.Visibility = Visibility.Hidden;
-                 
+
                 northVerginiaMapVPN.Visibility = Visibility.Hidden;
-                
+
                 californiaMapVPN.Visibility = Visibility.Hidden;
-                
+
                 currentInfoVPN.Text = "NA";
-                 
+
             }
         }
 
@@ -2550,7 +2579,7 @@ namespace FDS
                     headerWithVPN.Visibility = Visibility.Visible;
                     grdWithVPN.Visibility = Visibility.Visible;
                     //MainHomePageDPP.Visibility = Visibility.Hidden;
-                   
+
 
                     grdGridEvents.Visibility = Visibility.Hidden;
                     grdNoInternetGrid.Visibility = Visibility.Hidden;
@@ -2571,6 +2600,7 @@ namespace FDS
                     else
                     {
                         grdGridEvents.Visibility = Visibility.Visible;
+                        lblheadingServer.Text = "Activity Logs";
                     }
 
                 }
@@ -2586,7 +2616,7 @@ namespace FDS
                     headerWithVPN.Visibility = Visibility.Hidden;
                     grdWithVPN.Visibility = Visibility.Hidden;
                     //MainHomePageDPP.Visibility = Visibility.Hidden;
-                  
+
 
                     grdMapGrid.Visibility = Visibility.Hidden;
                     grdGridEvents.Visibility = Visibility.Visible;
@@ -2629,7 +2659,7 @@ namespace FDS
                     headerWithVPN.Visibility = Visibility.Hidden;
                     grdWithVPN.Visibility = Visibility.Hidden;
                     //MainHomePageDPP.Visibility = Visibility.Hidden;
-                   
+
 
                     ShowMap();
 
@@ -2735,6 +2765,7 @@ namespace FDS
                         {
                             deviceActive = true;
                             grdBlurScreen.Visibility = Visibility.Hidden;
+                            DeviceActivateDeactivate(true);
                             await RetrieveServices();
                             loadMenuItems("Assets/DeviceActive.png", "Your device is protected");
                             grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
@@ -2783,7 +2814,7 @@ namespace FDS
             headerWithVPN.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
             headerWithoutVPN.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
             grdWithoutVPN.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
-            grdWithDeviceInfo.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+            //grdWithDeviceInfo.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
             grdWithVPN.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
             currentServerHeader.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
             healthScoreHeader.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
@@ -3307,7 +3338,9 @@ namespace FDS
                 MessageBox.Show("Uninstall request has been raised successfully!", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 isUninstallRequestRaised = true;
                 btnUninstall.ToolTip = "Your uninstall request is pending.";
-                btnUninstall.Foreground = System.Windows.Media.Brushes.Gold;
+                btnUninstall.Width = 153;
+                uninstallText.Text = "Uninstallation Pending";
+                uninstallText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFC16B"));                
                 UninstallResponseTimer.Start();
             }
             else
@@ -3350,7 +3383,9 @@ namespace FDS
                     {
 
                         btnUninstall.ToolTip = "Your uninstall request is pending.";
-                        btnUninstall.Foreground = System.Windows.Media.Brushes.Gold;
+                        uninstallText.Text = "Uninstallation Pending";
+                        btnUninstall.Width = 153;
+                        uninstallText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFC16B"));
 
                     }
                     else if (apiResponse.Data == "3")
@@ -3358,8 +3393,10 @@ namespace FDS
                         btnUninstall.IsEnabled = true;
                         UninstallResponseTimer.Stop();
                         btnUninstall.ToolTip = "Your uninstall request has been declined!";
+                        uninstallText.Text = "Uninstall FDS";
+                        uninstallText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
 
-                        btnUninstall.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                        //btnUninstall.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
                     }
                     else if (apiResponse.Data == "2")
                     {
@@ -3373,7 +3410,7 @@ namespace FDS
                         }
 
                         btnUninstall.ToolTip = "Your uninstall request has been approved! ";
-                        btnUninstall.Foreground = System.Windows.Media.Brushes.DarkGreen;
+                        //btnUninstall.Foreground = System.Windows.Media.Brushes.DarkGreen;
 
 
                         Generic.StopRemoveStartupApplication();

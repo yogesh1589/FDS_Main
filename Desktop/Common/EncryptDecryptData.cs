@@ -247,10 +247,10 @@ namespace FDS.Common
             }
             catch (Exception ex)
             {
-                if (showMessageBoxes == true)
-                {
-                    MessageBox.Show("An error occurred while doing decryption in RetriveDecrypt: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                //if (showMessageBoxes == true)
+                //{
+                //    MessageBox.Show("An error occurred while doing decryption in RetriveDecrypt: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                //}
                 return "";
             }
 
