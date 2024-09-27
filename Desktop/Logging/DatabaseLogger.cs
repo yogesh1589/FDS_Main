@@ -28,64 +28,71 @@ namespace FDS.Logging
 
         public async void LogInformation(string authorizationCode, string subServiceName, long FileProcessed, string ServiceId, bool IsManualExecution, string serviceTypeDetails)
         {
-
-            bool IsEventExecution = false;
-            if (serviceTypeDetails == "E")
+            try
             {
-                IsManualExecution = false;
-                IsEventExecution = true;
-            }
-            bool isSkipFlag = false;
-            if (serviceTypeDetails == "SK")
-            {
-                isSkipFlag = true;
-            }
 
-            LogServiceRequest logServiceRequest = new LogServiceRequest
-            {
-                authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
-                mac_address = AppConstants.MACAddress,
-                serial_number = AppConstants.SerialNumber,
-                device_uuid = AppConstants.UUId,
-                sub_service_authorization_code = authorizationCode,
-                sub_service_name = subServiceName,
-                current_user = Environment.UserName,
-                executed = true,
-                file_deleted = Convert.ToString(FileProcessed),
-                IsManualExecution = IsManualExecution,
-                IsEventExecution = IsEventExecution,
-                Skipped_Service_Executed = isSkipFlag
-            };
+                bool IsEventExecution = false;
+                if (serviceTypeDetails == "E")
+                {
+                    IsManualExecution = false;
+                    IsEventExecution = true;
+                }
+                bool isSkipFlag = false;
+                if (serviceTypeDetails == "SK")
+                {
+                    isSkipFlag = true;
+                }
 
-            var payload = EncryptDecryptData.Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(logServiceRequest))));
+                LogServiceRequest logServiceRequest = new LogServiceRequest
+                {
+                    authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,
+                    mac_address = AppConstants.MACAddress,
+                    serial_number = AppConstants.SerialNumber,
+                    device_uuid = AppConstants.UUId,
+                    sub_service_authorization_code = authorizationCode,
+                    sub_service_name = subServiceName,
+                    current_user = Environment.UserName,
+                    executed = true,
+                    file_deleted = Convert.ToString(FileProcessed),
+                    IsManualExecution = IsManualExecution,
+                    IsEventExecution = IsEventExecution,
+                    Skipped_Service_Executed = isSkipFlag
+                };
 
-            var formContent = new List<KeyValuePair<string, string>> {
+                var payload = EncryptDecryptData.Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(logServiceRequest))));
+
+                var formContent = new List<KeyValuePair<string, string>> {
                         new KeyValuePair<string, string>("authentication_token", String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token) ,
                         new KeyValuePair<string, string>("payload", payload),
                 new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
                     };
 
-            var handler = new HttpClientHandler
-            {
-                UseProxy = false // Disable using the system proxy
-            };
-
-            using (var client1 = new HttpClient(handler))
-            {
-                client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
-                var response = await client1.PostAsync(AppConstants.EndPoints.LogServicesData, new FormUrlEncodedContent(formContent));
-                if (response.IsSuccessStatusCode)
+                var handler = new HttpClientHandler
                 {
-                    //timerLastUpdate.IsEnabled = false;
-                    var ExecuteNowContent = new List<KeyValuePair<string, string>> {
+                    UseProxy = false // Disable using the system proxy
+                };
+
+                using (var client1 = new HttpClient(handler))
+                {
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    var response = await client1.PostAsync(AppConstants.EndPoints.LogServicesData, new FormUrlEncodedContent(formContent));
+                    if (response.IsSuccessStatusCode)
+                    {
+                        //timerLastUpdate.IsEnabled = false;
+                        var ExecuteNowContent = new List<KeyValuePair<string, string>> {
                     new KeyValuePair<string, string>("execute_now", "false") ,
                     };
-                    var ExecuteNowResponse = await client1.PutAsync(AppConstants.EndPoints.ExecuteNow + ServiceId + "/", new FormUrlEncodedContent(ExecuteNowContent));
-                    if (ExecuteNowResponse.IsSuccessStatusCode)
-                    {
+                        var ExecuteNowResponse = await client1.PutAsync(AppConstants.EndPoints.ExecuteNow + ServiceId + "/", new FormUrlEncodedContent(ExecuteNowContent));
+                        if (ExecuteNowResponse.IsSuccessStatusCode)
+                        {
 
+                        }
                     }
                 }
+            }
+            catch
+            {
+                
             }
         }
 

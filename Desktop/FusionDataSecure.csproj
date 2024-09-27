@@ -269,6 +269,7 @@
     <Compile Include="TunnelDll\Win32.cs" />
     <Compile Include="User32API.cs" />
     <Compile Include="ViewModels\LogEntryViewModel.cs" />
+    <Compile Include="ViewModels\RelayCommand.cs" />
     <Compile Include="WindowService\WindowServiceInstaller.cs" />
     <Page Include="css\sendOTPStyle.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -605,6 +606,7 @@
     <Resource Include="Assets\successN.png" />
     <Resource Include="Assets\uninstall.png" />
     <Resource Include="Assets\vpnB.png" />
+    <Resource Include="Assets\noint.png" />
     <Content Include="wireguard.h" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

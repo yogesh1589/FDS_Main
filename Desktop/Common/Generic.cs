@@ -45,6 +45,9 @@ namespace FDS.Common
 
         private static bool? _isUserAdministrator;
 
+
+       
+
         public static bool CheckInternetConnection()
         {
             try

@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace FDS.ViewModels
@@ -36,14 +37,15 @@ namespace FDS.ViewModels
             LogEntries = new ObservableCollection<LogEntryModel>();
         }
 
-        public async Task LoadMoreLogEntries(int serviceID)
+        public async Task LoadMoreLogEntries(int serviceID,string clickDrag)
         {
+            Thread.Sleep(200);
             if (ServiceID != serviceID)
             {
                 CurrentPage = 1;
                 LogEntries.Clear();
             }
-
+            bool apiCalled = false;
             var newLogEntries = await apiService.GetServiceInfoAsync(serviceID, PageSize, CurrentPage);
             if (newLogEntries != null && newLogEntries.Count > 0)
             {
@@ -139,7 +141,7 @@ namespace FDS.ViewModels
                         {
                             Header = timeFDS.Item1,
                             Title = logEntry.file_deleted.ToString() + " Files cleared",
-                            Description = logEntry.title + " by " + logEntry.changed_by.ToString() + Environment.NewLine + " at " + timeFDS.Item2
+                            Description = logEntry.title + " by " + logEntry.changed_by.ToString() + " at " + timeFDS.Item2
                         });
                     }
                     else if (logEntry.service_name == "Free Storage Protection")
@@ -148,17 +150,21 @@ namespace FDS.ViewModels
                         {
                             Header = timeFDS.Item1,
                             Title = logEntry.title,
-                            Description = logEntry.title + " by " + logEntry.changed_by.ToString() + Environment.NewLine + " at " + timeFDS.Item2
+                            Description = logEntry.title + " by " + logEntry.changed_by.ToString() + " at " + timeFDS.Item2
                         });
                     }
                     else if (logEntry.service_name == "Trash Data Protection")
                     {
-                        LogEntries.Add(new LogEntryModel
+                        if (!apiCalled)
                         {
-                            Header = timeFDS.Item1,
-                            Title = logEntry.file_deleted.ToString() + " Files cleared",
-                            Description = logEntry.title + " completed by " + logEntry.changed_by.ToString() + Environment.NewLine + " at " + timeFDS.Item2
-                        });
+                            LogEntries.Add(new LogEntryModel
+                            {
+                                Header = timeFDS.Item1,
+                                Title = logEntry.file_deleted.ToString() + " Files cleared",
+                                Description = logEntry.title + " completed by " + logEntry.changed_by.ToString() + " at " + timeFDS.Item2
+                            });
+                            apiCalled = true;
+                        }
                     }
                     else if (logEntry.service_name == "System Network Monitoring Protection")
                     {
@@ -195,7 +201,16 @@ namespace FDS.ViewModels
 
             }
             ServiceID = serviceID;
-            CurrentPage++;
+            
+            if ((newLogEntries.Count == 5) && (clickDrag == "s"))
+            {
+                CurrentPage++;
+            }
+            else
+            {
+                CurrentPage = 1;
+            }
+           
         }
 
 

@@ -966,6 +966,7 @@ CornerRadius="8">
                                             <Style TargetType="ListBoxItem">
                                                 <Setter Property="Margin" Value="-15,8,0,0"/>
                                                 <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ListBoxItem_PreviewMouseLeftButtonDown"/>
+                                                <EventSetter Event="MouseDoubleClick" Handler="ListBoxItem_MouseDoubleClick"/>
                                                 <Setter Property="Template">
                                                     <Setter.Value>
                                                         <ControlTemplate TargetType="ListBoxItem">
@@ -981,13 +982,11 @@ CornerRadius="8">
                                                 <Style.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter Property="Background" Value="#0C1828"/>
-                                                        <Setter Property="Width" Value="310"/>
                                                         <Setter Property="Foreground" Value="White"/>
                                                         <!-- Change text color on hover -->
                                                     </Trigger>
                                                     <Trigger Property="IsSelected" Value="True">
                                                         <Setter Property="Background" Value="#0C1828"/>
-                                                        <Setter Property="Width" Value="350"/>
                                                         <Setter Property="Foreground" Value="White"/>
                                                         <!-- Change text color when selected -->
                                                     </Trigger>
@@ -995,6 +994,7 @@ CornerRadius="8">
                                             </Style>
                                         </ListBox.ItemContainerStyle>
                                     </ListBox>
+
 
 
 
@@ -1234,7 +1234,7 @@ CornerRadius="8">
                                                         <Image Grid.Row="0" Source="/Assets/vector.png" Height="14" HorizontalAlignment="Left" Margin="5,0,8,0" Width="16" />
                                                         <TextBlock  Grid.Row="0" Text="Reported Certificates" Foreground="#E7E8EA" FontSize="11" FontWeight="SemiBold" Margin="28,0,50,0" Width="114" 
                                                              Height="16" />
-                                                        <TextBlock  Grid.Row="2" Text="34" x:Name="txtCertificatesCounts" HorizontalAlignment="Center" VerticalAlignment="Bottom"  FontWeight="Bold" 
+                                                        <TextBlock  Grid.Row="2" Text="0" x:Name="txtCertificatesCounts" HorizontalAlignment="Center" VerticalAlignment="Bottom"  FontWeight="Bold" 
                                                                 FontSize="16" Foreground="White" 
                                                             FontFamily="Radian"  Margin="0,10,50,19" TextAlignment="Center" Width="50" Height="34"></TextBlock>
 
@@ -1257,16 +1257,16 @@ CornerRadius="8">
                                                         <Image Grid.Row="0" Source="/Assets/SystemNetwork.png" Height="20" HorizontalAlignment="Left" Margin="17,0,8,0" Width="20" />
                                                         <TextBlock  Grid.Row="0" Text="Reported Proxies" Foreground="#E7E8EA" FontSize="11" FontWeight="SemiBold" Margin="40,3,0,0" Width="91" 
                                                             Height="22" />
-                                                        <TextBlock Grid.Row="2" Text="4" x:Name="txtProxyCount" HorizontalAlignment="Center" VerticalAlignment="Bottom"  FontWeight="Bold" 
+                                                        <TextBlock Grid.Row="2" Text="0" x:Name="txtProxyCount" HorizontalAlignment="Center" VerticalAlignment="Bottom"  FontWeight="Bold" 
                                                             FontSize="16" Foreground="White" 
                                                             FontFamily="Radian"  Margin="0,4,0,25" TextAlignment="Center"  Width="50" Height="20"></TextBlock>
                                                     </Grid>
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
- 
 
-                                        <Border CornerRadius="10" Background="#0E2E5B"  Grid.Column="2" Width="222" Height="84" Margin="0,0,10,0">
+
+                                        <Border CornerRadius="10" Background="#0E2E5B" Grid.Column="2" Width="222" Height="84" Margin="0,0,10,0">
                                             <Grid RenderTransformOrigin="0.857,0.554" MouseDown="Grid_MouseDown">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="150"/>
@@ -1274,20 +1274,105 @@ CornerRadius="8">
                                                 </Grid.ColumnDefinitions>
                                                 <Grid.RowDefinitions>
                                                     <RowDefinition Height="48"></RowDefinition>
-                                                    <RowDefinition Height="30"></RowDefinition>
+                                                    <RowDefinition Height="34"></RowDefinition>
                                                 </Grid.RowDefinitions>
+
+                                                <!-- First Ellipse -->
+                                                <Ellipse Width="81.82" Height="81.82" Grid.RowSpan="2" Grid.ColumnSpan="2"
+         Opacity="0.65"
+         StrokeThickness="2.45"
+         VerticalAlignment="Top" HorizontalAlignment="Left"
+         Margin="145.89,1.09,0,0">
+                                                    <!-- Updated top and left margin -->
+                                                    <Ellipse.Fill>
+                                                        <SolidColorBrush Color="Transparent"/>
+                                                    </Ellipse.Fill>
+                                                    <Ellipse.Stroke>
+                                                        <RadialGradientBrush Center="0.0921,1" RadiusX="0.9706" RadiusY="1">
+                                                            <GradientStop Color="#00B2FF" Offset="0"/>
+                                                            <GradientStop Color="#007AFF" Offset="0.3415"/>
+                                                            <GradientStop Color="#2E59C5" Offset="0.7037"/>
+                                                            <GradientStop Color="#9B78E5" Offset="1"/>
+                                                        </RadialGradientBrush>
+                                                    </Ellipse.Stroke>
+                                                </Ellipse>
+
+
+                                                <!-- Second Ellipse -->
+                                                <Ellipse Width="114.55" Height="114.55" Grid.RowSpan="2" Grid.ColumnSpan="2"
+         Opacity="0.35"
+         StrokeThickness="2.86"
+         VerticalAlignment="Top" HorizontalAlignment="Left"
+         Margin="129.53,-15.27,0,0">
+                                                    <Ellipse.Fill>
+                                                        <SolidColorBrush Color="Transparent"/>
+                                                    </Ellipse.Fill>
+                                                    <Ellipse.Stroke>
+                                                        <RadialGradientBrush Center="0.0921,1" RadiusX="0.9706" RadiusY="1">
+                                                            <GradientStop Color="#00B2FF" Offset="0"/>
+                                                            <GradientStop Color="#007AFF" Offset="0.3415"/>
+                                                            <GradientStop Color="#2E59C5" Offset="0.7037"/>
+                                                            <GradientStop Color="#9B78E5" Offset="1"/>
+                                                        </RadialGradientBrush>
+                                                    </Ellipse.Stroke>
+                                                </Ellipse>
+
+                                                <!-- Third Ellipse -->
+                                                <Ellipse Width="147.27" Height="147.27" Grid.RowSpan="2" Grid.ColumnSpan="2"
+         Opacity="0.15"
+         StrokeThickness="3.27"
+         VerticalAlignment="Top" HorizontalAlignment="Left"
+         Margin="113.16,-31.64,0,0">
+                                                    <Ellipse.Fill>
+                                                        <SolidColorBrush Color="Transparent"/>
+                                                    </Ellipse.Fill>
+                                                    <Ellipse.Stroke>
+                                                        <RadialGradientBrush Center="0.0921,1" RadiusX="0.9706" RadiusY="1">
+                                                            <GradientStop Color="#00B2FF" Offset="0"/>
+                                                            <GradientStop Color="#007AFF" Offset="0.3415"/>
+                                                            <GradientStop Color="#2E59C5" Offset="0.7037"/>
+                                                            <GradientStop Color="#9B78E5" Offset="1"/>
+                                                        </RadialGradientBrush>
+                                                    </Ellipse.Stroke>
+                                                </Ellipse>
+
+                                                <!-- Fourth Ellipse -->
+                                                <Ellipse Width="180" Height="180" Grid.RowSpan="2" Grid.ColumnSpan="2"
+         Opacity="0.05"
+         StrokeThickness="3.27"
+         VerticalAlignment="Top" HorizontalAlignment="Left"
+         Margin="96.8,-48,0,0">
+                                                    <!-- Updated top and left margin -->
+                                                    <Ellipse.Fill>
+                                                        <SolidColorBrush Color="Transparent"/>
+                                                    </Ellipse.Fill>
+                                                    <Ellipse.Stroke>
+                                                        <RadialGradientBrush Center="0.0921,1" RadiusX="0.9706" RadiusY="1">
+                                                            <GradientStop Color="#00B2FF" Offset="0"/>
+                                                            <GradientStop Color="#007AFF" Offset="0.3415"/>
+                                                            <GradientStop Color="#2E59C5" Offset="0.7037"/>
+                                                            <GradientStop Color="#9B78E5" Offset="1"/>
+                                                        </RadialGradientBrush>
+                                                    </Ellipse.Stroke>
+                                                </Ellipse>
+
+
 
                                                 <!-- Loader (ProgressBar as an example) -->
                                                 <ProgressBar Grid.RowSpan="2" Grid.Column="1" x:Name="loader" IsIndeterminate="True" Visibility="Collapsed" Width="40" Height="15" Margin="0,0,110,0" VerticalAlignment="Center" HorizontalAlignment="Right"/>
 
                                                 <!-- TextBlock for displaying download status -->
-                                                <TextBlock Grid.Row="1" Grid.RowSpan="2" Margin="20,0,80,0" HorizontalAlignment="Center" VerticalAlignment="Top" FontWeight="SemiBold" FontSize="14" x:Name="downloadStatus"   Text="Connecting..." Grid.ColumnSpan="2" Foreground="#FFC16B" Visibility="Collapsed" FontFamily="Radian" Height="22" Width="160"   />
+                                                <TextBlock Grid.Row="1" Grid.RowSpan="2" Margin="20,0,80,0" HorizontalAlignment="Center" VerticalAlignment="Top" FontWeight="SemiBold" FontSize="14" x:Name="downloadStatus" Text="Connecting..." Grid.ColumnSpan="2" Foreground="#FFC16B" Visibility="Collapsed" FontFamily="Radian" Height="22" Width="160"/>
 
-                                                <Image x:Name="VPNimage1" Grid.RowSpan="2" Grid.Column="1" Source="/Assets/vpnB.png" Width="40" Height="40" Stretch="Uniform" Margin="0,10,95,10" VerticalAlignment="Center" HorizontalAlignment="Right" RenderTransformOrigin="2.63,0.644"  MouseDown="VPNImage1_MouseDown"/>
-                                                <TextBlock HorizontalAlignment="Center" Grid.Row="0" Grid.Column="0" VerticalAlignment="Bottom"  FontWeight="Bold" FontSize="16" Foreground="#FFFFFF" FontFamily="Radian" Text="Fusion VPN" Margin="-10,0,0,0" Height="24" Width="90" />
-                                                <TextBlock x:Name="vpnstatus2" Grid.Row="1" HorizontalAlignment="Center" Visibility="Visible" VerticalAlignment="Top" FontWeight="SemiBold" FontSize="12" Foreground="#FB4B4E" FontFamily="Radian" Text="Disconnected" Margin="-20,0,0,0" Height="16" Width="75"  Grid.Column="0"></TextBlock>
+                                                <!-- VPN Image (Button) -->
+                                                <Image x:Name="VPNimage1" Grid.RowSpan="2" Grid.Column="1" Source="/Assets/vpnB.png" Width="40" Height="40" Stretch="Uniform" Margin="20,10,90,10" VerticalAlignment="Center" HorizontalAlignment="Right" RenderTransformOrigin="2.63,0.644" MouseDown="VPNImage1_MouseDown"/>
+
+                                                <!-- Other TextBlocks -->
+                                                <TextBlock HorizontalAlignment="Center" Grid.Row="0" Grid.Column="0" VerticalAlignment="Bottom" FontWeight="Bold" FontSize="16" Foreground="#FFFFFF" FontFamily="Radian" Text="Fusion VPN" Margin="-10,0,0,0" Height="24" Width="90"/>
+                                                <TextBlock x:Name="vpnstatus2" Grid.Row="1" HorizontalAlignment="Center" Visibility="Visible" VerticalAlignment="Top" FontWeight="SemiBold" FontSize="12" Foreground="#FB4B4E" FontFamily="Radian" Text="Disconnected" Margin="-20,0,0,0" Height="16" Width="75" Grid.Column="0"/>
                                             </Grid>
                                         </Border>
+
 
                                     </Grid>
 
@@ -1362,7 +1447,9 @@ CornerRadius="8">
                                         <Border CornerRadius="10" Background="#0E2E5B"   Grid.Column="1" Width="335" Height="227">
                                             <Grid RenderTransformOrigin="0.857,0.554">
                                                 <Grid>
-                                                    <Image Name="noInternet" VerticalAlignment="Center" HorizontalAlignment="Center" Source="/Assets/nointernet.png" Width="164" Height="137" Margin="0,0,0,0"/>
+                                                    <Image Name="noInternet" VerticalAlignment="Center" HorizontalAlignment="Center" Source="/Assets/noint.png" Width="164" Height="103" Margin="84,42,84,79"/>
+                                                    <TextBlock x:Name="txtNointernet" Grid.Column="0" Text="No, activity reported yet." FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"  Foreground="#CED1D4" Width="144" Height="16" Margin="95,167,95,43"></TextBlock>
+
                                                 </Grid>
                                                 
                                             </Grid>

@@ -30,6 +30,7 @@ using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -1989,17 +1990,7 @@ namespace FDS
         {
             try
             {
-
-                isInternetConnected = Generic.CheckInternetConnection();
-
-                if (!isInternetConnected)
-                {
-                    isInternetReconnect = false;
-                    System.Threading.Thread.Sleep(2000);
-                    isInternetConnected = Generic.CheckInternetConnection();
-                }
-
-                if (isInternetConnected)
+                if (CheckInternet())
                 {
 
                     if (deviceActive && !allServiceDisabled && !isInternetReconnect)
@@ -2108,23 +2099,6 @@ namespace FDS
 
                     }
                 }
-                else
-                {
-                    timerLastUpdate.IsEnabled = true;
-                    lblMessageHeader.Text = "No internet connection!Your device is offline.";
-                    grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-                    grdMapGrid.Visibility = Visibility.Hidden;
-                    grdNoInternetGrid.Visibility = Visibility.Visible;
-                    string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
-                    BitmapImage DeviceDeactive = new BitmapImage();
-                    DeviceDeactive.BeginInit();
-                    DeviceDeactive.UriSource = new Uri(ImagePath);
-                    DeviceDeactive.EndInit();
-                    //imgCompliant.Source = DeviceDeactive;
-
-                }
-
-
             }
             catch (Exception ex)
             {
@@ -2136,51 +2110,134 @@ namespace FDS
             }
         }
 
-        private ListBoxItem lastSelectedItem = null;
-        private async void ListBoxItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+
+        public bool CheckInternet()
         {
-            // Handle the click event here
-            var listBoxItem = sender as ListBoxItem;
-            if (listBoxItem != null)
+            try
             {
+                isInternetConnected = Generic.CheckInternetConnection();
 
-                ListBoxItem firstListBoxItem = lstServices.ItemContainerGenerator.ContainerFromIndex(0) as ListBoxItem;
-                if (firstListBoxItem != null)
+                if (!isInternetConnected)
                 {
-                    firstListBoxItem.Background = Brushes.Transparent; // Reset to default background color
+                    isInternetReconnect = false;
+                    System.Threading.Thread.Sleep(2000);
+                    isInternetConnected = Generic.CheckInternetConnection();
                 }
 
-                if (lastSelectedItem != null)
+                if (!isInternetConnected)
                 {
-                    lastSelectedItem.Background = Brushes.Transparent; // Reset to default background color
+                    MainHomePageUI2.Visibility = Visibility.Visible;
+                    GrdhealthScore.Visibility = Visibility.Visible;
+                    headerWithVPN.Visibility = Visibility.Visible;
+                    grdWithVPN.Visibility = Visibility.Visible;
+
+                    timerLastUpdate.IsEnabled = true;
+                    lblMessageHeader.Text = "No internet connection! Your device is offline.";
+                    grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                    grdMapGrid.Visibility = Visibility.Hidden;
+                    grdNoInternetGrid.Visibility = Visibility.Visible;
+                    string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
+                    BitmapImage DeviceDeactive = new BitmapImage();
+                    DeviceDeactive.BeginInit();
+                    DeviceDeactive.UriSource = new Uri(ImagePath);
+                    DeviceDeactive.EndInit();
+                    //imgCompliant.Source = DeviceDeactive;
                 }
-
-                listBoxItem.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0C1828"));
-
-                lastSelectedItem = listBoxItem;
-
-
-                // Access the TextBlock within the ListBoxItem
-                ServiceDPP service = listBoxItem.DataContext as ServiceDPP;
-                if (service != null)
+                else
                 {
-                    lblheadingServer.Text = "Activity Logs";
-                    // Retrieve Id property of the service
-                    int id = service.ServiceID;
-                    CurrentServiceID = id;
-                    EventLogsScrollViewer.ScrollToVerticalOffset(0);
-                    await ViewModel.LoadMoreLogEntries(id);
-                    if (ViewModel.LogEntries.Count > 0)
-                    {
-                        grdGridEvents.Visibility = Visibility.Visible;
-                    }
-                    else
-                    {
-                        grdNoInternetGrid.Visibility = Visibility.Visible;
-                    }
-                    Console.WriteLine($"Number of LogEntries: {ViewModel.LogEntries.Count}");
+                    lblUserName.Visibility = Visibility.Visible;
+                    txtOrganization.Visibility = Visibility.Visible;
+                    //GetDeviceDetails();
+                    return true;
                 }
             }
+            catch (Exception)
+            {
+
+                return false;
+            }
+
+            return false;
+        }
+
+        private ListBoxItem lastSelectedItem = null;
+        private bool isDoubleClick = false;
+
+        private void ListBoxItem_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            isDoubleClick = true;
+            // Handle double-click logic
+            //MessageBox.Show("Double Click Detected");
+        }
+        private async void ListBoxItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+
+            if (e.ClickCount == 1)
+            {
+                // Delay action to detect if it's a double-click
+                _ = Dispatcher.BeginInvoke(new Action(async () =>
+                {
+                    // If the click was not part of a double-click, handle it as a single click
+                    if (!isDoubleClick)
+                    {
+                        // Single-click logic
+                        //MessageBox.Show("Single Click Detected");
+                        // Handle the click event here
+                        var listBoxItem = sender as ListBoxItem;
+                        if (listBoxItem != null)
+                        {
+
+                            ListBoxItem firstListBoxItem = lstServices.ItemContainerGenerator.ContainerFromIndex(0) as ListBoxItem;
+                            if (firstListBoxItem != null)
+                            {
+                                firstListBoxItem.Background = Brushes.Transparent; // Reset to default background color
+                            }
+
+                            if (lastSelectedItem != null)
+                            {
+                                lastSelectedItem.Background = Brushes.Transparent; // Reset to default background color
+                            }
+
+                            listBoxItem.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0C1828"));
+
+                            lastSelectedItem = listBoxItem;
+
+
+                            // Access the TextBlock within the ListBoxItem
+                            ServiceDPP service = listBoxItem.DataContext as ServiceDPP;
+                            if (service != null)
+                            {
+                                lblheadingServer.Text = "Activity Logs";
+                                // Retrieve Id property of the service
+                                int id = service.ServiceID;
+                                CurrentServiceID = id;
+                                //EventLogsScrollViewer.ScrollToVerticalOffset(0);
+                                ViewModel.LogEntries.Clear();
+                                Thread.Sleep(200);
+                                await ViewModel.LoadMoreLogEntries(id, "c");
+
+                                if (ViewModel.LogEntries.Count > 0)
+                                {
+                                    grdGridEvents.Visibility = Visibility.Visible;
+                                    grdNoInternetGrid.Visibility = Visibility.Hidden;
+                                }
+                                else
+                                {
+                                    grdGridEvents.Visibility = Visibility.Hidden;
+                                    grdNoInternetGrid.Visibility = Visibility.Visible;
+                                }
+                                Console.WriteLine($"Number of LogEntries: {ViewModel.LogEntries.Count}");
+                            }
+                        }
+                    }
+
+                    // Reset double-click flag
+                    isDoubleClick = false;
+                }), System.Windows.Threading.DispatcherPriority.Background);
+            }
+
+
+
         }
 
 
@@ -2191,7 +2248,7 @@ namespace FDS
             if (e.VerticalOffset == e.ExtentHeight - e.ViewportHeight)
             {
                 // Load more items when scrolled to the bottom
-                await ViewModel.LoadMoreLogEntries(CurrentServiceID);
+                await ViewModel.LoadMoreLogEntries(CurrentServiceID, "s");
             }
         }
 
@@ -2424,6 +2481,7 @@ namespace FDS
         {
             grdMapGrid.Visibility = Visibility.Visible;
             grdGridEvents.Visibility = Visibility.Hidden;
+            grdNoInternetGrid.Visibility = Visibility.Hidden;
             lblheadingServer.Text = "Current Server";
             if (currentServerName == string.Empty)
             {
@@ -2431,7 +2489,7 @@ namespace FDS
                 ohioMapVPN.Visibility = Visibility.Hidden;
                 northVerginiaMapVPN.Visibility = Visibility.Hidden;
                 californiaMapVPN.Visibility = Visibility.Hidden;
-                currentInfoVPN.Text = "NA";
+                currentInfoVPN.Text = "N/A";
 
 
             }
@@ -2479,7 +2537,7 @@ namespace FDS
 
                 californiaMapVPN.Visibility = Visibility.Hidden;
 
-                currentInfoVPN.Text = "NA";
+                currentInfoVPN.Text = "N/A";
 
             }
         }
@@ -2645,7 +2703,7 @@ namespace FDS
                         {
                             InitializeListBox();
                             int id = firstService.ServiceID;
-                            await ViewModel.LoadMoreLogEntries(id);
+                            await ViewModel.LoadMoreLogEntries(id, "c   ");
                         }
                     }
 
@@ -2690,6 +2748,21 @@ namespace FDS
         private async Task GetServiceHealthReport()
         {
             var Response = await apiService.GetServiceInfoAsync();
+            if(Response == null) {
+                deviceOffline = true;
+                MainHomePageUI2.Visibility= Visibility.Visible;
+                grdNoInternetGrid.Visibility = Visibility.Visible;
+                timerLastUpdate.IsEnabled = true;
+                lblMessageHeader.Text = "Your Device is Disabled. Contact to Administrator";
+                grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFC16B"));
+                string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
+                BitmapImage DeviceDeactive = new BitmapImage();
+                DeviceDeactive.BeginInit();
+                DeviceDeactive.UriSource = new Uri(ImagePath);
+                DeviceDeactive.EndInit();
+                imgCompliant.Source = DeviceDeactive;
+
+                return; }
             if ((Response.Success) && (Response.Data.Count > 0))
             {
                 ServiceGridDetails(Response);
@@ -2716,13 +2789,13 @@ namespace FDS
                 {
                     deviceOffline = true;
                     timerLastUpdate.IsEnabled = true;
-                    lblMessageHeader.Text = "Your Device is Disabled. Contact to Administrator";
-                    grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFC16B"));
-                    string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
-                    BitmapImage DeviceDeactive = new BitmapImage();
-                    DeviceDeactive.BeginInit();
-                    DeviceDeactive.UriSource = new Uri(ImagePath);
-                    DeviceDeactive.EndInit();
+                    //lblMessageHeader.Text = "Your Device is Disabled. Contact to Administrator";
+                    //grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFC16B"));
+                    //string ImagePath = Path.Combine(BaseDir, "Assets/DeviceDisable.png");
+                    //BitmapImage DeviceDeactive = new BitmapImage();
+                    //DeviceDeactive.BeginInit();
+                    //DeviceDeactive.UriSource = new Uri(ImagePath);
+                    //DeviceDeactive.EndInit();
                     //imgCompliant.Source = DeviceDeactive;
                     return;
                 }
@@ -3340,7 +3413,7 @@ namespace FDS
                 btnUninstall.ToolTip = "Your uninstall request is pending.";
                 btnUninstall.Width = 153;
                 uninstallText.Text = "Uninstallation Pending";
-                uninstallText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFC16B"));                
+                uninstallText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFC16B"));
                 UninstallResponseTimer.Start();
             }
             else
