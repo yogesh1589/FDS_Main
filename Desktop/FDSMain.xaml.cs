@@ -13,6 +13,7 @@ using FDS.WindowService;
 using Microsoft.Win32;
 using NCrontab;
 using Newtonsoft.Json;
+using Org.BouncyCastle.Asn1.Ocsp;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -21,6 +22,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.IO.Pipes;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -36,6 +38,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -129,7 +132,7 @@ namespace FDS
         string encryptOutPutFile = @"\Main";
         System.Windows.Controls.Image imgLoader;
         bool deviceDeletedFlag = false;
-        public bool showMessageBoxes = true;//true for staging and false for production
+        public bool showMessageBoxes = false;//true for staging and false for production
         ApiService apiService = new ApiService();
         public static byte[] EncKey { get; set; }
         public bool deviceActive = true;
@@ -152,6 +155,7 @@ namespace FDS
         private int CurrentServiceID = 0;
         public ObservableCollection<LogEntry> LogEntries;
         private bool connectedVPN;
+        public string publicIP = string.Empty;
 
         public FDSMain()
         {
@@ -353,23 +357,32 @@ namespace FDS
                 vpnstatus2.Visibility = Visibility.Hidden;
                 VPNimage1.Visibility = Visibility.Hidden;
 
+                //WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
+                //windowServiceInstaller.InstallService("Service_FDS", "WindowServiceFDS.exe");
+                //windowServiceInstaller.StartService("Service_FDS");
+
+
+                //bool result = SendRequest("VPNRun,FDSTunnel$wg0");
                 bool result = await ConnectVPN();
 
                 if (result)
                 {
-                    VPNService vpnService = new VPNService();
-                    string publicIp = await vpnService.GetPublicIpAddressAsync();
 
-                    if (!string.IsNullOrEmpty(publicIp))
+                    VPNService vpnService = new VPNService();
+                    
+
+                    if (!string.IsNullOrEmpty(publicIP))
                     {
-                        var location = await vpnService.GetIpLocationAsync(publicIp);
+                        var location = await vpnService.GetIpLocationAsync(publicIP);
                         currentServerName = location;
                         ShowMap();
                     }
 
                     VPNimage1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
-                    vpnstatus2.Text = "Connected";
+                    vpnstatus2.Text = "You are connected";
                     vpnstatus2.Foreground = Brushes.Green;
+
+
 
                     loader.Visibility = Visibility.Hidden;
                     downloadStatus.Visibility = Visibility.Hidden;
@@ -397,10 +410,12 @@ namespace FDS
                 vpnstatus2.Visibility = Visibility.Hidden;
                 VPNimage1.Visibility = Visibility.Hidden;
 
+                //WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
+                //windowServiceInstaller.InstallService("Service_FDS", "WindowServiceFDS.exe");
+                //windowServiceInstaller.StartService("Service_FDS");
 
-
+                //bool result = SendRequest("VPNStop,FDSTunnel$wg0");
                 bool result = await ConnectVPN();
-
                 if (result)
                 {
 
@@ -410,17 +425,20 @@ namespace FDS
                     downloadStatus.Visibility = Visibility.Collapsed;
                     vpnstatus2.Visibility = Visibility.Visible;
                     VPNimage1.Visibility = Visibility.Visible;
+
                     VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
                     vpnstatus2.Text = "Disconnected";
                     vpnstatus2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+
+
 
                     currentServerName = string.Empty;
                     ShowMap();
                 }
                 else
                 {
-                    VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
-                    vpnstatus2.Text = "Disconnected";
+                    VPNimage1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
+                    vpnstatus2.Text = "You are connected";
                     vpnstatus2.Foreground = Brushes.Green;
 
                     loader.Visibility = Visibility.Hidden;
@@ -434,7 +452,6 @@ namespace FDS
             ShowMap();
         }
 
-
         public async Task<bool> ConnectVPN()
         {
             string configFile = String.Format("{0}wg0.conf", AppDomain.CurrentDomain.BaseDirectory); // Provide the path where you want to save the file
@@ -446,11 +463,20 @@ namespace FDS
                 {
 
                     VPNService vpnService = new VPNService();
-                    VPNServiceRequest vpnData = await vpnService.VPNConnectAsync();
-                    if (vpnData != null)
+                    
+                    var apiResponse = await vpnService.VPNConnectAsync();
+                    if (apiResponse != null)
                     {
-                        var configData = vpnData.Data.Config;
 
+                        var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.payload);
+
+                        string cleanJson = Regex.Replace(plainText, @"[^\x20-\x7E]+", "");
+
+                        var finalData = JsonConvert.DeserializeObject<VPNResponseNew>(cleanJson);
+
+                        var configData = finalData.Data.Config.ToString();
+
+                        GetIPConfig(configData.ToString());
 
                         if (File.Exists(configFile))
                         {
@@ -458,9 +484,14 @@ namespace FDS
                         }
                         File.WriteAllText(configFile, configData);
 
-                        Tunnel.Service.Run(configFile);
+                  
+
                         await WriteAllBytesAsync(configFile, Encoding.UTF8.GetBytes(configData));
+                        Tunnel.Service.Run(configFile);
                         await Task.Run(() => Tunnel.Service.Add(configFile, true));
+                        
+                        //Tunnel.Service.Add(configFile, false);
+
                         connectedVPN = true;
                         return true;
                     }
@@ -487,6 +518,84 @@ namespace FDS
             }
             return false;
         }
+        
+
+        public void RunFDSAdministrator(string configFile, string methodName)
+        {
+            try
+            {
+                string fdsAdminPath = String.Format("{0}FDS_Administrator.exe", AppDomain.CurrentDomain.BaseDirectory);             
+                string arguments = $"\"{configFile}\" \"{methodName}\"";
+
+                 
+                ProcessStartInfo processInfo = new ProcessStartInfo
+                {
+                    FileName = fdsAdminPath,
+                    Arguments = arguments,
+                    UseShellExecute = true, // Required to elevate privileges
+                    Verb = "runas", // This runs the process as admin
+                    WindowStyle = ProcessWindowStyle.Normal // Optional: set how the window is shown
+                };
+
+                // Start the process
+                Process process = Process.Start(processInfo);
+
+                // Optionally wait for the process to complete
+                process.WaitForExit();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error starting FDS_Administrator as admin: {ex.Message}");
+            }
+        }
+
+
+        private const string PipeName = "AdminTaskPipe";
+        public bool SendRequest(string request)
+        {
+            try
+            {
+                if (!connectedVPN)
+                {
+                    connectedVPN = true;
+                    return SendRequestNamedPipe(request);
+
+                }
+                else
+                {
+                    connectedVPN = false;
+                    return SendRequestNamedPipe(request);
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+
+        public bool SendRequestNamedPipe(string request)
+        {
+            try
+            {
+                using (var client = new NamedPipeClientStream(".", PipeName, PipeDirection.InOut))
+                {
+                    client.Connect();
+                    using (var writer = new StreamWriter(client) { AutoFlush = true })
+                    using (var reader = new StreamReader(client))
+                    {
+                        writer.WriteLine(request);
+                        string response = reader.ReadLine();
+                        return true;
+                    }
+                }
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
 
         public async Task WriteAllBytesAsync(string filePath, byte[] bytes)
         {
@@ -498,6 +607,24 @@ namespace FDS
             }
         }
 
+
+        public async Task GetIPConfig(string configData)
+        {
+            // Regular expression to extract the IP from the Endpoint line
+            string pattern = @"Endpoint = (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})";
+            Match match = Regex.Match(configData, pattern);
+
+            if (match.Success)
+            {
+                string ip = match.Groups[1].Value;
+                publicIP = ip;
+                //Console.WriteLine($"Extracted IP: {ip}");
+            }
+            else
+            {
+                //Console.WriteLine("No IP found in the data.");
+            }
+        }
 
 
         private async Task<string> generateNewConfig()
@@ -544,12 +671,19 @@ namespace FDS
             {
                 try
                 {
+
+
+                    //SendRequest("VPNRun,fdsvpnsvc");
+
                     //LoadServices();
                     string LauncherAppPath = String.Format("{0}LauncherApp.exe", AppDomain.CurrentDomain.BaseDirectory);
                     SetShortCut(LauncherAppPath);
                     WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
-                    windowServiceInstaller.InstallService();
-                    windowServiceInstaller.StartService();
+                    windowServiceInstaller.InstallService("Service_FDS", "WindowServiceFDS.exe");
+                    windowServiceInstaller.StartService("Service_FDS");
+
+
+
                 }
                 catch (Exception ex)
                 {
@@ -609,6 +743,23 @@ namespace FDS
                     MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+        }
+
+        public async void VPNServiceCreate()
+        {
+            try
+            {
+                bool result = await ConnectVPN();
+
+                if (result)
+                {
+                }
+            }
+            catch (Exception ex)
+            {
+                ex.ToString();
+            }
+
         }
 
         public void FDSMain_Loaded(object sender, RoutedEventArgs e)
@@ -2171,7 +2322,6 @@ namespace FDS
         }
         private async void ListBoxItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-
             if (e.ClickCount == 1)
             {
                 // Delay action to detect if it's a double-click
@@ -2181,12 +2331,10 @@ namespace FDS
                     if (!isDoubleClick)
                     {
                         // Single-click logic
-                        //MessageBox.Show("Single Click Detected");
-                        // Handle the click event here
                         var listBoxItem = sender as ListBoxItem;
                         if (listBoxItem != null)
                         {
-
+                            // Deselect the first ListBox item and the last selected item
                             ListBoxItem firstListBoxItem = lstServices.ItemContainerGenerator.ContainerFromIndex(0) as ListBoxItem;
                             if (firstListBoxItem != null)
                             {
@@ -2199,9 +2347,7 @@ namespace FDS
                             }
 
                             listBoxItem.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0C1828"));
-
                             lastSelectedItem = listBoxItem;
-
 
                             // Access the TextBlock within the ListBoxItem
                             ServiceDPP service = listBoxItem.DataContext as ServiceDPP;
@@ -2209,23 +2355,30 @@ namespace FDS
                             {
                                 lblheadingServer.Text = "Activity Logs";
                                 // Retrieve Id property of the service
+                                prevButton.IsEnabled = false;
                                 int id = service.ServiceID;
                                 CurrentServiceID = id;
-                                //EventLogsScrollViewer.ScrollToVerticalOffset(0);
+
+                                // Clear previous log entries and load new ones for the selected service
                                 ViewModel.LogEntries.Clear();
-                                Thread.Sleep(200);
                                 await ViewModel.LoadMoreLogEntries(id, "c");
 
+                                // Show or hide grids based on whether logs are present
                                 if (ViewModel.LogEntries.Count > 0)
                                 {
                                     grdGridEvents.Visibility = Visibility.Visible;
                                     grdNoInternetGrid.Visibility = Visibility.Hidden;
+                                    gridButtonsHeader.Visibility = Visibility.Visible;
                                 }
                                 else
                                 {
                                     grdGridEvents.Visibility = Visibility.Hidden;
                                     grdNoInternetGrid.Visibility = Visibility.Visible;
+                                    gridButtonsHeader.Visibility = Visibility.Hidden;
                                 }
+
+                                IsEnabledDisabled();
+
                                 Console.WriteLine($"Number of LogEntries: {ViewModel.LogEntries.Count}");
                             }
                         }
@@ -2235,13 +2388,43 @@ namespace FDS
                     isDoubleClick = false;
                 }), System.Windows.Threading.DispatcherPriority.Background);
             }
-
-
-
         }
 
 
+        private void IsEnabledDisabled()
+        {
+            if (ViewModel.CanGoToNextPage == true)
+            {
+                nextButton.IsEnabled = true;
+            }
+            else
+            {
+                nextButton.IsEnabled = false;
+            }
 
+            if (ViewModel.CanGoToPreviousPage == true)
+            {
+                prevButton.IsEnabled = true;
+            }
+            else
+            {
+                prevButton.IsEnabled = false;
+            }
+        }
+
+
+        //btnNextEvent_Click        private void btnPreviousEvent_Click(object sender, RoutedEventArgs e)
+        private async void btnNextEvent_Click(object sender, RoutedEventArgs e)
+        {
+            await ViewModel.LoadMoreLogEntries(CurrentServiceID, "n");
+            IsEnabledDisabled();
+        }
+
+        private async void btnPreviousEvent_Click(object sender, RoutedEventArgs e)
+        {
+            await ViewModel.LoadMoreLogEntries(CurrentServiceID, "p");
+            IsEnabledDisabled();
+        }
 
         private async void ScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
@@ -2483,6 +2666,7 @@ namespace FDS
             grdGridEvents.Visibility = Visibility.Hidden;
             grdNoInternetGrid.Visibility = Visibility.Hidden;
             lblheadingServer.Text = "Current Server";
+            gridButtonsHeader.Visibility = Visibility.Hidden;
             if (currentServerName == string.Empty)
             {
                 watingMapVPN.Visibility = Visibility.Visible;
@@ -2504,7 +2688,7 @@ namespace FDS
 
 
             }
-            else if (currentServerName.ToLower().Contains("ohio"))
+            else if (currentServerName.ToLower().Contains("ohio") || (currentServerName.ToLower().Contains("texas")))
             {
                 watingMapVPN.Visibility = Visibility.Hidden;
                 ohioMapVPN.Visibility = Visibility.Visible;
@@ -2659,12 +2843,14 @@ namespace FDS
                     {
                         grdGridEvents.Visibility = Visibility.Visible;
                         lblheadingServer.Text = "Activity Logs";
+                        gridButtonsHeader.Visibility = Visibility.Visible;
                     }
 
                 }
                 else if (dataPrivacyActive)
                 {
                     lblheadingServer.Text = "Activity Logs";
+                    gridButtonsHeader.Visibility = Visibility.Visible;
                     MainHomePageUI2.Visibility = Visibility.Visible;
                     healthScoreHeader.Visibility = Visibility.Visible;
                     GrdhealthScore.Visibility = Visibility.Visible;
@@ -2748,9 +2934,10 @@ namespace FDS
         private async Task GetServiceHealthReport()
         {
             var Response = await apiService.GetServiceInfoAsync();
-            if(Response == null) {
+            if (Response == null)
+            {
                 deviceOffline = true;
-                MainHomePageUI2.Visibility= Visibility.Visible;
+                MainHomePageUI2.Visibility = Visibility.Visible;
                 grdNoInternetGrid.Visibility = Visibility.Visible;
                 timerLastUpdate.IsEnabled = true;
                 lblMessageHeader.Text = "Your Device is Disabled. Contact to Administrator";
@@ -2762,7 +2949,8 @@ namespace FDS
                 DeviceDeactive.EndInit();
                 imgCompliant.Source = DeviceDeactive;
 
-                return; }
+                return;
+            }
             if ((Response.Success) && (Response.Data.Count > 0))
             {
                 ServiceGridDetails(Response);
@@ -2842,6 +3030,13 @@ namespace FDS
                             await RetrieveServices();
                             loadMenuItems("Assets/DeviceActive.png", "Your device is protected");
                             grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
+
+                            //vpn
+                            //WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
+                            //if (!windowServiceInstaller.IsServiceInstalled("FDSWireGuardTunnel"))
+                            //{
+                            //    VPNServiceCreate();
+                            //}
 
                         }
                         else
@@ -3027,7 +3222,7 @@ namespace FDS
                     bool isEventServiceRun = false;
                     bool isNetworkServiceRun = false;
 
-                    lstCron.Clear();
+                    //lstCron.Clear();
                     lstCronEvent.Clear();
                     foreach (var services in servicesResponse.Services)
                     {
@@ -3068,6 +3263,15 @@ namespace FDS
                                     {
                                         var schedule = CrontabSchedule.Parse(subservice.Execution_period);
                                         DateTime nextRunTime = schedule.GetNextOccurrence(DateTime.Now);
+
+                                        var existingEntry = lstCron.FirstOrDefault(x => x.Key.Name == subservice.Name);
+
+                                        if (!existingEntry.Equals(default(KeyValuePair<SubservicesData, DateTime>)))
+                                        {
+                                            // Remove the existing entry if found
+                                            lstCron.Remove(existingEntry.Key);
+                                        }
+
                                         lstCron.Add(subservice, nextRunTime);
                                     }
 
@@ -3650,8 +3854,8 @@ namespace FDS
                     {
 
                         WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
-                        windowServiceInstaller.StopService();
-                        windowServiceInstaller.UninstallService();
+                        windowServiceInstaller.StopService("Service_FDS");
+                        windowServiceInstaller.UninstallService("Service_FDS", "WindowServiceFDS.exe");
                     }
                     catch (Exception ex)
                     {

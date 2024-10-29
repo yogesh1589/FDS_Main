@@ -14,6 +14,7 @@ namespace FDS.DTO.Responses
         public string error { get; set; }
         public bool Success { get; set; }
 
+        public string payload { get; set; }
         public HttpStatusCode HttpStatusCode { get; set; }
     }
 }

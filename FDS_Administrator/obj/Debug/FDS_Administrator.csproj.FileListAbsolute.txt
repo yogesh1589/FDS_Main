@@ -17,3 +17,5 @@ D:\14March\FDS\windowsapp\FDS_Administrator\obj\Debug\FDS_Administrator.csproj.C
 D:\14March\FDS\windowsapp\FDS_Administrator\obj\Debug\FDS_Administrator.exe
 D:\14March\FDS\windowsapp\FDS_Administrator\obj\Debug\FDS_Administrator.pdb
 D:\14March\FDS\windowsapp\FDS_Administrator\obj\Debug\FDS_Admi.AF765904.Up2Date
+D:\14March\FDS\windowsapp\FDS_Administrator\bin\Debug\System.Runtime.CompilerServices.Unsafe.dll
+D:\14March\FDS\windowsapp\FDS_Administrator\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml

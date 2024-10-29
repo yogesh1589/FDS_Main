@@ -15,13 +15,12 @@ namespace FDS.WindowService
 
 
         string serviceExePath = string.Empty;
-        string serviceName = "Service_FDS";
 
-        public void InstallService()
+        public void InstallService(string serviceName, string fileName)
         {
 
             string AutoStartBaseDir = Generic.GetApplicationpath();
-            serviceExePath = Path.Combine(AutoStartBaseDir, "WindowServiceFDS.exe");
+            serviceExePath = Path.Combine(AutoStartBaseDir, fileName);
 
             if (IsServiceInstalled(serviceName))
             {
@@ -34,7 +33,7 @@ namespace FDS.WindowService
             }
         }
 
-        static bool IsServiceInstalled(string serviceName)
+        public bool IsServiceInstalled(string serviceName)
         {
             ServiceController[] services = ServiceController.GetServices();
             foreach (ServiceController service in services)
@@ -45,12 +44,12 @@ namespace FDS.WindowService
                 }
             }
             return false;
-        } 
+        }
 
-        public void UninstallService()
+        public void UninstallService(string serviceName, string fileName)
         {
             string AutoStartBaseDir = Generic.GetApplicationpath();
-            serviceExePath = Path.Combine(AutoStartBaseDir, "WindowServiceFDS.exe");
+            serviceExePath = Path.Combine(AutoStartBaseDir, fileName);
 
             if (!IsServiceInstalled(serviceName))
             {
@@ -64,7 +63,7 @@ namespace FDS.WindowService
         }
 
 
-        public void StartService()
+        public void StartService(string serviceName)
         {
             ServiceController serviceController = new ServiceController(serviceName);
             if (serviceController.Status == ServiceControllerStatus.Running)
@@ -78,7 +77,7 @@ namespace FDS.WindowService
             }
         }
 
-        public void StopService()
+        public void StopService(string serviceName)
         {
             ServiceController serviceController = new ServiceController(serviceName);
             if (serviceController.Status == ServiceControllerStatus.Stopped)

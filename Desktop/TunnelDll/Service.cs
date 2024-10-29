@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
+ 
 
 namespace Tunnel
 {
@@ -26,8 +27,11 @@ namespace Tunnel
             return new Driver.Adapter(Path.GetFileNameWithoutExtension(configFile));
         }
 
+         
+
         public static void Add(string configFile, bool ephemeral)
-        {
+        {    
+
             var tunnelName = Path.GetFileNameWithoutExtension(configFile);
             var shortName = String.Format("WireGuardTunnel${0}", tunnelName);
             var longName = String.Format("{0}: {1}", LongName, tunnelName);
@@ -43,7 +47,10 @@ namespace Tunnel
                 if (service != IntPtr.Zero)
                 {
                     Win32.CloseServiceHandle(service);
-                    Remove(configFile, true);
+                    if (ephemeral)
+                    {
+                        Remove(configFile, true); // Remove only if ephemeral is true
+                    }
                 }
                 service = Win32.CreateService(scm, shortName, longName, Win32.ServiceAccessRights.AllAccess, Win32.ServiceType.Win32OwnProcess, Win32.ServiceStartType.Demand, Win32.ServiceError.Normal, pathAndArgs, null, IntPtr.Zero, "Nsi\0TcpIp\0", null, null);
                 if (service == IntPtr.Zero)

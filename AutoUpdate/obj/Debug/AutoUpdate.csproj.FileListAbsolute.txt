@@ -43,3 +43,5 @@ D:\14March\FDS\windowsapp\AutoUpdate\obj\Debug\AutoUpdate.csproj.CoreCompileInpu
 D:\14March\FDS\windowsapp\AutoUpdate\obj\Debug\AutoUpdate.exe
 D:\14March\FDS\windowsapp\AutoUpdate\obj\Debug\AutoUpdate.pdb
 D:\14March\FDS\windowsapp\AutoUpdate\obj\Debug\AutoUpdate.csproj.Up2Date
+D:\14March\FDS\windowsapp\AutoUpdate\bin\Debug\System.Runtime.CompilerServices.Unsafe.dll
+D:\14March\FDS\windowsapp\AutoUpdate\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml

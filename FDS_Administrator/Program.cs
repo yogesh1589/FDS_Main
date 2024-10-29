@@ -2,6 +2,7 @@
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
@@ -10,9 +11,12 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Principal;
+using System.ServiceProcess;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Tunnel;
 
 namespace FDS_Administrator
 {
@@ -28,43 +32,26 @@ namespace FDS_Administrator
 
         const int SW_HIDE = 0;  // Hides the window
         const int SW_SHOW = 5;  // Shows the window
+        private const string LongName = "FDS VPN";
+        private const string Description = "Demonstration tunnel for testing WireGuard";
 
-
-        static void HideConsoleWindow()
-        {
-            IntPtr hWndConsole = GetConsoleWindow();
-            if (hWndConsole != IntPtr.Zero)
-            {
-                ShowWindow(hWndConsole, SW_HIDE);
-            }
-        }
-
-
-        public static string pipName = @"\\.\pipe\AdminPipes";
+      
+        
         static void Main(string[] args)
         {
- 
-            
-            // Check for command-line arguments
-            if (args.Length > 0)
+            if (args.Length >= 2)
             {
-                //string abc = "Certificates,f769bb0beebd2f03f3ba26157251a657e39a01a5," + StoreLocation.CurrentUser + "," + StoreName.My;
-                //string abc = "WindowsRegistryProtection";
-                //string[] parameters = abc.Split(',');
-
-                string[] parameters = args[0].Split(',');
-                string methodName = parameters[0];
-                Console.WriteLine(methodName);
-                // Determine which method to call based on the argument
+                string configFile = args[0];
+                WriteLog("config path ye hai " + configFile);
+                string methodName = args[1];
+                WriteLog("methodName ye hai " + methodName);
+                // Execute the desired method based on the methodName
                 switch (methodName)
                 {
-                    case "AutoUpdate":
-                        Method1(args); // Call Method1 and pass additional arguments
+                    case "vpncallAsync":
+                        vpncallAsync(configFile);
                         break;
-                    case "WindowsRegistryProtection":
-                        Method2(args); // Call Method2 and pass additional arguments
-                        break;
-                    // Add more cases for other methods if needed
+                    // Add other cases for different methods
                     default:
                         Console.WriteLine("Invalid method name");
                         break;
@@ -72,74 +59,85 @@ namespace FDS_Administrator
             }
             else
             {
-                Console.WriteLine("No method specified");
+                Console.WriteLine("Insufficient arguments passed.");
             }
         }
 
-        static void Method1(string[] args)
-        {
-            //DeleteCertificates deleteCertificates = new DeleteCertificates();
-            //deleteCertificates.Delete(args);
-            string msiFilePath = "C:\\web\\Temp\\FDS\\FDS.msi";
+    
 
-            if (File.Exists(msiFilePath))
+
+        static void vpncallAsync(string configFile)
+        {
+            WriteLog("Running tunnel");
+            Tunnel.Service.Run(configFile);
+            WriteLog("Running tunnel completed");
+
+            WriteLog("Running tunnel Add");
+            Tunnel.Service.Add(configFile, false);
+
+            WriteLog("Running tunnel Add completed");
+        }
+
+        private const string PipeName = "AdminTaskPipe";
+        static void SendRequest(string request)
+        {
+            WriteLog("request going");
+            try
             {
-
-                string outputDirectory = "C:\\Fusion Data Secure\\FDS\\";
-                Process process = new Process();
-                process.StartInfo.FileName = "msiexec";
-                process.StartInfo.Arguments = $"/a \"{msiFilePath}\" /qn TARGETDIR=\"{outputDirectory}\"";
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.RedirectStandardError = true;
-                process.StartInfo.CreateNoWindow = true;
-
-                try
+                using (var client = new NamedPipeClientStream(".", PipeName, PipeDirection.InOut))
                 {
-                    process.Start();
-                    Thread.Sleep(10000);
-                    //process.BeginOutputReadLine();
-
+                    client.Connect();
+                    using (var writer = new StreamWriter(client) { AutoFlush = true })
+                    using (var reader = new StreamReader(client))
+                    {
+                        WriteLog("request connected");
+                        writer.WriteLine(request);
+                        string response = reader.ReadLine();
+                        Console.WriteLine($"Service response: {response}");
+                    }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("An error occurred: " + ex.Message);
-                }
-                finally
-                {
-                    process.Close();
-                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
             }
         }
 
 
-        static void Method2(string[] args)
+        public static async Task WriteAllBytesAsync(string filePath, byte[] bytes)
         {
-            WindowsRegistryProtection windowsRegistryProtection = new WindowsRegistryProtection();
-            windowsRegistryProtection.DeleteRegistriesKey();
+            using (FileStream sourceStream = new FileStream(filePath,
+                FileMode.Create, FileAccess.Write, FileShare.None,
+                bufferSize: 4096, useAsync: true))
+            {
+                await sourceStream.WriteAsync(bytes, 0, bytes.Length);
+            }
         }
 
-        //private static void WriteLog(string logMessage)
-        //{
-        //    try
-        //    {
-        //        string path = AppDomain.CurrentDomain.BaseDirectory + "AdminAppLogs";
-        //        if (!Directory.Exists(path))
-        //        {
-        //            Directory.CreateDirectory(path);
-        //        }
 
-        //        string filePath = Path.Combine(path, "AdminLogs_" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt");
 
-        //        using (StreamWriter streamWriter = File.AppendText(filePath))
-        //        {
-        //            streamWriter.WriteLine($"{DateTime.Now} - {logMessage}");
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        WriteLog("WriteLog " + ex.ToString());
-        //    }
-        //}
+
+        private static void WriteLog(string logMessage)
+        {
+            try
+            {
+                string path = AppDomain.CurrentDomain.BaseDirectory + "AdminAppLogs";
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+
+                string filePath = Path.Combine(path, "AdminLogs_" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt");
+
+                using (StreamWriter streamWriter = File.AppendText(filePath))
+                {
+                    streamWriter.WriteLine($"{DateTime.Now} - {logMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLog("WriteLog " + ex.ToString());
+            }
+        }
     }
 }

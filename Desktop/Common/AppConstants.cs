@@ -46,6 +46,7 @@ namespace FDS.Common
             public const string individual = "individual/";
             public const string healthscore = "healthscore/";
             public const string serviceinfo = "serviceinfo/";
+            public const string vpnService = "device/vpn/config/";
             public const string 
                 nect = "client/connect/";
 
@@ -97,30 +98,11 @@ namespace FDS.Common
                     ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM Win32_NetworkAdapterConfiguration where IPEnabled=true");
                     foreach (ManagementObject mo in searcher.Get())
                     {
-                        mac = mo["MACAddress"].ToString();
+                         mac = mo["MACAddress"]?.ToString() ?? "MAC Address not available";
+
                         break;
                     }
-
-                    ///mac = (from o in objects orderby o["IPConnectionMetric"] select o["MACAddress"].ToString()).FirstOrDefault();
-
-                    //MessageBox.Show("Mac 1");
-
-                    //NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
-
-                    ////MessageBox.Show("Mac 2");
-
-                    //foreach (NetworkInterface adapter in interfaces)
-                    //{
-                    //    //MessageBox.Show(adapter.NetworkInterfaceType.ToString() + " " + NetworkInterfaceType.Ethernet + " " + adapter.Name);
-                    //    if (adapter.NetworkInterfaceType == NetworkInterfaceType.Ethernet && adapter.Name == "Ethernet")
-                    //    {
-                    //        //MessageBox.Show("Mac 3");
-                    //        mac = adapter.GetPhysicalAddress().ToString();
-                    //        //MessageBox.Show("Mac 4 -" + mac);
-                    //    }
-                    //}
-                    //string formattedMacAddress = string.Join(":", Enumerable.Range(0, 6).Select(i => mac.Substring(i * 2, 2)));
-                    ////MessageBox.Show("Mac 5");
+ 
                     return mac;
                 }
                 catch (Exception ex)

@@ -37,4 +37,4 @@ D:\14March\FDS\windowsapp\LauncherApp\bin\Release\Newtonsoft.Json.dll
 D:\14March\FDS\windowsapp\LauncherApp\bin\Release\System.CodeDom.dll
 D:\14March\FDS\windowsapp\LauncherApp\bin\Release\Newtonsoft.Json.xml
 D:\14March\FDS\windowsapp\LauncherApp\bin\Release\System.CodeDom.xml
-D:\14March\FDS\windowsapp\LauncherApp\obj\Release\LauncherApp.csproj.CopyComplete
+D:\14March\FDS\windowsapp\LauncherApp\obj\Release\Launcher.91152B33.Up2Date

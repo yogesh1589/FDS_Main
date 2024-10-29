@@ -13,56 +13,64 @@ using System.IO;
 using System.Net.Sockets;
 using Tunnel;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace FDS.API_Service
 {
     public class VPNService
     {
-        public async Task<VPNServiceRequest> VPNConnectAsync()
+        public async Task<ResponseData> VPNConnectAsync()
         {
             try
             {
 
-                var client = new HttpClient();
-                var request = new HttpRequestMessage(HttpMethod.Post, "https://z4ulpx0055.execute-api.us-east-2.amazonaws.com/api/client/connect");
-                request.Headers.Add("x-api-region", "us-east-1");
-                var content = new StringContent("{\n    \"device_id\": \"" + AppConstants.UUId + "\"\n}", null, "application/json");
-                request.Content = content;
-                var response = await client.SendAsync(request);
-                if (response.IsSuccessStatusCode)
+
+                var servicesObject = new RetriveServices
                 {
-                    response.EnsureSuccessStatusCode();
-                    string jsonResponse = await response.Content.ReadAsStringAsync();
-                    var config = Newtonsoft.Json.JsonConvert.DeserializeObject<VPNServiceRequest>(jsonResponse);
-                    return config;
+                    authorization_token = String.IsNullOrEmpty(ConfigDetails.Authorization_token) ? string.Empty : ConfigDetails.Authorization_token,                     
+                    mac_address = AppConstants.MACAddress,
+                    serial_number = AppConstants.SerialNumber,
+                    current_user = Environment.UserName,
+                    device_uuid = AppConstants.UUId,                     
+                };
+                var payload = EncryptDecryptData.Encrypt(Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(servicesObject))));
+
+
+                var formContent = new List<KeyValuePair<string, string>> {
+                new KeyValuePair<string, string>("authentication_token", String.IsNullOrEmpty(ConfigDetails.Authentication_token) ? string.Empty : ConfigDetails.Authentication_token) ,
+                new KeyValuePair<string, string>("payload", payload),
+                 new KeyValuePair<string, string>("code_version", AppConstants.CodeVersion),
+            };
+
+                var handler = new HttpClientHandler
+                {
+                    UseProxy = false // Disable using the system proxy
+                };
+
+                using (var client1 = new HttpClient(handler))
+                {
+                    client1.BaseAddress = new Uri(AppConstants.EndPoints.BaseAPI.ToString());
+                    client1.DefaultRequestHeaders.Add("x-api-region", "us-east-1");
+                    var response = await client1.PostAsync(AppConstants.EndPoints.vpnService, new FormUrlEncodedContent(formContent));
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var apiResponse = JsonConvert.DeserializeObject<ResponseData>(responseString);
+                        apiResponse.Success = true;
+                        return apiResponse;
+                    }
+                    else
+                    {
+                        ResponseData qRCodeResponse = new ResponseData
+                        {
+                            HttpStatusCode = response.StatusCode,
+                            Success = false
+                        };
+                        return qRCodeResponse;
+                    }
                 }
-                //string apiUrl = "https://vcs.fusiondatasecure.com/api/";
 
-                //var formContent = new List<KeyValuePair<string, string>>
-                //{
-                //    new KeyValuePair<string, string>("device_id", AppConstants.UUId)
-                //};
-
-                //var handler = new HttpClientHandler
-                //{
-                //    UseProxy = false // Disable using the system proxy
-                //};
-
-                //using (var client1 = new HttpClient(handler))
-                //{
-                //    client1.BaseAddress = new Uri(apiUrl);
-                //    var response = await client1.PostAsync(AppConstants.EndPoints.vpnConnect, new FormUrlEncodedContent(formContent));
-
-                //    if (response.IsSuccessStatusCode)
-                //    {
-                //        string jsonResponse = await response.Content.ReadAsStringAsync();
-
-                //        // Deserialize the JSON response into an object
-                //        var config = Newtonsoft.Json.JsonConvert.DeserializeObject<VPNServiceRequest>(jsonResponse);
-
-                //        return config;
-                //    }
-                //}
+                 
             }
             catch (Exception ex)
             {

@@ -10,18 +10,23 @@ using System.IO.Pipes;
 using System.Linq;
 using System.Management;
 using System.Management.Automation;
+using System.Management.Automation.Language;
+using System.Runtime.InteropServices;
+using System.Security.AccessControl;
 using System.Security.Principal;
 using System.ServiceProcess;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+
 using static System.Net.Mime.MediaTypeNames;
 
 namespace WindowServiceFDS
 {
     public partial class Service1 : ServiceBase
     {
+        private const string PipeName = "AdminTaskPipe";
         public Service1()
         {
             InitializeComponent();
@@ -29,12 +34,13 @@ namespace WindowServiceFDS
 
         protected override void OnStart(string[] args)
         {
-            //WriteLog("Service Started at " + DateTime.Now);
+            WriteLog("Service Started at " + DateTime.Now);
             //System.Threading.Tasks.Task.Run(() => CheckNCreate());
             //System.Threading.Tasks.Task.Run(() => SetStartupApp());
             System.Threading.Tasks.Task.Run(() => ModifyUACSettings());
+            //System.Threading.Tasks.Task.Run(() => StartNamedPipeServer());
 
-        }    
+        }
 
         public void ModifyUACSettings()
         {
@@ -113,13 +119,147 @@ namespace WindowServiceFDS
             }
         }
 
+        // When creating the NamedPipeServerStream, specify security settings
+        private void StartNamedPipeServer()
+        {
+            PipeSecurity pipeSecurity = new PipeSecurity();
+            pipeSecurity.SetAccessRule(new PipeAccessRule(
+                new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null),
+                PipeAccessRights.ReadWrite, AccessControlType.Allow));
+
+
+
+            while (true)
+            {
+                using (var server = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.None, 1024, 1024, pipeSecurity))
+                {
+                    WriteLog("Waiting for a client connection...");
+                    server.WaitForConnection();
+
+                    using (var reader = new StreamReader(server))
+                    using (var writer = new StreamWriter(server) { AutoFlush = true })
+                    {
+                        var request = reader.ReadLine();
+                        WriteLog($"Received request: {request}");
+
+                        if (request.StartsWith("VPNRun"))
+                        {
+                            var parameters = request.Split(',');
+                            string serviceName = parameters[1];
+                            WriteLog($"serviceName : {serviceName}");
+                            StartService(serviceName);
+                            WriteLog($"start hoo gayi kya");
+                        }
+                        else if (request.StartsWith("VPNStop"))
+                        {
+                            var parameters = request.Split(',');
+                            string serviceName = parameters[1];
+                            WriteLog($"serviceName : {serviceName}");
+                            StopService(serviceName);
+                        }
+                        else if (request.StartsWith("VPNSvcInstall"))
+                        {
+                            try
+                            {
+                                var parameters = request.Split(',');
+                                string configFile = parameters[1];
+                                WriteLog($"configFile : {configFile}");
+                                //Tunnel.Service.Run(configFile);
+                                //Tunnel.Service.Add(configFile, true);
+                                WriteLog($"Add Method runs successfully");
+                            }
+                            catch
+                            {
+                                WriteLog($"configFile : there is some error");
+                            }
+
+                        }
+                        else if (request.StartsWith("VPNInstallRun"))
+                        {
+                            Directory.SetCurrentDirectory(@"D:\14March\FDS\windowsapp\FDS_Administrator\bin\Debug");
+                            WriteLog($"Current directory: {Directory.GetCurrentDirectory()}");
+                            WriteLog($"User identity: {WindowsIdentity.GetCurrent().Name}");
+                         
+                            var parameters = request.Split(',');
+                            string configFile = parameters[1];                            
+                            WriteLog($"configFile : {configFile}");
+                            //Tunnel.Service.Run(configFile);                            
+                            //Tunnel.Service.Add(configFile, false);
+                            WriteLog($"Add Method runs successfully");
+                        }
+
+
+                        else
+                        {
+                            writer.WriteLine("Unknown command");
+                        }
+                    }
+                }
+            }
+        }
+
+
+        public void StartService(string serviceName)
+        {
+            WriteLog("service name hai - " + serviceName);
+            ServiceController serviceController = new ServiceController(serviceName);
+            if (serviceController.Status == ServiceControllerStatus.Running)
+            {
+                WriteLog("Service already running.");
+            }
+            else
+            {
+                serviceController.Start();
+                WriteLog("Service started.");
+            }
+        }
+
+        public void StopService(string serviceName)
+        {
+            ServiceController serviceController = new ServiceController(serviceName);
+            if (serviceController.Status == ServiceControllerStatus.Stopped)
+            {
+                WriteLog("Service already stopped.");
+            }
+            else
+            {
+                serviceController.Stop();
+                serviceController.WaitForStatus(ServiceControllerStatus.Stopped);
+                WriteLog("Service stopped.");
+            }
+        }
+
+
+        public static async System.Threading.Tasks.Task VPNAdd(string configFile)
+        {
+            try
+            {
+            //    WriteLog("vpn code running = " + configFile);              
+            //    await System.Threading.Tasks.Task.Run(() => Tunnel.Service.Add(configFile, true));
+            }
+            catch
+            {
+                WriteLog("error in vpn");
+            }
+        }
+
+        public static async System.Threading.Tasks.Task WriteAllBytesAsync(string filePath, byte[] bytes)
+        {
+            using (FileStream sourceStream = new FileStream(filePath,
+                FileMode.Create, FileAccess.Write, FileShare.None,
+                bufferSize: 4096, useAsync: true))
+            {
+                await sourceStream.WriteAsync(bytes, 0, bytes.Length);
+            }
+        }
+
         protected override void OnStop()
         {
             // WriteLog("Service Stopeed at " + DateTime.Now);
 
         }
 
-        private void WriteLog(string logMessage)
+        private static void WriteLog(string logMessage)
         {
             try
             {
