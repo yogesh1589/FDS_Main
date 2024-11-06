@@ -509,10 +509,6 @@
       <Project>{a1ae7fcc-02f1-46a3-9a8c-5ad099099224}</Project>
       <Name>AutoUpdate</Name>
     </ProjectReference>
-    <ProjectReference Include="..\FDS_Administrator\FDS_Administrator.csproj">
-      <Project>{ad0672e7-25d8-4a82-b912-e138acdcebf8}</Project>
-      <Name>FDS_Administrator</Name>
-    </ProjectReference>
     <ProjectReference Include="..\LauncherApp\LauncherApp.csproj">
       <Project>{3b81c27b-d4f7-41fc-9b0a-f8c072da28fe}</Project>
       <Name>LauncherApp</Name>

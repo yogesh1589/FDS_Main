@@ -27,16 +27,15 @@ namespace Tunnel
             return new Driver.Adapter(Path.GetFileNameWithoutExtension(configFile));
         }
 
-         
+
 
         public static void Add(string configFile, bool ephemeral)
-        {    
-
+        {
             var tunnelName = Path.GetFileNameWithoutExtension(configFile);
             var shortName = String.Format("WireGuardTunnel${0}", tunnelName);
             var longName = String.Format("{0}: {1}", LongName, tunnelName);
             var exeName = Process.GetCurrentProcess().MainModule.FileName;
-            var pathAndArgs = String.Format("\"{0}\" /service \"{1}\" {2}", exeName, configFile, Process.GetCurrentProcess().Id); //TODO: This is not the proper way to escape file args.
+            var pathAndArgs = String.Format("\"{0}\" /service \"{1}\" {2}", exeName, configFile, Process.GetCurrentProcess().Id);
 
             var scm = Win32.OpenSCManager(null, null, Win32.ScmAccessRights.AllAccess);
             if (scm == IntPtr.Zero)
@@ -52,7 +51,9 @@ namespace Tunnel
                         Remove(configFile, true); // Remove only if ephemeral is true
                     }
                 }
+
                 service = Win32.CreateService(scm, shortName, longName, Win32.ServiceAccessRights.AllAccess, Win32.ServiceType.Win32OwnProcess, Win32.ServiceStartType.Demand, Win32.ServiceError.Normal, pathAndArgs, null, IntPtr.Zero, "Nsi\0TcpIp\0", null, null);
+
                 if (service == IntPtr.Zero)
                     throw new Win32Exception(Marshal.GetLastWin32Error());
                 try
@@ -65,8 +66,9 @@ namespace Tunnel
                     if (!Win32.ChangeServiceConfig2(service, Win32.ServiceConfigType.Description, ref description))
                         throw new Win32Exception(Marshal.GetLastWin32Error());
 
-                    if (!Win32.StartService(service, 0, null))
-                        throw new Win32Exception(Marshal.GetLastWin32Error());
+                    // Removed the StartService call to avoid automatically starting the service
+                    // if (!Win32.StartService(service, 0, null))
+                    //     throw new Win32Exception(Marshal.GetLastWin32Error());
 
                     if (ephemeral && !Win32.DeleteService(service))
                         throw new Win32Exception(Marshal.GetLastWin32Error());
@@ -81,6 +83,7 @@ namespace Tunnel
                 Win32.CloseServiceHandle(scm);
             }
         }
+
 
         public static void Remove(string configFile, bool waitForStop)
         {

@@ -1,7 +1,0 @@
-F:\Fusion\FDS\windowsapp\FDS_LauncherApp\obj\Release\FDS_LauncherApp.csproj.AssemblyReference.cache
-F:\Fusion\FDS\windowsapp\FDS_LauncherApp\obj\Release\FDS_LauncherApp.csproj.CoreCompileInputs.cache
-F:\Fusion\FDS\windowsapp\FDS_LauncherApp\bin\Release\FDS_LauncherApp.exe.config
-F:\Fusion\FDS\windowsapp\FDS_LauncherApp\bin\Release\FDS_LauncherApp.exe
-F:\Fusion\FDS\windowsapp\FDS_LauncherApp\bin\Release\FDS_LauncherApp.pdb
-F:\Fusion\FDS\windowsapp\FDS_LauncherApp\obj\Release\FDS_LauncherApp.exe
-F:\Fusion\FDS\windowsapp\FDS_LauncherApp\obj\Release\FDS_LauncherApp.pdb

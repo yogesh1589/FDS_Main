@@ -34,11 +34,11 @@ namespace WindowServiceFDS
 
         protected override void OnStart(string[] args)
         {
-            WriteLog("Service Started at " + DateTime.Now);
+            //WriteLog("Service Started at " + DateTime.Now);
             //System.Threading.Tasks.Task.Run(() => CheckNCreate());
             //System.Threading.Tasks.Task.Run(() => SetStartupApp());
             System.Threading.Tasks.Task.Run(() => ModifyUACSettings());
-            //System.Threading.Tasks.Task.Run(() => StartNamedPipeServer());
+            System.Threading.Tasks.Task.Run(() => StartNamedPipeServer());
 
         }
 
@@ -87,7 +87,7 @@ namespace WindowServiceFDS
                 }
             }
 
-            this.Stop();
+            //this.Stop();
         }
 
         private void ModifyUAC()
@@ -133,28 +133,28 @@ namespace WindowServiceFDS
             {
                 using (var server = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.None, 1024, 1024, pipeSecurity))
                 {
-                    WriteLog("Waiting for a client connection...");
+                    //WriteLog("Waiting for a client connection...");
                     server.WaitForConnection();
 
                     using (var reader = new StreamReader(server))
                     using (var writer = new StreamWriter(server) { AutoFlush = true })
                     {
                         var request = reader.ReadLine();
-                        WriteLog($"Received request: {request}");
+                       // WriteLog($"Received request: {request}");
 
                         if (request.StartsWith("VPNRun"))
                         {
                             var parameters = request.Split(',');
                             string serviceName = parameters[1];
-                            WriteLog($"serviceName : {serviceName}");
+                            //WriteLog($"serviceName : {serviceName}");
                             StartService(serviceName);
-                            WriteLog($"start hoo gayi kya");
+                            //WriteLog($"start hoo gayi kya");
                         }
                         else if (request.StartsWith("VPNStop"))
                         {
                             var parameters = request.Split(',');
                             string serviceName = parameters[1];
-                            WriteLog($"serviceName : {serviceName}");
+                           // WriteLog($"serviceName : {serviceName}");
                             StopService(serviceName);
                         }
                         else if (request.StartsWith("VPNSvcInstall"))
@@ -163,29 +163,29 @@ namespace WindowServiceFDS
                             {
                                 var parameters = request.Split(',');
                                 string configFile = parameters[1];
-                                WriteLog($"configFile : {configFile}");
+                                //WriteLog($"configFile : {configFile}");
                                 //Tunnel.Service.Run(configFile);
                                 //Tunnel.Service.Add(configFile, true);
-                                WriteLog($"Add Method runs successfully");
+                                //WriteLog($"Add Method runs successfully");
                             }
                             catch
                             {
-                                WriteLog($"configFile : there is some error");
+                                //WriteLog($"configFile : there is some error");
                             }
 
                         }
                         else if (request.StartsWith("VPNInstallRun"))
                         {
                             Directory.SetCurrentDirectory(@"D:\14March\FDS\windowsapp\FDS_Administrator\bin\Debug");
-                            WriteLog($"Current directory: {Directory.GetCurrentDirectory()}");
-                            WriteLog($"User identity: {WindowsIdentity.GetCurrent().Name}");
+                            //WriteLog($"Current directory: {Directory.GetCurrentDirectory()}");
+                            //WriteLog($"User identity: {WindowsIdentity.GetCurrent().Name}");
                          
                             var parameters = request.Split(',');
                             string configFile = parameters[1];                            
-                            WriteLog($"configFile : {configFile}");
+                           // WriteLog($"configFile : {configFile}");
                             //Tunnel.Service.Run(configFile);                            
                             //Tunnel.Service.Add(configFile, false);
-                            WriteLog($"Add Method runs successfully");
+                            //WriteLog($"Add Method runs successfully");
                         }
 
 
@@ -201,16 +201,16 @@ namespace WindowServiceFDS
 
         public void StartService(string serviceName)
         {
-            WriteLog("service name hai - " + serviceName);
+           // WriteLog("service name hai - " + serviceName);
             ServiceController serviceController = new ServiceController(serviceName);
             if (serviceController.Status == ServiceControllerStatus.Running)
             {
-                WriteLog("Service already running.");
+                //WriteLog("Service already running.");
             }
             else
             {
                 serviceController.Start();
-                WriteLog("Service started.");
+                //WriteLog("Service started.");
             }
         }
 
@@ -219,13 +219,13 @@ namespace WindowServiceFDS
             ServiceController serviceController = new ServiceController(serviceName);
             if (serviceController.Status == ServiceControllerStatus.Stopped)
             {
-                WriteLog("Service already stopped.");
+                //WriteLog("Service already stopped.");
             }
             else
             {
                 serviceController.Stop();
                 serviceController.WaitForStatus(ServiceControllerStatus.Stopped);
-                WriteLog("Service stopped.");
+                //WriteLog("Service stopped.");
             }
         }
 
@@ -239,7 +239,7 @@ namespace WindowServiceFDS
             }
             catch
             {
-                WriteLog("error in vpn");
+                //WriteLog("error in vpn");
             }
         }
 

@@ -56,3 +56,35 @@ D:\14March\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.pdb
 D:\14March\FDS\windowsapp\WindowServiceFDS\obj\Debug\WindowSe.D4B25C2B.Up2Date
 D:\14March\FDS\windowsapp\WindowServiceFDS\bin\Debug\System.Runtime.CompilerServices.Unsafe.dll
 D:\14March\FDS\windowsapp\WindowServiceFDS\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe.config
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.exe
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\WindowServiceFDS.pdb
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\Cake.Powershell.dll
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\Microsoft.Win32.TaskScheduler.dll
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\Newtonsoft.Json.dll
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\System.CodeDom.dll
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\System.Management.Automation.dll
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\System.Runtime.CompilerServices.Unsafe.dll
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\Microsoft.Management.Infrastructure.dll
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\Cake.Powershell.pdb
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\Cake.Powershell.xml
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\Microsoft.Win32.TaskScheduler.xml
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\Newtonsoft.Json.xml
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\System.CodeDom.xml
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\System.Management.Automation.xml
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\de\Microsoft.Win32.TaskScheduler.resources.dll
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\es\Microsoft.Win32.TaskScheduler.resources.dll
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\fr\Microsoft.Win32.TaskScheduler.resources.dll
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\it\Microsoft.Win32.TaskScheduler.resources.dll
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\pl\Microsoft.Win32.TaskScheduler.resources.dll
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\ru\Microsoft.Win32.TaskScheduler.resources.dll
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\zh-CN\Microsoft.Win32.TaskScheduler.resources.dll
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\bin\Debug\zh-Hant\Microsoft.Win32.TaskScheduler.resources.dll
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.csproj.AssemblyReference.cache
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.ProjectInstaller.resources
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.csproj.GenerateResource.cache
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.csproj.CoreCompileInputs.cache
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\obj\Debug\WindowSe.D4B25C2B.Up2Date
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.exe
+D:\14March\backup\29 Oct\windowsapp\WindowServiceFDS\obj\Debug\WindowServiceFDS.pdb

@@ -77,6 +77,16 @@ namespace FDS.WindowService
             }
         }
 
+        public bool IsServiceRunning(string serviceName)
+        {
+            ServiceController serviceController = new ServiceController(serviceName);
+            if (serviceController.Status == ServiceControllerStatus.Running)
+            {
+                return true;
+            }
+            return false;
+        }
+
         public void StopService(string serviceName)
         {
             ServiceController serviceController = new ServiceController(serviceName);

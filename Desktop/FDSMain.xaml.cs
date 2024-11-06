@@ -156,6 +156,11 @@ namespace FDS
         public ObservableCollection<LogEntry> LogEntries;
         private bool connectedVPN;
         public string publicIP = string.Empty;
+        WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
+        public string vpnServieName = "WireGuardTunnel$wg0";
+        public bool isVPNServiceRunning = false;
+        public string watcherServiceName = "Service_FDS";
+        string configFileVPN = String.Format("{0}wg0.conf", AppDomain.CurrentDomain.BaseDirectory);
 
         public FDSMain()
         {
@@ -166,6 +171,8 @@ namespace FDS
                 int insCount = Generic.AlreadyRunningInstance();
                 if (insCount > 1)
                     App.Current.Shutdown();
+
+
 
                 InitializeComponent();
                 InitializeTimers();
@@ -362,19 +369,22 @@ namespace FDS
                 //windowServiceInstaller.StartService("Service_FDS");
 
 
-                //bool result = SendRequest("VPNRun,FDSTunnel$wg0");
-                bool result = await ConnectVPN();
+                bool result = SendRequest("VPNRun," + vpnServieName);
+                //bool result = await ConnectVPN();
+
 
                 if (result)
                 {
 
                     VPNService vpnService = new VPNService();
-                    
+                    await ReadConfigFileAsync(configFileVPN);
+                    // MessageBox.Show("public ip is = " + publicIP.ToString());
 
                     if (!string.IsNullOrEmpty(publicIP))
                     {
                         var location = await vpnService.GetIpLocationAsync(publicIP);
                         currentServerName = location;
+                        // MessageBox.Show(location.ToString());
                         ShowMap();
                     }
 
@@ -414,8 +424,8 @@ namespace FDS
                 //windowServiceInstaller.InstallService("Service_FDS", "WindowServiceFDS.exe");
                 //windowServiceInstaller.StartService("Service_FDS");
 
-                //bool result = SendRequest("VPNStop,FDSTunnel$wg0");
-                bool result = await ConnectVPN();
+                bool result = SendRequest("VPNStop," + vpnServieName);
+                //bool result = await ConnectVPN();
                 if (result)
                 {
 
@@ -454,100 +464,80 @@ namespace FDS
 
         public async Task<bool> ConnectVPN()
         {
-            string configFile = String.Format("{0}wg0.conf", AppDomain.CurrentDomain.BaseDirectory); // Provide the path where you want to save the file
+            // Provide the path where you want to save the file
 
             try
             {
 
-                if (!connectedVPN)
+                //if (!connectedVPN)
+                //{
+
+                VPNService vpnService = new VPNService();
+
+                var apiResponse = await vpnService.VPNConnectAsync();
+                if (apiResponse != null)
                 {
+                    //MessageBox.Show("api response get");
+                    var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.payload);
 
-                    VPNService vpnService = new VPNService();
-                    
-                    var apiResponse = await vpnService.VPNConnectAsync();
-                    if (apiResponse != null)
+                    string cleanJson = Regex.Replace(plainText, @"[^\x20-\x7E]+", "");
+
+                    var finalData = JsonConvert.DeserializeObject<VPNResponseNew>(cleanJson);
+
+                    var configData = finalData.Data.Config.ToString();
+
+                    //GetIPConfig(configData.ToString());
+                    //MessageBox.Show("config file path = " + configFileVPN);
+                    if (File.Exists(configFileVPN))
                     {
-
-                        var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.payload);
-
-                        string cleanJson = Regex.Replace(plainText, @"[^\x20-\x7E]+", "");
-
-                        var finalData = JsonConvert.DeserializeObject<VPNResponseNew>(cleanJson);
-
-                        var configData = finalData.Data.Config.ToString();
-
-                        GetIPConfig(configData.ToString());
-
-                        if (File.Exists(configFile))
-                        {
-                            File.Delete(configFile);
-                        }
-                        File.WriteAllText(configFile, configData);
-
-                  
-
-                        await WriteAllBytesAsync(configFile, Encoding.UTF8.GetBytes(configData));
-                        Tunnel.Service.Run(configFile);
-                        await Task.Run(() => Tunnel.Service.Add(configFile, true));
-                        
-                        //Tunnel.Service.Add(configFile, false);
-
-                        connectedVPN = true;
-                        return true;
+                        File.Delete(configFileVPN);
                     }
+                    File.WriteAllText(configFileVPN, configData);
+                    //MessageBox.Show("config file path written on = " + configFileVPN);
+
+
+                    await WriteAllBytesAsync(configFileVPN, Encoding.UTF8.GetBytes(configData));
+                    Tunnel.Service.Run(configFileVPN);
+                    Tunnel.Service.Add(configFileVPN, false);
+                    //await Task.Run(() => Tunnel.Service.Add(configFile, false));
+
+                    //Tunnel.Service.Add(configFile, false);
+
+                    connectedVPN = true;
+                    return true;
                 }
                 else
                 {
-                    await Task.Run(() =>
-                    {
-                        Tunnel.Service.Remove(configFile, true);
-                        try { File.Delete(configFile); } catch { }
-                    });
                     connectedVPN = false;
-                    string binPath = String.Format("{0}log.bin", AppDomain.CurrentDomain.BaseDirectory);
-                    if (File.Exists(binPath))
-                    {
-                        File.Delete(binPath);
-                    }
-                    return true;
+                    return false;
                 }
+                //}
+                //else
+                //{
+                //    await Task.Run(() =>
+                //    {
+                //        Tunnel.Service.Remove(configFile, true);
+                //        try { File.Delete(configFile); } catch { }
+                //    });
+                //    connectedVPN = false;
+                //    string binPath = String.Format("{0}log.bin", AppDomain.CurrentDomain.BaseDirectory);
+                //    if (File.Exists(binPath))
+                //    {
+                //        File.Delete(binPath);
+                //    }
+                //    return true;
+                //}
             }
             catch (Exception ex)
             {
-                try { File.Delete(configFile); } catch { }
+                MessageBox.Show("kuch error hai");
+                try { File.Delete(configFileVPN); } catch { }
             }
             return false;
         }
-        
 
-        public void RunFDSAdministrator(string configFile, string methodName)
-        {
-            try
-            {
-                string fdsAdminPath = String.Format("{0}FDS_Administrator.exe", AppDomain.CurrentDomain.BaseDirectory);             
-                string arguments = $"\"{configFile}\" \"{methodName}\"";
 
-                 
-                ProcessStartInfo processInfo = new ProcessStartInfo
-                {
-                    FileName = fdsAdminPath,
-                    Arguments = arguments,
-                    UseShellExecute = true, // Required to elevate privileges
-                    Verb = "runas", // This runs the process as admin
-                    WindowStyle = ProcessWindowStyle.Normal // Optional: set how the window is shown
-                };
 
-                // Start the process
-                Process process = Process.Start(processInfo);
-
-                // Optionally wait for the process to complete
-                process.WaitForExit();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error starting FDS_Administrator as admin: {ex.Message}");
-            }
-        }
 
 
         private const string PipeName = "AdminTaskPipe";
@@ -581,20 +571,64 @@ namespace FDS
                 using (var client = new NamedPipeClientStream(".", PipeName, PipeDirection.InOut))
                 {
                     client.Connect();
-                    using (var writer = new StreamWriter(client) { AutoFlush = true })
-                    using (var reader = new StreamReader(client))
+
+                    // Create the writer and reader
+                    var writer = new StreamWriter(client) { AutoFlush = true };
+                    var reader = new StreamReader(client);
+
+                    try
                     {
                         writer.WriteLine(request);
                         string response = reader.ReadLine();
-                        return true;
+                        // Optionally, process the response if needed
+                        return true; // Indicate success
+                    }
+                    catch (IOException ioEx)
+                    {
+                        // Handle IO exceptions
+                        Console.WriteLine("IOException: " + ioEx.Message);
+                        return false; // Indicate failure
+                    }
+                    catch (ObjectDisposedException disposedEx)
+                    {
+                        // Check if the exception message is "Cannot access a closed pipe."
+                        if (disposedEx.Message.Contains("Cannot access a closed pipe."))
+                        {
+                            return true; // Return true if the message matches
+                        }
+                        else
+                        {
+                            Console.WriteLine("ObjectDisposedException: " + disposedEx.Message);
+                            return false; // Return false for other messages
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Handle other exceptions
+                        Console.WriteLine("Exception: " + ex.Message);
+                        return false; // Indicate failure
+                    }
+                    finally
+                    {
+                        // Dispose of the writer and reader explicitly
+                        writer.Dispose();
+                        reader.Dispose();
                     }
                 }
-
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return false;
+                if (ex.Message.Contains("Pipe is broken."))
+                {
+                    return true; // Return true if the message matches
+                }
+                // Handle connection exceptions
+                Console.WriteLine("Connection Exception: " + ex.Message);
+                return false; // Indicate failure
             }
+
+
+
         }
 
         public async Task WriteAllBytesAsync(string filePath, byte[] bytes)
@@ -622,9 +656,24 @@ namespace FDS
             }
             else
             {
-                //Console.WriteLine("No IP found in the data.");
+                //configFileVPNConsole.WriteLine("No IP found in the data.");
             }
         }
+
+        public async Task ReadConfigFileAsync(string filePath)
+        {
+            try
+            {
+                // Read the entire file content asynchronously
+                string configData = File.ReadAllText(filePath);
+                await GetIPConfig(configData);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error reading file: {ex.Message}");
+            }
+        }
+
 
 
         private async Task<string> generateNewConfig()
@@ -679,9 +728,13 @@ namespace FDS
                     string LauncherAppPath = String.Format("{0}LauncherApp.exe", AppDomain.CurrentDomain.BaseDirectory);
                     SetShortCut(LauncherAppPath);
                     WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
-                    windowServiceInstaller.InstallService("Service_FDS", "WindowServiceFDS.exe");
-                    windowServiceInstaller.StartService("Service_FDS");
+                    windowServiceInstaller.InstallService(watcherServiceName, "WindowServiceFDS.exe");
+                    windowServiceInstaller.StartService(watcherServiceName);
 
+                    if (isVPNServiceRunning)
+                    {
+                        windowServiceInstaller.StartService(vpnServieName);
+                    }
 
 
                 }
@@ -753,6 +806,16 @@ namespace FDS
 
                 if (result)
                 {
+                    windowServiceInstaller.StopService(vpnServieName);
+
+                    if (windowServiceInstaller.IsServiceRunning(vpnServieName))
+                    {
+                        VPNMapShow();
+                    }
+                    else
+                    {
+                        VPNMapHide();
+                    }
                 }
             }
             catch (Exception ex)
@@ -2182,6 +2245,25 @@ namespace FDS
                         var HealthData = JsonConvert.DeserializeObject<HealthCheckResponse>(result);
 
 
+                        if (windowServiceInstaller.IsServiceInstalled(vpnServieName))
+                        {
+                            if (!windowServiceInstaller.IsServiceInstalled(watcherServiceName))
+                            {
+                                windowServiceInstaller.InstallService(watcherServiceName, "WindowServiceFDS.exe");
+                                windowServiceInstaller.StartService(watcherServiceName);
+                            }
+
+                            if ((windowServiceInstaller.IsServiceRunning(vpnServieName)) & (vpnstatus2.Text.Contains("Disconnected")))
+                            {
+                                VPNMapShow();
+                            }
+                            else
+                            {
+                                VPNMapHide();
+                            }
+                        }
+
+
                         if (HealthData.call_config)
                         {
 
@@ -3032,11 +3114,13 @@ namespace FDS
                             grdheaderColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06D6A0"));
 
                             //vpn
-                            //WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
-                            //if (!windowServiceInstaller.IsServiceInstalled("FDSWireGuardTunnel"))
-                            //{
-                            //    VPNServiceCreate();
-                            //}
+
+                            if (!windowServiceInstaller.IsServiceInstalled(vpnServieName))
+                            {
+                                VPNServiceCreate();
+                            }
+
+
 
                         }
                         else
@@ -3072,6 +3156,57 @@ namespace FDS
                 {
                     MessageBox.Show("An error occurred in Fetching API: ", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+            }
+        }
+
+
+        public async void VPNMapHide()
+        {
+            loader.Visibility = Visibility.Collapsed;
+            downloadStatus.Visibility = Visibility.Collapsed;
+            vpnstatus2.Visibility = Visibility.Visible;
+            VPNimage1.Visibility = Visibility.Visible;
+
+            VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
+            vpnstatus2.Text = "Disconnected";
+            vpnstatus2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+            currentServerName = string.Empty;
+            ShowMap();
+        }
+
+        public async void VPNMapShow()
+        {
+            VPNService vpnService = new VPNService();
+
+            var apiResponse2 = await vpnService.VPNConnectAsync();
+            if (apiResponse2 != null)
+            {
+
+                var plainText2 = EncryptDecryptData.RetriveDecrypt(apiResponse2.payload);
+
+                string cleanJson = Regex.Replace(plainText2, @"[^\x20-\x7E]+", "");
+
+                var finalData = JsonConvert.DeserializeObject<VPNResponseNew>(cleanJson);
+
+                var configData = finalData.Data.Config.ToString();
+
+                GetIPConfig(configData.ToString());
+
+
+                if (!string.IsNullOrEmpty(publicIP))
+                {
+                    var location = await vpnService.GetIpLocationAsync(publicIP);
+                    currentServerName = location;
+                    ShowMap();
+                }
+
+                VPNimage1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
+                vpnstatus2.Text = "You are connected";
+                vpnstatus2.Foreground = Brushes.Green;
+                loader.Visibility = Visibility.Hidden;
+                downloadStatus.Visibility = Visibility.Hidden;
+                vpnstatus2.Visibility = Visibility.Visible;
+                VPNimage1.Visibility = Visibility.Visible;
             }
         }
 
@@ -3854,8 +3989,8 @@ namespace FDS
                     {
 
                         WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
-                        windowServiceInstaller.StopService("Service_FDS");
-                        windowServiceInstaller.UninstallService("Service_FDS", "WindowServiceFDS.exe");
+                        windowServiceInstaller.StopService(watcherServiceName);
+                        windowServiceInstaller.UninstallService(watcherServiceName, "WindowServiceFDS.exe");
                     }
                     catch (Exception ex)
                     {

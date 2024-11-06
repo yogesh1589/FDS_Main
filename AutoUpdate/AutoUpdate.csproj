@@ -84,11 +84,5 @@
     <None Include="app.manifest" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\FDS_Administrator\FDS_Administrator.csproj">
-      <Project>{ad0672e7-25d8-4a82-b912-e138acdcebf8}</Project>
-      <Name>FDS_Administrator</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
