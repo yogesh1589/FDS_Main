@@ -38,3 +38,25 @@ D:\14March\FDS\windowsapp\LauncherApp\obj\Debug\LauncherApp.csproj.CoreCompileIn
 D:\14March\FDS\windowsapp\LauncherApp\obj\Debug\LauncherApp.exe
 D:\14March\FDS\windowsapp\LauncherApp\obj\Debug\LauncherApp.pdb
 D:\14March\FDS\windowsapp\LauncherApp\obj\Debug\Launcher.91152B33.Up2Date
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\bin\Debug\LauncherApp.exe.config
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\bin\Debug\LauncherApp.exe
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\bin\Debug\LauncherApp.pdb
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\bin\Debug\Microsoft.Win32.TaskScheduler.dll
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\bin\Debug\Newtonsoft.Json.dll
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\bin\Debug\System.CodeDom.dll
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\bin\Debug\Microsoft.Win32.TaskScheduler.xml
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\bin\Debug\Newtonsoft.Json.xml
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\bin\Debug\System.CodeDom.xml
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\bin\Debug\de\Microsoft.Win32.TaskScheduler.resources.dll
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\bin\Debug\es\Microsoft.Win32.TaskScheduler.resources.dll
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\bin\Debug\fr\Microsoft.Win32.TaskScheduler.resources.dll
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\bin\Debug\it\Microsoft.Win32.TaskScheduler.resources.dll
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\bin\Debug\pl\Microsoft.Win32.TaskScheduler.resources.dll
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\bin\Debug\ru\Microsoft.Win32.TaskScheduler.resources.dll
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\bin\Debug\zh-CN\Microsoft.Win32.TaskScheduler.resources.dll
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\bin\Debug\zh-Hant\Microsoft.Win32.TaskScheduler.resources.dll
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\obj\Debug\LauncherApp.csproj.AssemblyReference.cache
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\obj\Debug\LauncherApp.csproj.CoreCompileInputs.cache
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\obj\Debug\Launcher.91152B33.Up2Date
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\obj\Debug\LauncherApp.exe
+D:\14March\backup\29 Oct\windowsapp\LauncherApp\obj\Debug\LauncherApp.pdb

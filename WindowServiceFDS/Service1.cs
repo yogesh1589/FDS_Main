@@ -127,68 +127,37 @@ namespace WindowServiceFDS
                 new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null),
                 PipeAccessRights.ReadWrite, AccessControlType.Allow));
 
-
+            WriteLog("Server started");
 
             while (true)
             {
                 using (var server = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.None, 1024, 1024, pipeSecurity))
                 {
-                    //WriteLog("Waiting for a client connection...");
+                    WriteLog("Waiting for a client connection...");
                     server.WaitForConnection();
 
                     using (var reader = new StreamReader(server))
                     using (var writer = new StreamWriter(server) { AutoFlush = true })
                     {
                         var request = reader.ReadLine();
-                       // WriteLog($"Received request: {request}");
+                        WriteLog($"Received request: {request}");
 
                         if (request.StartsWith("VPNRun"))
                         {
                             var parameters = request.Split(',');
                             string serviceName = parameters[1];
-                            //WriteLog($"serviceName : {serviceName}");
+                            WriteLog($"Starting service: {serviceName}");
                             StartService(serviceName);
-                            //WriteLog($"start hoo gayi kya");
+                            writer.WriteLine("Service started successfully");
                         }
                         else if (request.StartsWith("VPNStop"))
                         {
                             var parameters = request.Split(',');
                             string serviceName = parameters[1];
-                           // WriteLog($"serviceName : {serviceName}");
+                            WriteLog($"Stopping service: {serviceName}");
                             StopService(serviceName);
+                            writer.WriteLine("Service stopped successfully");
                         }
-                        else if (request.StartsWith("VPNSvcInstall"))
-                        {
-                            try
-                            {
-                                var parameters = request.Split(',');
-                                string configFile = parameters[1];
-                                //WriteLog($"configFile : {configFile}");
-                                //Tunnel.Service.Run(configFile);
-                                //Tunnel.Service.Add(configFile, true);
-                                //WriteLog($"Add Method runs successfully");
-                            }
-                            catch
-                            {
-                                //WriteLog($"configFile : there is some error");
-                            }
-
-                        }
-                        else if (request.StartsWith("VPNInstallRun"))
-                        {
-                            Directory.SetCurrentDirectory(@"D:\14March\FDS\windowsapp\FDS_Administrator\bin\Debug");
-                            //WriteLog($"Current directory: {Directory.GetCurrentDirectory()}");
-                            //WriteLog($"User identity: {WindowsIdentity.GetCurrent().Name}");
-                         
-                            var parameters = request.Split(',');
-                            string configFile = parameters[1];                            
-                           // WriteLog($"configFile : {configFile}");
-                            //Tunnel.Service.Run(configFile);                            
-                            //Tunnel.Service.Add(configFile, false);
-                            //WriteLog($"Add Method runs successfully");
-                        }
-
-
                         else
                         {
                             writer.WriteLine("Unknown command");
@@ -197,6 +166,7 @@ namespace WindowServiceFDS
                 }
             }
         }
+
 
 
         public void StartService(string serviceName)
@@ -230,28 +200,7 @@ namespace WindowServiceFDS
         }
 
 
-        public static async System.Threading.Tasks.Task VPNAdd(string configFile)
-        {
-            try
-            {
-            //    WriteLog("vpn code running = " + configFile);              
-            //    await System.Threading.Tasks.Task.Run(() => Tunnel.Service.Add(configFile, true));
-            }
-            catch
-            {
-                //WriteLog("error in vpn");
-            }
-        }
-
-        public static async System.Threading.Tasks.Task WriteAllBytesAsync(string filePath, byte[] bytes)
-        {
-            using (FileStream sourceStream = new FileStream(filePath,
-                FileMode.Create, FileAccess.Write, FileShare.None,
-                bufferSize: 4096, useAsync: true))
-            {
-                await sourceStream.WriteAsync(bytes, 0, bytes.Length);
-            }
-        }
+     
 
         protected override void OnStop()
         {

@@ -180,7 +180,9 @@
     <Compile Include="API Service\VPNService.cs" />
     <Compile Include="Common\BrowsersGeneric.cs" />
     <Compile Include="Common\CountryCodeConverter.cs" />
+    <Compile Include="Common\FDSService.cs" />
     <Compile Include="Common\IsActiveToColorConverter.cs" />
+    <Compile Include="Common\RSAKeyGenerator.cs" />
     <Compile Include="Common\SystemMoniteringService\CertificateDetails.cs" />
     <Compile Include="Common\Cipher.cs" />
     <Compile Include="Common\EncryptDecryptData.cs" />

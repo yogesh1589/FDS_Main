@@ -1,10 +1,16 @@
-﻿using FDS.DTO.Responses;
+﻿using FDS.API_Service;
+using FDS.DTO.Responses;
+using Newtonsoft.Json;
+using Org.BouncyCastle.Security;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Pipes;
 using System.Linq;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Tunnel;
 
@@ -12,101 +18,226 @@ namespace FDS.Common
 {
     public class VPNServiceCom
     {
-        public static VPNResponse ParseWireGuardConfiguration(string configString)
+        
+        bool connectedVPN = false;
+        string configFileVPN = String.Format("{0}wg0.conf", AppDomain.CurrentDomain.BaseDirectory);
+
+        public async Task<bool> ConnectVPN()
         {
-            VPNResponse config = new VPNResponse();
-            InterfaceConfiguration interfaceConfig = new InterfaceConfiguration();
-            PeerConfiguration peerConfig = new PeerConfiguration();
-            var lines = configString.Split('\n');
-            string currentSection = "";
 
-            foreach (var line in lines)
+            try
             {
-                if (line.Trim().StartsWith("[") && line.Trim().EndsWith("]"))
-                {
-                    currentSection = line.Trim();
-                    continue;
-                }
+                VPNService vpnService = new VPNService();
 
-                var parts = line.Trim().Split('=');
-                if (parts.Length != 2)
+                var apiResponse = await vpnService.VPNConnectAsync();
+                if (apiResponse != null)
                 {
-                    // Check if there's an equal sign in the value part
-                    parts = line.Trim().Split(new char[] { '=' }, 2, StringSplitOptions.RemoveEmptyEntries);
-                    if (parts.Length != 2)
-                        continue;
-                }
 
-                var key = parts[0].Trim();
-                var value = parts[1].Trim();
+                    var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.payload);
 
-                if (currentSection == "[Interface]")
-                {
-                    switch (key)
+                    string cleanJson = Regex.Replace(plainText, @"[^\x20-\x7E]+", "");
+
+                    var finalData = JsonConvert.DeserializeObject<VPNResponseNew>(cleanJson);
+
+                    var configData = finalData.Data.Config.ToString();
+
+
+                    if (File.Exists(configFileVPN))
                     {
-                        case "PrivateKey":
-                            interfaceConfig.PrivateKey = value;
-                            break;
-                        case "Address":
-                            interfaceConfig.Address = value;
-                            break;
-                        case "DNS":
-                            interfaceConfig.DNS = new List<string>(value.Split(','));
-                            break;
-                        default:
-                            break;
+                        File.Delete(configFileVPN);
                     }
+                    File.WriteAllText(configFileVPN, configData);
+
+
+                    await WriteAllBytesAsync(configFileVPN, Encoding.UTF8.GetBytes(configData));
+                    Tunnel.Service.Run(configFileVPN);
+                    Tunnel.Service.Add(configFileVPN, false);
+
+                    connectedVPN = true;
+                    return true;
                 }
-                else if (currentSection == "[Peer]")
+                else
                 {
-                    switch (key)
+                    connectedVPN = false;
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {               
+                try { File.Delete(configFileVPN); } catch { }
+            }
+            return false;
+        }
+
+
+
+
+
+        private const string PipeName = "AdminTaskPipe";
+        public bool SendRequest(string request)
+        {
+            try
+            {
+                
+                if (!connectedVPN)
+                {
+                    connectedVPN = true;
+                    return SendRequestNamedPipe(request);
+
+                }
+                else
+                {
+                    connectedVPN = false;
+                    return SendRequestNamedPipe(request);
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        private static readonly byte[] Key = Encoding.UTF8.GetBytes("ThisIsASecretKeyForAES256Example!");
+        private static readonly byte[] IV = Encoding.UTF8.GetBytes("InitializationVec"); // 16 bytes for AES
+
+
+        public bool SendRequestNamedPipe(string request)
+        {
+
+
+            //string encryptedMessage = Encrypt(request);
+
+             
+
+            try
+            {
+                using (var client = new NamedPipeClientStream(".", PipeName, PipeDirection.InOut))
+                {
+                    client.Connect(5000); // Timeout in milliseconds
+
+                    var writer = new StreamWriter(client) { AutoFlush = true };
+                    var reader = new StreamReader(client);
+
+                    try
                     {
-                        case "PublicKey":
-                            peerConfig.PublicKey = value;
-                            break;
-                        case "Endpoint":
-                            peerConfig.Endpoint = value;
-                            break;
-                        case "AllowedIPs":
-                            peerConfig.AllowedIPs = value;
-                            break;
-                        default:
-                            break;
+
+                        writer.WriteLine(request);
+                        string response = reader.ReadLine();
+                        return true; // Indicate success
+                    }
+                    catch (IOException ioEx)
+                    {
+                        // Handle IO exceptions
+                        Console.WriteLine("IOException: " + ioEx.Message);
+                        return false; // Indicate failure
+                    }
+                    catch (ObjectDisposedException disposedEx)
+                    {
+                        // Check if the exception message is "Cannot access a closed pipe."
+                        if (disposedEx.Message.Contains("Cannot access a closed pipe."))
+                        {
+                            return true; // Return true if the message matches
+                        }
+                        else
+                        {
+                            Console.WriteLine("ObjectDisposedException: " + disposedEx.Message);
+                            return false; // Return false for other messages
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Handle other exceptions
+                        Console.WriteLine("Exception: " + ex.Message);
+                        return false; // Indicate failure
+                    }
+                    finally
+                    {
+                        // Dispose of the writer and reader explicitly
+                        writer.Dispose();
+                        reader.Dispose();
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Pipe is broken."))
+                {
+                    return true; // Return true if the message matches
+                }
+                // Handle connection exceptions
+                Console.WriteLine("Connection Exception: " + ex.Message);
+                return false; // Indicate failure
+            }
 
-            config.Interface = interfaceConfig;
-            config.Peer = peerConfig;
-            return config;
+
+
         }
 
-        public static async Task<string> generateNewConfig()
+        public async Task WriteAllBytesAsync(string filePath, byte[] bytes)
         {
-            return string.Format("[Interface]\nPrivateKey = cF9Vwgt4OXR6YZdocIzXFZa3XlgpUaa3/lUPuVsPwVU=\nAddress = 10.66.66.2/32,fd42:42:42::2/128\nDNS = 1.1.1.1,1.0.0.1\n\n[Peer]\nPublicKey = eEhNt9rYKAfqHSJx1C0HEw7GbhpHjofsWFVxjlr+tCY=\nPresharedKey = W2O7L+SawuUnrqjlkb5L82wiW5W080VUnLM12NRs5cw=\nEndpoint = 3.129.250.218:51280\nAllowedIPs = 0.0.0.0/0,::/0\n");
+            using (FileStream sourceStream = new FileStream(filePath,
+                FileMode.Create, FileAccess.Write, FileShare.None,
+                bufferSize: 4096, useAsync: true))
+            {
+                await sourceStream.WriteAsync(bytes, 0, bytes.Length);
+            }
         }
 
-        public static async Task<string> generateNewConfig2(string privateKey, string serverPubkey2,string ipAddress)
+
+        public async Task<string> GetIPConfig(string configData)
         {
+            string publicIP = string.Empty;
+            string pattern = @"Endpoint = (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})";
+            Match match = Regex.Match(configData, pattern);
 
-            var keys = Keypair.Generate();
-            var client = new TcpClient();
-            string[] myIP = ipAddress.Trim().Split(':');
-            await client.ConnectAsync("3.129.250.218", 51280);
-            var stream = client.GetStream();
-            var reader = new StreamReader(stream, Encoding.UTF8);
-            var pubKeyBytes = Encoding.UTF8.GetBytes(keys.Public + "\n");
-            await stream.WriteAsync(pubKeyBytes, 0, pubKeyBytes.Length);
-            await stream.FlushAsync();
-            var ret = (await reader.ReadLineAsync()).Split(':');
-            client.Close();
-            var status = ret.Length >= 1 ? ret[0] : "";
-            var serverPubkey = ret.Length >= 2 ? ret[1] : "";
-            var serverPort = ret.Length >= 3 ? ret[2] : "";
-            var internalIP = ret.Length >= 4 ? ret[3] : "";
-            if (status != "OK")
-                throw new InvalidOperationException(string.Format("Server status is {0}", status));
-            return string.Format("[Interface]\nPrivateKey = {0}\nAddress = {1}\nDNS = 1.1.1.1,1.0.0.1\n\n[Peer]\nPublicKey = {2}\nEndpoint = {3}\nAllowedIPs = 0.0.0.0/0,::/0\n", privateKey, internalIP, serverPubkey2, ipAddress);
+            if (match.Success)
+            {
+                string ip = match.Groups[1].Value;
+                publicIP = ip;
+                
+            }
+            return publicIP;
+         
         }
+
+        public async Task ReadConfigFileAsync(string filePath)
+        {
+            try
+            {
+                // Read the entire file content asynchronously
+                string configData = File.ReadAllText(filePath);
+                await GetIPConfig(configData);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error reading file: {ex.Message}");
+            }
+        }
+
+
+ 
+
+        public static string Encrypt(string plainText)
+        {
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = Key;
+                aes.IV = IV;
+
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    using (CryptoStream cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write))
+                    {
+                        using (StreamWriter writer = new StreamWriter(cs))
+                        {
+                            writer.Write(plainText);
+                        }
+                    }
+                    return Convert.ToBase64String(ms.ToArray());
+                }
+            }
+        }
+
+      
     }
 }

@@ -29,6 +29,7 @@ using System.Net.Http;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -152,6 +153,7 @@ namespace FDS
         public bool isInternetReconnect = false;
         public string currentServerName = string.Empty;
         public LogEntryViewModel ViewModel { get; set; }
+        public FDSService FDSService { get; set; }
         private int CurrentServiceID = 0;
         public ObservableCollection<LogEntry> LogEntries;
         private bool connectedVPN;
@@ -181,6 +183,7 @@ namespace FDS
                 DataContext = new ViewModel();
                 thisWindow = GetWindow(this);
                 ViewModel = new LogEntryViewModel();
+                FDSService = new FDSService();
                 this.DataContext = ViewModel;
 
 
@@ -314,42 +317,52 @@ namespace FDS
 
 
 
-        public void SetShortCut(string LauncherAppPath)
-        {
-            try
-            {
 
-                // Destination path for the shortcut in the Startup folder
-                string startupFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup), "FDS.lnk");
-
-                // Check if the shortcut already exists in the Startup folder
-                if (!File.Exists(startupFolderPath))
-                {
-                    // Create a WshShell instance
-                    IWshRuntimeLibrary.WshShell wshShell = new IWshRuntimeLibrary.WshShell();
-
-                    // Create a shortcut
-                    IWshRuntimeLibrary.IWshShortcut shortcut = (IWshRuntimeLibrary.IWshShortcut)wshShell.CreateShortcut(startupFolderPath);
-                    shortcut.TargetPath = LauncherAppPath;
-                    shortcut.Save();
-
-                    Console.WriteLine("Shortcut created in the Startup folder successfully.");
-                }
-                else
-                {
-                    Console.WriteLine("Shortcut already exists in the Startup folder.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
-        }
 
         private void Grid_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            // Your click event logic here
             ShowMap();
+        }
+
+
+        private void VPNConnectedAfter()
+        {
+            VPNimage1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
+            vpnstatus2.Text = "You are connected";
+            vpnstatus2.Foreground = Brushes.Green;
+            loader.Visibility = Visibility.Hidden;
+            downloadStatus.Visibility = Visibility.Hidden;
+            vpnstatus2.Visibility = Visibility.Visible;
+            VPNimage1.Visibility = Visibility.Visible;
+        }
+
+        private void VPNConnectedBefore()
+        {
+            downloadStatus.Text = "Connecting...";
+            loader.Visibility = Visibility.Visible;
+            downloadStatus.Visibility = Visibility.Visible;
+            vpnstatus2.Visibility = Visibility.Hidden;
+            VPNimage1.Visibility = Visibility.Hidden;
+        }
+
+        private void VPNDisConnectedBefore()
+        {
+            downloadStatus.Text = "Disconnecting...";
+            loader.Visibility = Visibility.Visible;
+            downloadStatus.Visibility = Visibility.Visible;
+            vpnstatus2.Visibility = Visibility.Hidden;
+            VPNimage1.Visibility = Visibility.Hidden;
+        }
+
+        private void VPNDisConnectedAfter()
+        {
+            loader.Visibility = Visibility.Collapsed;
+            downloadStatus.Visibility = Visibility.Collapsed;
+            vpnstatus2.Visibility = Visibility.Visible;
+            VPNimage1.Visibility = Visibility.Visible;
+            VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
+            vpnstatus2.Text = "Disconnected";
+            vpnstatus2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
         }
 
 
@@ -358,407 +371,80 @@ namespace FDS
         {
             if (VPNimage1.Source.ToString().Contains("/Assets/VPNDis.png"))
             {
-                downloadStatus.Text = "Connecting...";
-                loader.Visibility = Visibility.Visible;
-                downloadStatus.Visibility = Visibility.Visible;
-                vpnstatus2.Visibility = Visibility.Hidden;
-                VPNimage1.Visibility = Visibility.Hidden;
 
-                //WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
-                //windowServiceInstaller.InstallService("Service_FDS", "WindowServiceFDS.exe");
-                //windowServiceInstaller.StartService("Service_FDS");
+                VPNServiceCom vPNServiceCom = new VPNServiceCom();
+                VPNConnectedBefore();
 
+               
 
-                bool result = SendRequest("VPNRun," + vpnServieName);
-                //bool result = await ConnectVPN();
-
+                bool result = vPNServiceCom.SendRequest("VPNRun," + vpnServieName);
 
                 if (result)
                 {
 
                     VPNService vpnService = new VPNService();
-                    await ReadConfigFileAsync(configFileVPN);
-                    // MessageBox.Show("public ip is = " + publicIP.ToString());
+                    await vPNServiceCom.ReadConfigFileAsync(configFileVPN);
+
 
                     if (!string.IsNullOrEmpty(publicIP))
                     {
                         var location = await vpnService.GetIpLocationAsync(publicIP);
                         currentServerName = location;
-                        // MessageBox.Show(location.ToString());
                         ShowMap();
                     }
+                    else
+                    {
+                        VPNMapShow();                         
+                    }
 
-                    VPNimage1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
-                    vpnstatus2.Text = "You are connected";
-                    vpnstatus2.Foreground = Brushes.Green;
 
-
-
-                    loader.Visibility = Visibility.Hidden;
-                    downloadStatus.Visibility = Visibility.Hidden;
-                    vpnstatus2.Visibility = Visibility.Visible;
-                    VPNimage1.Visibility = Visibility.Visible;
+                    VPNConnectedAfter();
                 }
                 else
                 {
-                    loader.Visibility = Visibility.Collapsed;
-                    downloadStatus.Visibility = Visibility.Collapsed;
-                    vpnstatus2.Visibility = Visibility.Visible;
-                    VPNimage1.Visibility = Visibility.Visible;
-                    VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
-                    vpnstatus2.Text = "Disconnected";
-                    vpnstatus2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
+                    VPNDisConnectedAfter();
 
                 }
             }
             else
             {
-                downloadStatus.Text = "Disconnecting...";
-                // Show the loader and download status text
-                loader.Visibility = Visibility.Visible;
-                downloadStatus.Visibility = Visibility.Visible;
-                vpnstatus2.Visibility = Visibility.Hidden;
-                VPNimage1.Visibility = Visibility.Hidden;
 
-                //WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
-                //windowServiceInstaller.InstallService("Service_FDS", "WindowServiceFDS.exe");
-                //windowServiceInstaller.StartService("Service_FDS");
+                VPNServiceCom vPNServiceCom = new VPNServiceCom();
 
-                bool result = SendRequest("VPNStop," + vpnServieName);
-                //bool result = await ConnectVPN();
+                VPNDisConnectedBefore();
+
+                bool result = vPNServiceCom.SendRequest("VPNStop," + vpnServieName);
+
                 if (result)
                 {
-
-
-                    // After files are downloaded, hide the loader and download status text
-                    loader.Visibility = Visibility.Collapsed;
-                    downloadStatus.Visibility = Visibility.Collapsed;
-                    vpnstatus2.Visibility = Visibility.Visible;
-                    VPNimage1.Visibility = Visibility.Visible;
-
-                    VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
-                    vpnstatus2.Text = "Disconnected";
-                    vpnstatus2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-
-
-
+                    VPNDisConnectedAfter();
                     currentServerName = string.Empty;
                     ShowMap();
                 }
                 else
                 {
-                    VPNimage1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
-                    vpnstatus2.Text = "You are connected";
-                    vpnstatus2.Foreground = Brushes.Green;
-
-                    loader.Visibility = Visibility.Hidden;
-                    downloadStatus.Visibility = Visibility.Hidden;
-                    vpnstatus2.Visibility = Visibility.Visible;
-                    VPNimage1.Visibility = Visibility.Visible;
+                    VPNConnectedAfter();
                 }
             }
-
-
             ShowMap();
         }
 
-        public async Task<bool> ConnectVPN()
-        {
-            // Provide the path where you want to save the file
-
-            try
-            {
-
-                //if (!connectedVPN)
-                //{
-
-                VPNService vpnService = new VPNService();
-
-                var apiResponse = await vpnService.VPNConnectAsync();
-                if (apiResponse != null)
-                {
-                    //MessageBox.Show("api response get");
-                    var plainText = EncryptDecryptData.RetriveDecrypt(apiResponse.payload);
-
-                    string cleanJson = Regex.Replace(plainText, @"[^\x20-\x7E]+", "");
-
-                    var finalData = JsonConvert.DeserializeObject<VPNResponseNew>(cleanJson);
-
-                    var configData = finalData.Data.Config.ToString();
-
-                    //GetIPConfig(configData.ToString());
-                    //MessageBox.Show("config file path = " + configFileVPN);
-                    if (File.Exists(configFileVPN))
-                    {
-                        File.Delete(configFileVPN);
-                    }
-                    File.WriteAllText(configFileVPN, configData);
-                    //MessageBox.Show("config file path written on = " + configFileVPN);
-
-
-                    await WriteAllBytesAsync(configFileVPN, Encoding.UTF8.GetBytes(configData));
-                    Tunnel.Service.Run(configFileVPN);
-                    Tunnel.Service.Add(configFileVPN, false);
-                    //await Task.Run(() => Tunnel.Service.Add(configFile, false));
-
-                    //Tunnel.Service.Add(configFile, false);
-
-                    connectedVPN = true;
-                    return true;
-                }
-                else
-                {
-                    connectedVPN = false;
-                    return false;
-                }
-                //}
-                //else
-                //{
-                //    await Task.Run(() =>
-                //    {
-                //        Tunnel.Service.Remove(configFile, true);
-                //        try { File.Delete(configFile); } catch { }
-                //    });
-                //    connectedVPN = false;
-                //    string binPath = String.Format("{0}log.bin", AppDomain.CurrentDomain.BaseDirectory);
-                //    if (File.Exists(binPath))
-                //    {
-                //        File.Delete(binPath);
-                //    }
-                //    return true;
-                //}
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("kuch error hai");
-                try { File.Delete(configFileVPN); } catch { }
-            }
-            return false;
-        }
 
 
 
-
-
-        private const string PipeName = "AdminTaskPipe";
-        public bool SendRequest(string request)
-        {
-            try
-            {
-                if (!connectedVPN)
-                {
-                    connectedVPN = true;
-                    return SendRequestNamedPipe(request);
-
-                }
-                else
-                {
-                    connectedVPN = false;
-                    return SendRequestNamedPipe(request);
-                }
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
-        }
-
-
-        public bool SendRequestNamedPipe(string request)
-        {
-            try
-            {
-                using (var client = new NamedPipeClientStream(".", PipeName, PipeDirection.InOut))
-                {
-                    client.Connect();
-
-                    // Create the writer and reader
-                    var writer = new StreamWriter(client) { AutoFlush = true };
-                    var reader = new StreamReader(client);
-
-                    try
-                    {
-                        writer.WriteLine(request);
-                        string response = reader.ReadLine();
-                        // Optionally, process the response if needed
-                        return true; // Indicate success
-                    }
-                    catch (IOException ioEx)
-                    {
-                        // Handle IO exceptions
-                        Console.WriteLine("IOException: " + ioEx.Message);
-                        return false; // Indicate failure
-                    }
-                    catch (ObjectDisposedException disposedEx)
-                    {
-                        // Check if the exception message is "Cannot access a closed pipe."
-                        if (disposedEx.Message.Contains("Cannot access a closed pipe."))
-                        {
-                            return true; // Return true if the message matches
-                        }
-                        else
-                        {
-                            Console.WriteLine("ObjectDisposedException: " + disposedEx.Message);
-                            return false; // Return false for other messages
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        // Handle other exceptions
-                        Console.WriteLine("Exception: " + ex.Message);
-                        return false; // Indicate failure
-                    }
-                    finally
-                    {
-                        // Dispose of the writer and reader explicitly
-                        writer.Dispose();
-                        reader.Dispose();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                if (ex.Message.Contains("Pipe is broken."))
-                {
-                    return true; // Return true if the message matches
-                }
-                // Handle connection exceptions
-                Console.WriteLine("Connection Exception: " + ex.Message);
-                return false; // Indicate failure
-            }
-
-
-
-        }
-
-        public async Task WriteAllBytesAsync(string filePath, byte[] bytes)
-        {
-            using (FileStream sourceStream = new FileStream(filePath,
-                FileMode.Create, FileAccess.Write, FileShare.None,
-                bufferSize: 4096, useAsync: true))
-            {
-                await sourceStream.WriteAsync(bytes, 0, bytes.Length);
-            }
-        }
-
-
-        public async Task GetIPConfig(string configData)
-        {
-            // Regular expression to extract the IP from the Endpoint line
-            string pattern = @"Endpoint = (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})";
-            Match match = Regex.Match(configData, pattern);
-
-            if (match.Success)
-            {
-                string ip = match.Groups[1].Value;
-                publicIP = ip;
-                //Console.WriteLine($"Extracted IP: {ip}");
-            }
-            else
-            {
-                //configFileVPNConsole.WriteLine("No IP found in the data.");
-            }
-        }
-
-        public async Task ReadConfigFileAsync(string filePath)
-        {
-            try
-            {
-                // Read the entire file content asynchronously
-                string configData = File.ReadAllText(filePath);
-                await GetIPConfig(configData);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error reading file: {ex.Message}");
-            }
-        }
-
-
-
-        private async Task<string> generateNewConfig()
-        {
-
-            var keys = Keypair.Generate();
-            var client = new TcpClient();
-            await client.ConnectAsync("demo.wireguard.com", 42912);
-            var stream = client.GetStream();
-            var reader = new StreamReader(stream, Encoding.UTF8);
-            var pubKeyBytes = Encoding.UTF8.GetBytes(keys.Public + "\n");
-            await stream.WriteAsync(pubKeyBytes, 0, pubKeyBytes.Length);
-            await stream.FlushAsync();
-            var ret = (await reader.ReadLineAsync()).Split(':');
-            client.Close();
-            var status = ret.Length >= 1 ? ret[0] : "";
-            var serverPubkey = ret.Length >= 2 ? ret[1] : "";
-            var serverPort = ret.Length >= 3 ? ret[2] : "";
-            var internalIP = ret.Length >= 4 ? ret[3] : "";
-            if (status != "OK")
-                throw new InvalidOperationException(string.Format("Server status is {0}", status));
-            return string.Format("[Interface]\nPrivateKey = {0}\nAddress = {1}/24\nDNS = 8.8.8.8, 8.8.4.4\n\n[Peer]\nPublicKey = {2}\nEndpoint = demo.wireguard.com:{3}\nAllowedIPs = 0.0.0.0/0\n", keys.Private, internalIP, serverPubkey, serverPort);
-        }
-
-
-
-
-        //private void LoadServices()
-        //{
-        //    Services.Add(new ServiceDPP { ServiceName = "Web Tracking Protection", IsActive = true });
-        //    Services.Add(new ServiceDPP { ServiceName = "Web Session Protection", IsActive = true });
-        //    Services.Add(new ServiceDPP { ServiceName = "Web Chache Protection", IsActive = false });
-        //    Services.Add(new ServiceDPP { ServiceName = "DNS Chache Protection", IsActive = true });
-        //    Services.Add(new ServiceDPP { ServiceName = "Windows Registry Protection", IsActive = false });
-        //    Services.Add(new ServiceDPP { ServiceName = "Free Storage Protection", IsActive = false });
-        //    Services.Add(new ServiceDPP { ServiceName = "Trash Data Protection", IsActive = true });
-        //    Services.Add(new ServiceDPP { ServiceName = "System Network Monitering Protection", IsActive = true });
-        //}
 
 
         public void LoadFDS()
         {
             try
             {
-                try
-                {
+                FDSService.LoadWinService();
 
+                loadFDS = true;             
+  
+                FDSService.CheckEncryptFile();
 
-                    //SendRequest("VPNRun,fdsvpnsvc");
-
-                    //LoadServices();
-                    string LauncherAppPath = String.Format("{0}LauncherApp.exe", AppDomain.CurrentDomain.BaseDirectory);
-                    SetShortCut(LauncherAppPath);
-                    WindowServiceInstaller windowServiceInstaller = new WindowServiceInstaller();
-                    windowServiceInstaller.InstallService(watcherServiceName, "WindowServiceFDS.exe");
-                    windowServiceInstaller.StartService(watcherServiceName);
-
-                    if (isVPNServiceRunning)
-                    {
-                        windowServiceInstaller.StartService(vpnServieName);
-                    }
-
-
-                }
-                catch (Exception ex)
-                {
-                    ex.ToString();
-                }
-
-
-
-                //btnUninstall.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
-                loadFDS = true;
-
-                //// -------Actual Code --------------------------------
-                encryptOutPutFile = basePathEncryption + @"\Main";
-
-                ConfigDataClear();
-
-                if (File.Exists(encryptOutPutFile))
-                {
-                    string finalOutPutFile = basePathEncryption + @"\FinalDecrypt";
-                    Common.EncryptionDecryption.DecryptFile(encryptOutPutFile, finalOutPutFile);
-                    Common.EncryptionDecryption.ReadDecryptFile(finalOutPutFile);
-                }
+                
 
                 if (!CheckAllKeys())
                 {
@@ -768,7 +454,7 @@ namespace FDS
                 {
                     try
                     {
-                        //Generic.AutoRestart();
+                        
                         if (File.Exists(TempPath + "AutoUpdate.exe"))
                         {
                             if (TryCloseRunningProcess("AutoUpdate"))
@@ -779,15 +465,15 @@ namespace FDS
                     }
                     catch
                     {
-                        //MessageBox.Show("error");
+                        
                     }
 
                     LoadMenu(Screens.Landing);
                     TimerLastUpdate_Tick(timerLastUpdate, null);
-                    //timerLastUpdate.IsEnabled = true;
+                  
                     GetDeviceDetails();
                 }
-                // -------Actual Code --------------------------------
+               
             }
             catch (Exception ex)
             {
@@ -798,32 +484,7 @@ namespace FDS
             }
         }
 
-        public async void VPNServiceCreate()
-        {
-            try
-            {
-                bool result = await ConnectVPN();
-
-                if (result)
-                {
-                    windowServiceInstaller.StopService(vpnServieName);
-
-                    if (windowServiceInstaller.IsServiceRunning(vpnServieName))
-                    {
-                        VPNMapShow();
-                    }
-                    else
-                    {
-                        VPNMapHide();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                ex.ToString();
-            }
-
-        }
+      
 
         public void FDSMain_Loaded(object sender, RoutedEventArgs e)
         {
@@ -1368,19 +1029,19 @@ namespace FDS
         private void btnGetStarted_Click(object sender, RoutedEventArgs e)
         {
 
-            ConfigDataClear();
+            FDSService.ConfigDataClear();
             LoadMenu(Screens.AuthenticationMethods2);
         }
 
         private void btnOrganisation_Click(object sender, RoutedEventArgs e)
         {
-            ConfigDataClear();
+            FDSService.ConfigDataClear();
             LoadMenu(Screens.AuthenticationMethods);
         }
 
         private void btnIndividual_Click(object sender, RoutedEventArgs e)
         {
-            ConfigDataClear();
+            FDSService.ConfigDataClear();
             LoadMenu(Screens.AuthenticationStep3);
         }
 
@@ -1497,7 +1158,7 @@ namespace FDS
                             {
 
                                 File.Delete(encryptOutPutFile);
-                                ConfigDataClear();
+                                FDSService.ConfigDataClear();
                             }
                         }
                     }
@@ -1517,7 +1178,7 @@ namespace FDS
                     {
 
                         File.Delete(encryptOutPutFile);
-                        ConfigDataClear();
+                        FDSService.ConfigDataClear();
                     }
                 }
             }
@@ -2253,7 +1914,7 @@ namespace FDS
                                 windowServiceInstaller.StartService(watcherServiceName);
                             }
 
-                            if ((windowServiceInstaller.IsServiceRunning(vpnServieName)) & (vpnstatus2.Text.Contains("Disconnected")))
+                            if ((windowServiceInstaller.IsServiceRunning(vpnServieName)) & (vpnstatus2.Text.Contains("You are connected")))
                             {
                                 VPNMapShow();
                             }
@@ -2559,7 +2220,7 @@ namespace FDS
                 if (File.Exists(encryptOutPutFile))
                 {
                     try { File.Delete(encryptOutPutFile); } catch { }
-                    ConfigDataClear();
+                    FDSService.ConfigDataClear();
                 }
 
             }
@@ -3159,6 +2820,35 @@ namespace FDS
             }
         }
 
+        public async void VPNServiceCreate()
+        {
+            try
+            {
+                VPNServiceCom vPNServiceCom = new VPNServiceCom();  
+                bool result = await vPNServiceCom.ConnectVPN();
+
+                if (result)
+                {
+                    windowServiceInstaller.StopService(vpnServieName);
+
+                    if (windowServiceInstaller.IsServiceRunning(vpnServieName))
+                    {
+                        VPNMapShow();
+                    }
+                    else
+                    {
+                        VPNMapHide();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ex.ToString();
+            }
+
+        }
+
+
 
         public async void VPNMapHide()
         {
@@ -3166,7 +2856,6 @@ namespace FDS
             downloadStatus.Visibility = Visibility.Collapsed;
             vpnstatus2.Visibility = Visibility.Visible;
             VPNimage1.Visibility = Visibility.Visible;
-
             VPNimage1.Source = new BitmapImage(new Uri("/Assets/VPNDis.png", UriKind.Relative));
             vpnstatus2.Text = "Disconnected";
             vpnstatus2.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FB4B4E"));
@@ -3177,6 +2866,7 @@ namespace FDS
         public async void VPNMapShow()
         {
             VPNService vpnService = new VPNService();
+            VPNServiceCom vPNServiceCom =  new VPNServiceCom();
 
             var apiResponse2 = await vpnService.VPNConnectAsync();
             if (apiResponse2 != null)
@@ -3190,7 +2880,7 @@ namespace FDS
 
                 var configData = finalData.Data.Config.ToString();
 
-                GetIPConfig(configData.ToString());
+                 publicIP = await vPNServiceCom.GetIPConfig(configData.ToString());
 
 
                 if (!string.IsNullOrEmpty(publicIP))
@@ -3200,13 +2890,7 @@ namespace FDS
                     ShowMap();
                 }
 
-                VPNimage1.Source = new BitmapImage(new Uri("/Assets/GreenButton.png", UriKind.Relative));
-                vpnstatus2.Text = "You are connected";
-                vpnstatus2.Foreground = Brushes.Green;
-                loader.Visibility = Visibility.Hidden;
-                downloadStatus.Visibility = Visibility.Hidden;
-                vpnstatus2.Visibility = Visibility.Visible;
-                VPNimage1.Visibility = Visibility.Visible;
+                VPNConnectedAfter();
             }
         }
 
@@ -3216,8 +2900,7 @@ namespace FDS
 
             headerWithVPN.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
             headerWithoutVPN.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
-            grdWithoutVPN.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
-            //grdWithDeviceInfo.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+            grdWithoutVPN.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;            
             grdWithVPN.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
             currentServerHeader.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
             healthScoreHeader.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
@@ -3459,28 +3142,17 @@ namespace FDS
                         SubservicesData SubservicesData = key.Key;
 
 
-                        //bool testCheck = false;
-                        //if ((SubservicesData.Name.ToString() == "DNS Cache Protection") || (SubservicesData.Name.ToString() == "Free Storage Protection") || (SubservicesData.Name.ToString() == "Trash Data Protection") || (SubservicesData.Name.ToString() == "Windows Registry Protection"))
-                        //{
-                        //testCheck = true;
-                        //}                         
-                        //string dateString = "2023-09-14 17:16:00"; // Example string in "yyyy-MM-dd HH:mm:ss" format
-                        //if (DateTime.TryParse(dateString, out DateTime dateTime))
-                        //{
-                        //    // Parsing was successful, use 'dateTime'
-                        //}
-                        //if (DateTime.Now.Date == dateTime.Date && DateTime.Now.Hour == dateTime.Hour && ((DateTime.Now.Minute == dateTime.Minute) || (DateTime.Now.Minute - 1 == dateTime.Minute)) && (testCheck == true))
-
+                         
                         if (DateTime.Now.Date == key.Value.Date && DateTime.Now.Hour == key.Value.Hour && (DateTime.Now.Minute == key.Value.Minute || (DateTime.Now.Minute - 1 == key.Value.Minute)))
                         {
-                            // MessageBox.Show("Schedule Execution :" + SubservicesData.Sub_service_name);
+                            
 
                             bool result = await RunServices("S", SubservicesData);
 
                             if (result)
                             {
                                 DateTime localDate = DateTime.Now.ToLocalTime();
-                                //txtUpdatedOn.Text = localDate.ToString();
+                              
                             }
 
                             var schedule = CrontabSchedule.Parse(SubservicesData.Execution_period);
@@ -3515,8 +3187,7 @@ namespace FDS
                 }
                 if (dicEventServicesE.Count > 0)
                 {
-                    // MessageBox.Show("Schedule Execution :" + SubservicesData.Sub_service_name + " & Flag - " + serviceTypeFlag);                    
-
+                   
                     await scheduleRunner.RunAll(dicEventServicesE, serviceTypeFlag, whitelistedDomain);
                     dicEventServicesE.Clear();
                 }
@@ -3637,7 +3308,7 @@ namespace FDS
 
 
                 DateTime localDate = DateTime.Now.ToLocalTime();
-                //txtUpdatedOn.Text = localDate.ToString();
+                
 
             }
             catch (Exception ex)
@@ -3818,7 +3489,7 @@ namespace FDS
                         {
 
                             File.Delete(encryptOutPutFile);
-                            ConfigDataClear();
+                            FDSService.ConfigDataClear();
                         }
 
                         btnUninstall.ToolTip = "Your uninstall request has been approved! ";
@@ -4115,20 +3786,7 @@ namespace FDS
         {
             LoadMenu(Screens.Landing);
         }
-        public void ConfigDataClear()
-        {
-            ConfigDetails.Key1 = string.Empty;
-            ConfigDetails.Key2 = string.Empty;
-            ConfigDetails.Authentication_token = string.Empty;
-            ConfigDetails.Authorization_token = string.Empty;
-            ConfigDetails.Modulus = string.Empty;
-            ConfigDetails.Exponent = string.Empty;
-            ConfigDetails.D = string.Empty;
-            ConfigDetails.DP = string.Empty;
-            ConfigDetails.DQ = string.Empty;
-            ConfigDetails.Q = string.Empty;
-            ConfigDetails.InverseQ = string.Empty;
-        }
+       
         public void updateTrayIcon()
         {
             try
